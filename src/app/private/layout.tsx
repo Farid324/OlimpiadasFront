@@ -1,0 +1,1 @@
+// src/app/private/layout.tsx
