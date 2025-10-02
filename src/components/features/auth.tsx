@@ -22,6 +22,22 @@ export default function LoginForm() {
     e.preventDefault();
     setError('');
     setLoading(true);
+    if (!email || !password) {
+      setError('Por favor, complete todos los campos.');
+      setLoading(false);
+      return;
+    }
+    if (!email.endsWith('@olimpiadas.edu')) {
+      setError('El correo debe pertenecer al dominio "@olimpiadas.edu".');
+      setLoading(false);
+      return;
+    }
+    if (password.length < 8 || password.length > 30) {
+      setError('La contraseña debe tener entre 8 y 30 caracteres.');
+      setLoading(false);
+      return;
+    }
+    
     try {
       await login(email, password);
       const userStr = localStorage.getItem('user');
