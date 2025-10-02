@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/Input';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { ROLE_HOME } from '@/config/security';
-import { Trophy, User, AlertCircle } from 'lucide-react';
+import { Trophy, User } from 'lucide-react';
+import { ErrorMessage } from '@/components/ui/ErrorMessage';
 
 export default function LoginForm() {
   const { login } = useAuth();
@@ -61,12 +62,7 @@ export default function LoginForm() {
           <h2 className="text-xl font-semibold text-center mb-1">Iniciar Sesión</h2>
           <p className="text-center text-sm text-gray-500 mb-4">Ingrese sus credenciales para acceder al sistema</p>
 
-          {error && (
-            <div className="flex items-start gap-2 border border-red-200 bg-red-50 text-red-700 rounded-md p-3 mb-3">
-              <AlertCircle className="w-4 h-4 mt-0.5" />
-              <span className="text-sm">{error}</span>
-            </div>
-          )}
+          {error && <ErrorMessage message={error} />}
 
           <form onSubmit={onSubmit} className="space-y-3">
             <div className="space-y-1">
