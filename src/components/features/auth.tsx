@@ -50,7 +50,7 @@ export default function LoginForm() {
         {/* Login Card simple */}
         <div className="bg-white rounded-xl border p-6 shadow-sm">
           <h2 className="text-xl font-semibold text-center mb-1">Iniciar Sesión</h2>
-          <p className="text-center text-sm text-gray-500 mb-4">Ingrese sus credenciales</p>
+          <p className="text-center text-sm text-gray-500 mb-4">Ingrese sus credenciales para acceder al sistema</p>
 
           {error && (
             <div className="flex items-start gap-2 border border-red-200 bg-red-50 text-red-700 rounded-md p-3 mb-3">
@@ -61,13 +61,13 @@ export default function LoginForm() {
 
           <form onSubmit={onSubmit} className="space-y-3">
             <div className="space-y-1">
-              <label className="text-sm font-medium" htmlFor="email">Correo Electrónico</label>
-              <Input id="email" type="email" placeholder="usuario@olimpiadas.edu" value={email} onChange={e => setEmail(e.target.value)} />
+              <label className="text-sm font-medium text-[var(--negro)]" htmlFor="email">Correo Electrónico</label>
+              <Input className="bg-[var(--grisClaro)]" id="email" type="email" placeholder="usuario@olimpiadas.edu" value={email} onChange={e => setEmail(e.target.value)} />
             </div>
 
             <div className="space-y-1">
-              <label className="text-sm font-medium" htmlFor="password">Contraseña</label>
-              <Input id="password" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} />
+              <label className="text-sm font-medium text-[var(--negro)]" htmlFor="password">Contraseña</label>
+              <Input className="bg-[var(--grisClaro)]" id="password" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} />
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>
