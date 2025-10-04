@@ -1,70 +1,72 @@
-'use client';
+// panelPrincipal/page.tsx
+import { useEffect, useState } from 'react';
 
-type Area = {
-  id: number;
-  name: string;
-  level: 'Primaria' | 'Secundaria';
-  participants: number;
-  status: 'Evaluando' | 'Clasificando' | 'Completado';
+// Tipos definidos directamente aquí
+type Nivel = {
+  id_nivel: number;
+  nombre_nivel: string;
+  inscritos: number;
 };
 
-// 🔹 Datos de ejemplo (luego se reemplazan con fetch al backend)
-const areas: Area[] = [
-  { id: 1, name: 'MATEMATICAS', level: 'Primaria', participants: 24, status: 'Evaluando' },
-  { id: 2, name: 'FISICA', level: 'Secundaria', participants: 30, status: 'Clasificando' },
-  { id: 3, name: 'QUIMICA', level: 'Secundaria', participants: 28, status: 'Completado' },
-];
+type Area = {
+  id_area: number;
+  nombre_area: string;
+  estado: string;
+  niveles: Nivel[];
+};
 
 export default function PanelPrincipalPage() {
+  const [areas, setAreas] = useState<Area[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchAreas() {
+      const res = await fetch('/areas'); // endpoint del backend
+      const data: Area[] = await res.json();
+      setAreas(data);
+      setLoading(false);
+    }
+
+    fetchAreas();
+  }, []);
+
+  if (loading) return <div className="p-4">Cargando áreas...</div>;
+
   return (
-    <div className="bg-white border rounded-xl p-6 shadow-sm">
-      {/* Título sección */}
-      <h2 className="text-lg font-semibold mb-1">Estado por Área de Competencia</h2>
-      <p className="text-sm text-gray-600 mb-6">
-        Seguimiento del progreso de evaluación en cada disciplina
-      </p>
-
-      {/* Lista de áreas */}
-      <div className="space-y-4">
-        {areas.map((area) => (
-          <div
-            key={area.id}
-            className="flex items-center justify-between p-5 bg-white rounded-xl border border-gray-100 shadow-sm"
-          >
-            <div>
-              <div className="flex items-center gap-3">
-                <h3 className="text-sm font-semibold uppercase">{area.name}</h3>
-                <span className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
-                  {area.level}
-                </span>
-              </div>
-              <p className="text-xs text-gray-500 mt-2">
-                {area.participants} participantes registrados
-              </p>
-            </div>
-
-            {/* Badge de estado */}
-            <div>
-              {area.status === 'Evaluando' && (
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-amber-100 text-amber-800 ring-1 ring-amber-200">
-                  Evaluando
-                </span>
-              )}
-              {area.status === 'Clasificando' && (
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800 ring-1 ring-yellow-200">
-                  Clasificando
-                </span>
-              )}
-              {area.status === 'Completado' && (
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800 ring-1 ring-green-200">
-                  Completado
-                </span>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
+    <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {areas.map(area => (
+        <div key={area.id_area} className="border rounded-lg p-4 shadow-md bg-white">
+          <h2 className="text-xl font-bold mb-2">{area.nombre_area}</h2>
+          <p>
+            Estado: <span className={`font-semibold ${getEstadoColor(area.estado)}`}>{area.estado}</span>
+          </p>
+          {area.niveles.length > 0 ? (
+            <>
+              <p>Nivel: {area.niveles[0].nombre_nivel}</p>
+              <p>Inscritos: {area.niveles[0].inscritos}</p>
+            </>
+          ) : (
+            <p>Nivel: N/A | Inscritos: 0</p>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
+
+// Función para cambiar color según el estado
+function getEstadoColor(estado: string) {
+  switch (estado) {
+    case 'EVALUANDO':
+      return 'text-blue-600';
+    case 'CLASIFICANDO':
+      return 'text-yellow-600';
+    case 'COMPLETADO':
+      return 'text-green-600';
+    default:
+      return '';
+  }
+}
+
+
 
