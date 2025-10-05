@@ -226,16 +226,5 @@ export default function ResponsablesPage() {
         )}
       </div>
 
-      {/* Modal */}
-      {showModal && (
-        <RegisterResponsableModal
-          onClose={() => setShowModal(false)}
-          onSuccess={() => {
-            fetchResponsables(); // recargar después de registrar
-            setShowModal(false);
-          }}
-        />
-      )}
-    </div>
-  );
+    
 }
