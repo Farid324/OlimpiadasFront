@@ -140,7 +140,21 @@ export default function ResponsablesPage() {
             No hay responsables registrados
           </div>
         ) : (
-          
+          // Scroll solo dentro de la tabla
+          <div className="max-h-[450px] overflow-y-auto overflow-x-hidden">
+            <table className="min-w-full border-collapse text-sm">
+              <thead className="sticky top-0 bg-white shadow-sm z-10">
+                <tr className="text-gray-700 border-b">
+                  <th className="pb-3 px-4 text-left">Evaluador</th>
+                  <th className="pb-3 px-4 text-left">Contacto</th>
+                  <th className="pb-3 px-4 text-left">Especialización</th>
+                  <th className="pb-3 px-4 text-left">Áreas</th>
+                  <th className="pb-3 px-4 text-left">Institución</th>
+                  <th className="pb-3 px-4 text-left">Experiencia</th>
+                  <th className="pb-3 px-4 text-center">Rol</th>
+                  <th className="pb-3 px-4 text-center">Activo</th>
+                </tr>
+              </thead>
 
               <tbody>
                 {filtered.map((r) => {
