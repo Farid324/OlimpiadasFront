@@ -28,6 +28,14 @@ const schema = z.object({
     .min(1, "El correo es obligatorio")
     .email("Correo inválido")
     .refine((val) => !val.includes(" "), { message: "El correo no debe contener espacios" }),
+  telefono: z.string()
+    .min(8, "El teléfono debe tener 8 dígitos")
+    .max(8, "El teléfono debe tener 8 dígitos")
+    .regex(/^[0-9]+$/, "Solo se permiten números"),
+  ci: z.string()
+    .min(6, "El CI debe tener entre 6 y 8 dígitos")
+    .max(8, "El CI debe tener entre 6 y 8 dígitos")
+    .regex(/^[0-9]+$/, "El CI solo debe contener números"),
   
 });
 
