@@ -31,7 +31,11 @@ export default function PrivateLayout({ children }: { children: React.ReactNode 
   const menuItems = useMemo(() => MENU_BY_ROLE[role] ?? [], [role]);
   const headerTitle = useMemo(() => findTitleByPath(pathname, menuItems), [pathname, menuItems]);
 
-  
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace('/auth');
+    }
+  }, [loading, user, router]);
 
   useEffect(() => {
     const roleParam = sp.get('role');
