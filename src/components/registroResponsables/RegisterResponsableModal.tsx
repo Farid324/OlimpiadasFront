@@ -36,7 +36,17 @@ const schema = z.object({
     .min(6, "El CI debe tener entre 6 y 8 dígitos")
     .max(8, "El CI debe tener entre 6 y 8 dígitos")
     .regex(/^[0-9]+$/, "El CI solo debe contener números"),
-  
+  institucion: z.string()
+    .min(2, "La institución es obligatoria")
+    .regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s]+$/, "Solo se permiten letras"),
+  experiencia: z.string()
+    .regex(/^[0-9]{1,2}$/, "Debe tener entre 1 y 2 dígitos")
+    .refine((val) => {
+      const num = Number(val);
+      return num >= 1 && num <= 30;
+    }, { message: "La experiencia debe estar entre 1 y 30 años" }),
+  especialidad: z.string().min(2, "La especialidad es obligatoria"),
+  id_area: z.string().refine((val) => val !== "0", { message: "Debe seleccionar un área" }),
 });
 
 type FormData = z.infer<typeof schema>;
