@@ -124,7 +124,93 @@ export default function ResponsablesPage() {
         />
       </div>
 
-      
+    {/* Tabla */}
+      <div className="bg-white rounded-lg shadow p-4">
+        <h2 className="font-semibold text-gray-700 mb-2">
+          Responsables Registrados ({filtered.length})
+        </h2>
+        <p className="text-sm text-gray-500 mb-4">
+          Lista completa de responsables por área de competencia
+        </p>
+
+        {loading ? (
+          <p className="text-gray-500 text-center">Cargando...</p>
+        ) : filtered.length === 0 ? (
+          <div className="border rounded-md p-6 text-gray-500 text-center">
+            No hay responsables registrados
+          </div>
+        ) : (
+          
+
+              <tbody>
+                {filtered.map((r) => {
+                  const initials = r.usuario.nombre[0] + (r.usuario.apellido?.[0] || "");
+                  return (
+                    <tr key={r.id_responsable_area} className="border-b hover:bg-gray-50">
+                      {/* Evaluador */}
+                      <td className="py-3 px-4 flex items-center gap-3">
+                        <div className="w-10 h-10 shrink-0 flex items-center justify-center rounded-full bg-gray-200 text-gray-700 font-bold">
+                          {initials.toUpperCase()}
+                        </div>
+                        <span className="font-bold text-black break-normal">
+                          {r.usuario.nombre} {r.usuario.apellido}
+                        </span>
+                      </td>
+
+                      {/* Contacto */}
+                      <td className="py-3 px-4 text-gray-800">
+                        <div className="flex items-center gap-2">
+                          <Mail size={16} className="text-black" />
+                          <span className="truncate">{r.usuario.correo}</span>
+                        </div>
+                        {r.usuario.telefono && (
+                          <div className="flex items-center gap-2">
+                            <Phone size={16} className="text-black" /> {r.usuario.telefono}
+                          </div>
+                        )}
+                      </td>
+
+                      <td className="py-3 px-4 text-black">{r.usuario.especialidad || "-"}</td>
+
+                      <td className="py-3 px-4">
+                        <span className="px-2 py-1 rounded-md bg-gray-200 text-black text-xs font-bold">
+                          {r.area.nombre_area}
+                        </span>
+                      </td>
+
+                      <td className="py-3 px-4 whitespace-normal text-black break-words">
+                        {r.usuario.institucion || "-"}
+                      </td>
+
+                      <td className="py-3 px-4 text-black">
+                        {r.usuario.experiencia ? `${r.usuario.experiencia} años` : "-"}
+                      </td>
+
+                      <td className="py-3 px-4 text-center">
+                        <span className="px-2 py-1 rounded-md bg-blue-100 text-blue-700 text-xs font-bold">
+                          Responsable
+                        </span>
+                      </td>
+
+                      <td className="py-3 px-4 text-center">
+                        {r.activo ? (
+                          <span className="px-2 py-1 rounded-md bg-green-100 text-green-800 text-xs font-bold">
+                            Activo
+                          </span>
+                        ) : (
+                          <span className="px-2 py-1 rounded-md bg-red-100 text-red-800 text-xs font-bold">
+                            Inactivo
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>  
 
     {/* Modal */}
       {showModal && (
