@@ -8,16 +8,16 @@ export default function PrivateLayout({ children }: { children: React.ReactNode 
         {/* Topbar */}
         <div className="flex items-center justify-between py-6 px-8">
           <div>
-            <h1 className="text-2xl font-bold">Panel de Control - Oh! SanSi 2024</h1>
+            <h1 className="text-2xl font-bold" style={{ color: 'var(--grisOscuro)' }}>
+              Panel de Control - Oh! SanSi 2024
+            </h1>
+
             <p className="text-sm text-gray-600">
               Olimpiada en Ciencias y Tecnología San Simón - Gestión integral del proceso de evaluación
             </p>
           </div>
 
-          <div className="flex items-center gap-4">
-            <button className="p-2 rounded-full hover:bg-gray-100">🔔</button>
-            <div className="bg-cyan-50 px-4 py-2 rounded-full text-sm">Olimpiadas 2025</div>
-          </div>
+          
         </div>
 
         {/* Contenido dinámico */}

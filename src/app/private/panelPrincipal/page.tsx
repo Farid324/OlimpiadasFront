@@ -1,7 +1,7 @@
-// panelPrincipal/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
+import { api } from '@/libs/api';
 
 // Tipos
 type Nivel = {
@@ -25,12 +25,10 @@ export default function PanelPrincipalPage() {
   useEffect(() => {
     async function fetchAreas() {
       try {
-        const res = await fetch('/areas');
-        if (!res.ok) throw new Error('Error al cargar áreas');
-        const data: Area[] = await res.json();
+        const { data } = await api.get<Area[]>('/areas');
         setAreas(data);
       } catch (err: any) {
-        setError(err.message);
+        setError(err.response?.data?.message || 'Error al cargar áreas');
       } finally {
         setLoading(false);
       }
@@ -39,56 +37,75 @@ export default function PanelPrincipalPage() {
     fetchAreas();
   }, []);
 
-  if (loading) return <div className="p-4">Cargando áreas...</div>;
-  if (error) return <div className="p-4 text-red-600">{error}</div>;
+  if (loading) return <div className="p-6">Cargando áreas...</div>;
+  if (error) return <div className="p-6 text-red-600">{error}</div>;
 
   return (
-    <div className="p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-      {areas.map(area => {
-        const nivel = area.niveles[0];
-        return (
-          <div key={area.id_area} className="bg-white shadow-lg rounded-xl p-5 border-t-4 border-blue-600 hover:shadow-xl transition">
-            <h2 className="text-xl font-bold mb-2">{area.nombre_area}</h2>
+    <div className="bg-[#f9fbfd] min-h-screen p-6">
+      <div className="max-w-5xl mx-auto">
+        <h1 className="text-lg font-semibold text-gray-800 mb-1">
+          Estado por Área de Competencia
+        </h1>
+        <p className="text-sm text-gray-500 mb-6">
+          Seguimiento del progreso de evaluación en cada disciplina
+        </p>
 
-            {/* Estado */}
-            <p className="mb-2">
-              Estado: <span className={`font-semibold ${getEstadoColor(area.estado)}`}>{area.estado}</span>
-            </p>
+        <div className="space-y-4">
+          {areas.map((area) => {
+            const nivel = area.niveles[0];
+            return (
+              <div
+                key={area.id_area}
+                className="flex items-center justify-between bg-[#f7f9fb] rounded-xl border border-gray-200 p-5 hover:shadow-md transition"
+              >
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900 uppercase">
+                    {area.nombre_area}
+                  </h2>
 
-            {/* Nivel */}
-            <p className="mb-2">
-              Nivel: {nivel ? nivel.nombre_nivel : 'N/A'}
-            </p>
+                  {/* Badge de nivel (más gris oscuro) */}
+                  <span className="inline-block bg-gray-300 text-gray-800 text-xs font-semibold px-3 py-1 rounded-full mt-1">
+                    {nivel ? nivel.nombre_nivel : 'N/A'}
+                  </span>
 
-            {/* Inscritos */}
-            <p className="mb-2 font-semibold">
-              Inscritos: {nivel ? nivel.inscritos : 0}
-            </p>
+                  <p className="text-sm text-gray-600 mt-2">
+                    {nivel ? nivel.inscritos : 0} participantes registrados
+                  </p>
+                </div>
 
-            {/* Opcional: botón para ver más detalles */}
-            <button className="mt-3 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">
-              Ver detalles
-            </button>
-          </div>
-        );
-      })}
+                <div>
+                  <span
+                    className={`text-sm font-medium px-4 py-1 rounded-full ${getEstadoBadgeColor(
+                      area.estado
+                    )}`}
+                  >
+                    {formatEstado(area.estado)}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
 
-// Función para cambiar color del texto según el estado
-function getEstadoColor(estado: string) {
-  switch (estado) {
-    case 'EVALUANDO':
-      return 'text-blue-600';
-    case 'CLASIFICANDO':
-      return 'text-yellow-600';
-    case 'COMPLETADO':
-      return 'text-green-600';
-    default:
-      return 'text-gray-600';
-  }
+// === Helpers ===
+function formatEstado(estado: string) {
+  const lower = estado.toLowerCase();
+  return lower.charAt(0).toUpperCase() + lower.slice(1);
 }
 
-
-
+function getEstadoBadgeColor(estado: string) {
+  switch (estado.toUpperCase()) {
+    case 'EVALUANDO':
+      return 'bg-orange-100 text-orange-700';
+    case 'CLASIFICANDO':
+      return 'bg-lime-100 text-lime-700';
+    case 'COMPLETADO':
+      return 'bg-green-100 text-green-700';
+    default:
+      return 'bg-gray-100 text-gray-700';
+  }
+}
