@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '@/libs/api';
+import { AxiosError } from 'axios'; // <- Importar AxiosError
 
-// Tipos
 type Nivel = {
   id_nivel: number;
   nombre_nivel: string;
@@ -27,8 +27,16 @@ export default function PanelPrincipalPage() {
       try {
         const { data } = await api.get<Area[]>('/areas');
         setAreas(data);
-      } catch (err: any) {
-        setError(err.response?.data?.message || 'Error al cargar áreas');
+      } catch (err: unknown) {
+        if (err instanceof AxiosError) {
+          // Tipado seguro de AxiosError
+          setError(err.response?.data?.message || 'Error al cargar áreas');
+        } else if (err instanceof Error) {
+          // Otros errores normales
+          setError(err.message);
+        } else {
+          setError('Error desconocido al cargar áreas');
+        }
       } finally {
         setLoading(false);
       }
@@ -63,7 +71,6 @@ export default function PanelPrincipalPage() {
                     {area.nombre_area}
                   </h2>
 
-                  {/* Badge de nivel (más gris oscuro) */}
                   <span className="inline-block bg-gray-300 text-gray-800 text-xs font-semibold px-3 py-1 rounded-full mt-1">
                     {nivel ? nivel.nombre_nivel : 'N/A'}
                   </span>
