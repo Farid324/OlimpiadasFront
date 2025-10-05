@@ -112,7 +112,19 @@ export default function ResponsablesPage() {
         </button>
       </div>
 
-     
+      {/* Buscador */}
+      <div className="relative">
+        <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-lg" />
+        <input
+          type="text"
+          placeholder="Buscar por nombre, email o institución"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full pl-10 border rounded-md h-11 text-gray-500"
+        />
+      </div>
+
+      
 
     {/* Modal */}
       {showModal && (
