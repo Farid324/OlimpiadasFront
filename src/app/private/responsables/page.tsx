@@ -74,6 +74,13 @@ export default function ResponsablesPage() {
           <p className="text-sm text-gray-500">Total Evaluadores</p>
           <p className="text-2xl font-bold text-black mt-2">{responsables.length}</p>
         </div>
+        <div className="bg-white p-4 rounded-lg shadow relative h-28">
+          <LuUserCog className="absolute top-4 right-4 text-black text-3xl" />
+          <p className="text-sm text-gray-500">Responsables de Área</p>
+          <p className="text-2xl font-bold text-black mt-2">
+            {responsables.filter(r => r.activo).length}
+          </p>
+        </div>
         
       </div>
 
