@@ -3,6 +3,18 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --negro: #000000;
+  --blanco: #ffffff;
+  --grisOscuro:#374151;
+  --grisClaro: #f5f5f5;
+  --azul: #0051FF;
+  --verdeCompleado: #D1FAE5;
+  --amarilloCompleado:#FFF7CC;
+  --oro:#FFE7A6;
+  --bronce:#FFD5A6;
+  --plata:#EFEFEF;
+  --rojo:#FF0000;
+  --sidebar-w: 280px;
 }
 
 @theme inline {
@@ -16,6 +28,15 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --blanco: #ffffff;
+    --grisOscuro:#374151;
+    --azul: #0051FF;
+    --verdeCompleado: #D1FAE5;
+    --amarilloCompleado:#FFF7CC;
+    --oro:#FFE7A6;
+    --bronce:#FFD5A6;
+    --plata:#EFEFEF;
+    --rojo:#FF0000;
   }
 }
 
