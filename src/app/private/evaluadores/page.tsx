@@ -1,11 +1,36 @@
-// src/app/private/olimpistas/page.tsx
-'use client';
+'use client'; // ← asegúrate de tenerlo
 
-export default function evaluadoresPage() {
+import { useState } from 'react'; // ← FALTA este import
+import Cards from '@/components/features/RegistroEva/components/Cards';
+import Search from '@/components/features/RegistroEva/components/Search';
+import Table from '@/components/features/RegistroEva/components/Table';
+// Usa import **default** (sin llaves) porque tu hook exporta default
+import useEvaluadores from '@/components/features/RegistroEva/hooks/useEvaluadores';
+
+export default function EvaluadoresPage() {
+  const { q, setQ, loading, evaluadores, metrics /*, refetch */ } = useEvaluadores();
+  const [show, setShow] = useState(false);
+
   return (
-    <div className="bg-white border rounded-xl p-6 shadow-sm">
-      <h2 className="text-xl font-semibold mb-2">Listado de Evaluadores</h2>
-      <p className="text-gray-700">Aquí va el contenido de la sección.</p>
+    <div className="p-6 space-y-4">
+      <Cards
+        total={metrics.total}
+        activos={metrics.activos}             // ← nueva métrica
+        areasCubiertas={metrics.areasCubiertas}
+        promExp={metrics.promExp}
+        onAdd={() => setShow(true)}           // ← booleano
+      />
+
+      <Search value={q} onChange={setQ} />
+
+      <Table loading={loading} evaluadores={evaluadores} />
+
+      {/* {show && (
+        <AddEvaluatorModal
+          onClose={() => setShow(false)}
+          onSuccess={() => { setShow(false); refetch(); }}
+        />
+      )} */}
     </div>
   );
 }
