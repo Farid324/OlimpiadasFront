@@ -24,6 +24,10 @@ const schema = z.object({
   nombre: z.string()
     .min(1, "El nombre es obligatorio")
     .regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s]+$/, "Solo se permiten letras"),
+  correo: z.string()
+    .min(1, "El correo es obligatorio")
+    .email("Correo inválido")
+    .refine((val) => !val.includes(" "), { message: "El correo no debe contener espacios" }),
   
 });
 
