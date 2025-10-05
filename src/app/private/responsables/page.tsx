@@ -81,6 +81,13 @@ export default function ResponsablesPage() {
             {responsables.filter(r => r.activo).length}
           </p>
         </div>
+        <div className="bg-white p-4 rounded-lg shadow relative h-28">
+          <LuBookOpenCheck className="absolute top-4 right-4 text-black text-3xl" />
+          <p className="text-sm text-gray-500">Áreas Cubiertas</p>
+          <p className="text-2xl font-bold text-black mt-2">
+            {new Set(responsables.map(r => r.area.nombre_area)).size}
+          </p>
+        </div>
         
       </div>
 
