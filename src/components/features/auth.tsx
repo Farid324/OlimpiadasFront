@@ -58,6 +58,13 @@ export default function LoginForm() {
       setLoading(false);
     }
   };
+  const onReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setEmail('');
+    setPassword('');
+  }
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
@@ -69,18 +76,18 @@ export default function LoginForm() {
               <Trophy className="h-8 w-8 text-white" />
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Oh! SanSi</h1>
-          <p className="text-gray-600 mt-2">Olimpiada en Ciencias y Tecnología San Simón</p>
+          <h1 className="text-2xl font-bold text-gray-900">Oh! SanSi 2025</h1>
+          <p className="text-gray-400 mt-2">Olimpiada en Ciencias y Tecnología San Simón</p>
         </div>
 
         {/* Login Card simple */}
-        <div className="bg-white rounded-xl border p-6 shadow-sm">
+        <div className="bg-white rounded-xl p-6 shadow-lg">
           <h2 className="text-xl font-semibold text-center mb-1">Iniciar Sesión</h2>
           <p className="text-center text-sm text-gray-500 mb-4">Ingrese sus credenciales para acceder al sistema</p>
 
           {error && <ErrorMessage message={error} />}
 
-          <form onSubmit={onSubmit} className="space-y-3">
+          <form onSubmit={onSubmit} onReset={onReset} className="space-y-3">
             <div className="space-y-1">
               <label className="text-sm font-medium" htmlFor="email">Correo Electrónico</label>
               <Input id="email" type="text" placeholder="usuario@olimpiadas.edu" value={email} onChange={e => { const value = e.target.value; const sanitized = value.replace(/[^a-zA-Z0-9@.]/g, ''); setEmail(sanitized);}}/>
@@ -103,6 +110,10 @@ export default function LoginForm() {
                   Ingresar
                 </>
               )}
+            </Button>
+
+            <Button variant="tertiary" type="reset" className="w-full" disabled={isLoading}>
+              Cancelar
             </Button>
           </form>
         </div>
