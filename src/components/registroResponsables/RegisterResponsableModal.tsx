@@ -81,7 +81,7 @@ export default function RegisterResponsableModal({ onClose, onSuccess }: Props) 
     setDupError(null);
 
     try {
-      // 🔍 Validar duplicados antes de registrar
+      //Validar duplicados antes de registrar
       const telCheck = await api.get(`/responsables/check-telefono/${data.telefono}`);
       if (telCheck.data.exists) {
         setDupError("❌ El teléfono ya está registrado");
