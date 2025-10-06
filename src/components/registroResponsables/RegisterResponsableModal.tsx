@@ -80,27 +80,23 @@ export default function RegisterResponsableModal({ onClose, onSuccess }: Props) 
     setSuccessMsg(null);
     setDupError(null);
 
-    
-
-      //Separar nombre y apellido según cantidad de palabras
-      const palabras = data.nombre.trim().split(/\s+/);
-      let nombre = "";
-      let apellido = "";
-
-      if (palabras.length === 4) {
-        nombre = palabras.slice(0, 2).join(" ");
-        apellido = palabras.slice(2).join(" ");
-      } else if (palabras.length === 3) {
-        nombre = palabras[0];
-        apellido = palabras.slice(1).join(" ");
-      } else if (palabras.length === 2) {
-        nombre = palabras[0];
-        apellido = palabras[1];
-      } else {
-        nombre = data.nombre;
-        apellido = "";
+    try {
+      //Validar duplicados antes de registrar
+      const telCheck = await api.get(`/responsables/check-telefono/${data.telefono}`);
+      if (telCheck.data.exists) {
+        setDupError("❌ El teléfono ya está registrado");
+        setLoading(false);
+        return;
       }
 
+      const ciCheck = await api.get(`/responsables/check-ci/${data.ci}`);
+      if (ciCheck.data.exists) {
+        setDupError("❌ El documento de identidad ya está registrado");
+        setLoading(false);
+        return;
+      }
+
+      
       //Enviar al backend
       await api.post('/responsables', {
         ...data,
