@@ -133,7 +133,12 @@ export default function ResponsablesPage() {
           Lista completa de responsables por área de competencia
         </p>
 
-
+        {loading ? (
+          <p className="text-gray-500 text-center">Cargando...</p>
+        ) : filtered.length === 0 ? (
+          <div className="border rounded-md p-6 text-gray-500 text-center">
+            No hay responsables registrados
+          </div>
         ) : (
           // Scroll solo dentro de la tabla
           <div className="max-h-[450px] overflow-y-auto overflow-x-hidden">
