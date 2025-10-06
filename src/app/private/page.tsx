@@ -1,6 +1,6 @@
 // src/app/private/page.tsx
-'use client';
-import { useAuth } from '@/hooks/useAuth';
+"use client";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function PrivateHome() {
   const { user } = useAuth();
@@ -13,7 +13,8 @@ export default function PrivateHome() {
           {user?.name} — <span className="font-medium">{user?.role}</span>
         </p>
         <p className="text-sm text-gray-500 mt-2">
-          Esta es tu interfaz privada. Aquí verás solo tus datos y acciones según tu rol.
+          Esta es tu interfaz privada. Aquí verás solo tus datos y acciones
+          según tu rol.
         </p>
       </div>
     </main>

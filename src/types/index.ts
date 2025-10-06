@@ -1,4 +1,4 @@
-export type RoleName = 'ADMINISTRADOR' | 'EVALUADOR' | 'RESPONSABLE_DE_AREA';
+export type RoleName = "ADMINISTRADOR" | "EVALUADOR" | "RESPONSABLE_DE_AREA";
 
 export interface UserDTO {
   id: string;
