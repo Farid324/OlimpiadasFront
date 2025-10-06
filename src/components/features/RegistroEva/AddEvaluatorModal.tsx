@@ -16,7 +16,7 @@ export default function AddEvaluatorModal({ onClose, onSuccess }: Props) {
   const [institucion, setInstitucion] = useState('');
   const [especialidad, setEspecialidad] = useState('');
   const [experiencia, setExperiencia] = useState(''); // string -> number
-  const [responsable, setResponsable] = useState(false);
+  
 
   // áreas
   const [areas, setAreas] = useState<Area[]>([]);
@@ -59,7 +59,7 @@ export default function AddEvaluatorModal({ onClose, onSuccess }: Props) {
         especialidad: especialidad.trim() || undefined,
         experiencia: experiencia ? Number(experiencia) : undefined,
         id_areas: selected,
-        responsable,
+       // responsable,
       });
       setMsg('✅ Evaluador registrado');
       onSuccess();
@@ -182,17 +182,7 @@ export default function AddEvaluatorModal({ onClose, onSuccess }: Props) {
               Selecciona al menos una área. Si hay muchas, usa la barra de desplazamiento.
             </p>
           </div>
-
-          <div className="col-span-2 flex items-center gap-2">
-            <input
-              id="resp"
-              type="checkbox"
-              checked={responsable}
-              onChange={(e) => setResponsable(e.target.checked)}
-            />
-            <label htmlFor="resp" className="text-sm">Designar como responsable de área</label>
-          </div>
-
+          
           <div className="col-span-2 flex justify-end gap-2 mt-4">
             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
             <Button type="submit" disabled={loading || !canSubmit}>
