@@ -96,7 +96,25 @@ export default function RegisterResponsableModal({ onClose, onSuccess }: Props) 
         return;
       }
 
-      
+      //Separar nombre y apellido según cantidad de palabras
+      const palabras = data.nombre.trim().split(/\s+/);
+      let nombre = "";
+      let apellido = "";
+
+      if (palabras.length === 4) {
+        nombre = palabras.slice(0, 2).join(" ");
+        apellido = palabras.slice(2).join(" ");
+      } else if (palabras.length === 3) {
+        nombre = palabras[0];
+        apellido = palabras.slice(1).join(" ");
+      } else if (palabras.length === 2) {
+        nombre = palabras[0];
+        apellido = palabras[1];
+      } else {
+        nombre = data.nombre;
+        apellido = "";
+      }
+
       //Enviar al backend
       await api.post('/responsables', {
         ...data,
