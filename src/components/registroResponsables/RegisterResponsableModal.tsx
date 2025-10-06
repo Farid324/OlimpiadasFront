@@ -96,7 +96,7 @@ export default function RegisterResponsableModal({ onClose, onSuccess }: Props) 
         return;
       }
 
-      // ✅ Separar nombre y apellido según cantidad de palabras
+      //Separar nombre y apellido según cantidad de palabras
       const palabras = data.nombre.trim().split(/\s+/);
       let nombre = "";
       let apellido = "";
@@ -115,7 +115,7 @@ export default function RegisterResponsableModal({ onClose, onSuccess }: Props) 
         apellido = "";
       }
 
-      // 🚀 Enviar al backend
+      //Enviar al backend
       await api.post('/responsables', {
         ...data,
         nombre,
