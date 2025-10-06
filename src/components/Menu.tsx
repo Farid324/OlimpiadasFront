@@ -24,9 +24,7 @@ const ICONS = {
   FiUserCheck,
   FiSmartphone,
 } as const;
-type Props = {
 
-};
 type IconKey = keyof typeof ICONS;
 
 export type MenuItem = {
@@ -65,19 +63,11 @@ const ROLE_LABEL: Record<RoleName, string> = {
   EVALUADOR: 'Evaluador',
   RESPONSABLE_DE_AREA: 'Responsable de Área',
 };
-function getInitials(name?: string, email?: string) {
-  if (name && name.trim()) {
-    const parts = name.trim().split(/\s+/);
-    const initials = (parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '');
-    return initials.toUpperCase() || 'U';
-  }
-  return (email?.[0] ?? 'U').toUpperCase();
-}
+
 
 export default function SideMenu({
   open,
   role,
-  onClose,
 }: {
 
   open: boolean;
@@ -94,7 +84,6 @@ export default function SideMenu({
   const displayName = user?.name || 'Usuario';
   const displayRole = ROLE_LABEL[(user?.role as RoleName) || role] || 'Rol';
   const displayEmail = user?.email || 'usuario@olimpiadas.edu';
-  const initials = getInitials(user?.name, user?.email);
   
   return (
     <aside
