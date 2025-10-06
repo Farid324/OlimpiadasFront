@@ -80,21 +80,7 @@ export default function RegisterResponsableModal({ onClose, onSuccess }: Props) 
     setSuccessMsg(null);
     setDupError(null);
 
-    try {
-      //Validar duplicados antes de registrar
-      const telCheck = await api.get(`/responsables/check-telefono/${data.telefono}`);
-      if (telCheck.data.exists) {
-        setDupError("❌ El teléfono ya está registrado");
-        setLoading(false);
-        return;
-      }
-
-      const ciCheck = await api.get(`/responsables/check-ci/${data.ci}`);
-      if (ciCheck.data.exists) {
-        setDupError("❌ El documento de identidad ya está registrado");
-        setLoading(false);
-        return;
-      }
+    
 
       //Separar nombre y apellido según cantidad de palabras
       const palabras = data.nombre.trim().split(/\s+/);
