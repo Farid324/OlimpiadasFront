@@ -163,9 +163,7 @@ export default function ResponsablesPage() {
                     <tr key={r.id_responsable_area} className="border-b hover:bg-gray-50">
                       {/* Evaluador */}
                       <td className="py-3 px-4 flex items-center gap-3">
-                        <div className="w-10 h-10 shrink-0 flex items-center justify-center rounded-full bg-gray-200 text-gray-700 font-bold">
-                          {initials.toUpperCase()}
-                        </div>
+                        
                         <span className="font-bold text-black break-normal">
                           {r.usuario.nombre} {r.usuario.apellido}
                         </span>
