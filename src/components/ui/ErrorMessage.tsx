@@ -1,3 +1,4 @@
+//comentario de prueba
 // src/components/ui/ErrorMessage.tsx
 import { AlertCircle } from 'lucide-react';
 
