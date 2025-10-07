@@ -175,7 +175,8 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
                 Contacto del tutor legal
               </label>
               <Input
-                placeholder="+591 70123456"
+                placeholder="+591 12345678"
+                className="placeholder: text-gray-700"
                 {...register("tutorContacto")}
               />
               {errors.tutorContacto && (
@@ -189,7 +190,7 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
                 Departamento de procedencia
               </label>
               <select
-                className="border rounded-md p-2 w-full"
+                className="border rounded-md p-2 w-full text-gray-700"
                 {...register("departamento")}
               >
                 {DEPARTAMENTOS.map((d) => (
@@ -209,7 +210,9 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
               <label className="block text-sm font-bold text-gray-700 mb-1">
                 Unidad Educativa
               </label>
-              <Input placeholder="U.E. ..." {...register("unidadEducativa")} />
+              <Input placeholder="U.E."
+              className="placeholder:text-gray-400 text-gray-700" 
+              {...register("unidadEducativa")} />
               {errors.unidadEducativa && (
                 <p className="text-red-500 text-sm">
                   {errors.unidadEducativa.message}
@@ -222,7 +225,7 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
                 Grado de escolaridad
               </label>
               <select
-                className="border rounded-md p-2 w-full"
+                className="border rounded-md p-2 w-full text-gray-700"
                 {...register("grado", { valueAsNumber: true })}
               >
                 {GRADOS.map((g) => (

@@ -37,7 +37,7 @@ export default function AreaCarousel({ items, active, onSelect }: Props) {
           className={`min-w-[230px] h-28 bg-white p-4 rounded-lg shadow relative text-left border
             ${!active ? "border-blue-600" : "border-transparent"}`}
         >
-          <p className="text-sm text-gray-500">Todas</p>
+          <p className="text-sm text-gray-500">Todos los</p>
           <p className="text-2xl font-bold text-black mt-2">Olimpistas</p>
         </button>
 
