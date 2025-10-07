@@ -39,11 +39,16 @@ export default function AddEvaluatorModal({ onClose, onSuccess }: Props) {
   function validateFields() {
     const newErrors: { [k: string]: string } = {};
 
-    // Nombre obligatorio
+    // Nombre completo obligatorio (mínimo dos palabras)
     if (!nombreCompleto.trim()) {
-      newErrors.nombreCompleto = 'El nombre es obligatorio';
-    } else if (nombreCompleto.trim().length < 3) {
-      newErrors.nombreCompleto = 'El nombre debe tener al menos 3 caracteres';
+      newErrors.nombreCompleto = 'El nombre completo es obligatorio';
+    } else {
+      const words = nombreCompleto.trim().split(/\s+/);
+      if (words.length < 2) {
+        newErrors.nombreCompleto = 'Debe ingresar al menos nombre y apellido';
+      } else if (nombreCompleto.trim().length < 5) {
+        newErrors.nombreCompleto = 'El nombre completo es muy corto';
+      }
     }
 
     // Correo obligatorio
@@ -136,7 +141,7 @@ export default function AddEvaluatorModal({ onClose, onSuccess }: Props) {
             <label className="block text-sm font-bold mb-1">Nombre Completo</label>
             <Input
               className="text-gray-900 placeholder:text-gray-400"
-              placeholder="Nombre y apellidos"
+              placeholder="Ej: Juan Pérez"
               value={nombreCompleto}
               onChange={(e) => setNombreCompleto(e.target.value)}
             />
