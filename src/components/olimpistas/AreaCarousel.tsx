@@ -21,7 +21,7 @@ export default function AreaCarousel({ items, active, onSelect }: Props) {
     <div className="relative">
       <button
         aria-label="Anterior"
-        className="absolute -left-3 top-1/2 -translate-y-1/2 z-10 bg-white border rounded-full p-2 shadow hover:bg-gray-50"
+        className="absolute -left-3 top-1/2 -translate-y-1/2 z-10 bg-blue-600 border rounded-full p-2 shadow hover:bg-gray-50"
         onClick={() => scrollBy(-300)}
       >
         <ChevronLeft />
@@ -64,7 +64,7 @@ export default function AreaCarousel({ items, active, onSelect }: Props) {
 
       <button
         aria-label="Siguiente"
-        className="absolute -right-3 top-1/2 -translate-y-1/2 z-10 bg-white border rounded-full p-2 shadow hover:bg-gray-50"
+        className="absolute -right-3 top-1/2 -translate-y-1/2 z-10 bg-blue-600 border rounded-full p-2 shadow hover:bg-gray-50"
         onClick={() => scrollBy(300)}
       >
         <ChevronRight />
