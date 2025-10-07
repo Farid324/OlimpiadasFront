@@ -147,6 +147,7 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
               </label>
               <Input
                 placeholder="Nombre completo"
+                className="placeholder: text-gray-700"
                 {...register("nombreCompleto")}
               />
               {errors.nombreCompleto && (
@@ -159,7 +160,11 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
               <label className="block text-sm font-bold text-gray-700 mb-1">
                 Cédula de identidad
               </label>
-              <Input placeholder="0000000" {...register("ci")} />
+              <Input
+                placeholder="0000000"
+                className="placeholder: text-gray-700"
+                {...register("ci")}
+              />
               {errors.ci && (
                 <p className="text-red-500 text-sm">{errors.ci.message}</p>
               )}
