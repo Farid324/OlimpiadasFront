@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '@/libs/api';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -15,8 +15,10 @@ export default function AddEvaluatorModal({ onClose, onSuccess }: Props) {
   const [telefono, setTelefono] = useState('');
   const [institucion, setInstitucion] = useState('');
   const [especialidad, setEspecialidad] = useState('');
-  const [experiencia, setExperiencia] = useState(''); // string -> number
-  
+  const [experiencia, setExperiencia] = useState('');
+
+  // errores específicos por campo
+  const [errors, setErrors] = useState<{ [k: string]: string }>({});
 
   // áreas
   const [areas, setAreas] = useState<Area[]>([]);
@@ -31,39 +33,81 @@ export default function AddEvaluatorModal({ onClose, onSuccess }: Props) {
       .catch(() => setAreas([]));
   }, []);
 
-  const canSubmit = useMemo(() => {
-    const okNombre = nombreCompleto.trim().length >= 3;
-    const okCorreo = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(correo.trim());
-    const okExp = !experiencia || /^\d+$/.test(experiencia);
-    const okAreas = selected.length > 0;
-    return okNombre && okCorreo && okExp && okAreas;
-  }, [nombreCompleto, correo, experiencia, selected]);
-
   const toggleArea = (id: number) =>
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
+  function validateFields() {
+    const newErrors: { [k: string]: string } = {};
+
+    // Nombre obligatorio
+    if (!nombreCompleto.trim()) {
+      newErrors.nombreCompleto = 'El nombre es obligatorio';
+    } else if (nombreCompleto.trim().length < 3) {
+      newErrors.nombreCompleto = 'El nombre debe tener al menos 3 caracteres';
+    }
+
+    // Correo obligatorio
+    if (!correo.trim()) {
+      newErrors.correo = 'El correo es obligatorio';
+    } else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(correo.trim())) {
+      newErrors.correo = 'Debe ingresar un correo válido';
+    }
+
+    // Teléfono obligatorio
+    if (!telefono.trim()) {
+      newErrors.telefono = 'El teléfono es obligatorio';
+    } else if (!/^\+?\d{7,15}$/.test(telefono.trim())) {
+      newErrors.telefono = 'El teléfono debe tener entre 7 y 15 dígitos (opcional + al inicio)';
+    }
+
+    // Institución obligatoria
+    if (!institucion.trim()) {
+      newErrors.institucion = 'La institución es obligatoria';
+    }
+
+    // Especialidad obligatoria
+    if (!especialidad.trim()) {
+      newErrors.especialidad = 'La especialidad es obligatoria';
+    }
+
+    // Experiencia obligatoria
+    if (!experiencia.trim()) {
+      newErrors.experiencia = 'La experiencia es obligatoria';
+    } else if (!/^\d+$/.test(experiencia)) {
+      newErrors.experiencia = 'La experiencia debe ser un número';
+    }
+
+    // Áreas obligatorias
+    if (selected.length === 0) {
+      newErrors.id_areas = 'Debe seleccionar al menos un área';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!canSubmit) {
-      setMsg('Completa los campos obligatorios y selecciona al menos un área.');
+    if (!validateFields()) {
+      setMsg('❌ Debe completar todos los campos correctamente.');
       return;
     }
+
     setLoading(true);
     setMsg(null);
     try {
       await api.post('/evaluadores', {
         nombreCompleto: nombreCompleto.trim(),
         correo: correo.trim(),
-        telefono: telefono.trim() || undefined,
-        institucion: institucion.trim() || undefined,
-        especialidad: especialidad.trim() || undefined,
-        experiencia: experiencia ? Number(experiencia) : undefined,
+        telefono: telefono.trim(),
+        institucion: institucion.trim(),
+        especialidad: especialidad.trim(),
+        experiencia: Number(experiencia),
         id_areas: selected,
-       // responsable,
       });
       setMsg('✅ Evaluador registrado');
       onSuccess();
-    } catch (err: any) {
+    } catch {
       setMsg('❌ No se pudo registrar (revisa conexión, token o duplicados).');
     } finally {
       setLoading(false);
@@ -87,6 +131,7 @@ export default function AddEvaluatorModal({ onClose, onSuccess }: Props) {
         {msg && <p className="mb-3 text-sm">{msg}</p>}
 
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-5">
+          {/* Nombre */}
           <div>
             <label className="block text-sm font-bold mb-1">Nombre Completo</label>
             <Input
@@ -95,8 +140,10 @@ export default function AddEvaluatorModal({ onClose, onSuccess }: Props) {
               value={nombreCompleto}
               onChange={(e) => setNombreCompleto(e.target.value)}
             />
+            {errors.nombreCompleto && <p className="text-red-500 text-sm">{errors.nombreCompleto}</p>}
           </div>
 
+          {/* Correo */}
           <div>
             <label className="block text-sm font-bold mb-1">Correo</label>
             <Input
@@ -105,8 +152,10 @@ export default function AddEvaluatorModal({ onClose, onSuccess }: Props) {
               value={correo}
               onChange={(e) => setCorreo(e.target.value)}
             />
+            {errors.correo && <p className="text-red-500 text-sm">{errors.correo}</p>}
           </div>
 
+          {/* Teléfono */}
           <div>
             <label className="block text-sm font-bold mb-1">Teléfono</label>
             <Input
@@ -115,8 +164,10 @@ export default function AddEvaluatorModal({ onClose, onSuccess }: Props) {
               value={telefono}
               onChange={(e) => setTelefono(e.target.value)}
             />
+            {errors.telefono && <p className="text-red-500 text-sm">{errors.telefono}</p>}
           </div>
 
+          {/* Especialidad */}
           <div>
             <label className="block text-sm font-bold mb-1">Especialidad</label>
             <Input
@@ -125,8 +176,10 @@ export default function AddEvaluatorModal({ onClose, onSuccess }: Props) {
               value={especialidad}
               onChange={(e) => setEspecialidad(e.target.value)}
             />
+            {errors.especialidad && <p className="text-red-500 text-sm">{errors.especialidad}</p>}
           </div>
 
+          {/* Institución */}
           <div>
             <label className="block text-sm font-bold mb-1">Institución</label>
             <Input
@@ -135,8 +188,10 @@ export default function AddEvaluatorModal({ onClose, onSuccess }: Props) {
               value={institucion}
               onChange={(e) => setInstitucion(e.target.value)}
             />
+            {errors.institucion && <p className="text-red-500 text-sm">{errors.institucion}</p>}
           </div>
 
+          {/* Experiencia */}
           <div>
             <label className="block text-sm font-bold mb-1">Años de experiencia</label>
             <Input
@@ -148,6 +203,7 @@ export default function AddEvaluatorModal({ onClose, onSuccess }: Props) {
               value={experiencia}
               onChange={(e) => setExperiencia(e.target.value)}
             />
+            {errors.experiencia && <p className="text-red-500 text-sm">{errors.experiencia}</p>}
           </div>
 
           {/* Áreas (scroll) */}
@@ -178,14 +234,13 @@ export default function AddEvaluatorModal({ onClose, onSuccess }: Props) {
                 })}
               </div>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Selecciona al menos una área. Si hay muchas, usa la barra de desplazamiento.
-            </p>
+            {errors.id_areas && <p className="text-red-500 text-sm">{errors.id_areas}</p>}
           </div>
           
+          {/* Botones */}
           <div className="col-span-2 flex justify-end gap-2 mt-4">
             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
-            <Button type="submit" disabled={loading || !canSubmit}>
+            <Button type="submit" disabled={loading}>
               {loading ? 'Guardando…' : 'Registrar'}
             </Button>
           </div>
