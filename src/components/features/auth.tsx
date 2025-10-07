@@ -82,13 +82,13 @@ export default function LoginForm() {
 
           <form onSubmit={onSubmit} className="space-y-3">
             <div className="space-y-1">
-              <label className="text-sm font-medium text-[var(--negro)]" htmlFor="email">Correo Electrónico</label>
-              <Input className="bg-[var(--grisClaro)]" id="email" type="email" placeholder="usuario@olimpiadas.edu" value={email} onChange={e => setEmail(e.target.value)} />
+              <label className="text-sm font-medium" htmlFor="email">Correo Electrónico</label>
+              <Input id="email" type="text" placeholder="usuario@olimpiadas.edu" value={email} onChange={e => { const value = e.target.value; const sanitized = value.replace(/[^a-zA-Z0-9@.]/g, ''); setEmail(sanitized);}}/>
             </div>
 
             <div className="space-y-1">
-              <label className="text-sm font-medium text-[var(--negro)]" htmlFor="password">Contraseña</label>
-              <Input className="bg-[var(--grisClaro)]" id="password" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} />
+              <label className="text-sm font-medium" htmlFor="password">Contraseña</label>
+              <Input id="password" type="password" placeholder="••••••••" value={password} maxLength={30} onChange={e => setPassword(e.target.value)} />
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>
