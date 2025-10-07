@@ -9,10 +9,9 @@ import {
 } from "react-icons/lu";
 import { FiUserCheck, FiSmartphone, FiUser, FiLogOut } from "react-icons/fi";
 import { useAuth } from '@/hooks/useAuth';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';;
 
 export type RoleName = 'ADMINISTRADOR' | 'EVALUADOR' | 'RESPONSABLE_DE_AREA';
-
 const ICONS = {
   LuHouse,
   LuUsers,
@@ -61,6 +60,20 @@ export const MENU_BY_ROLE: Record<RoleName, MenuItem[]> = {
   ],
 };
 
+const ROLE_LABEL: Record<RoleName, string> = {
+  ADMINISTRADOR: 'Administrador',
+  EVALUADOR: 'Evaluador',
+  RESPONSABLE_DE_AREA: 'Responsable de Área',
+};
+function getInitials(name?: string, email?: string) {
+  if (name && name.trim()) {
+    const parts = name.trim().split(/\s+/);
+    const initials = (parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '');
+    return initials.toUpperCase() || 'U';
+  }
+  return (email?.[0] ?? 'U').toUpperCase();
+}
+
 export default function SideMenu({
   open,
   role,
@@ -71,13 +84,17 @@ export default function SideMenu({
   role: RoleName;
   onClose?: () => void;
 }) {
-  const { logout } = useAuth();
+  const {user, logout } = useAuth();
   const router = useRouter();
   const items = MENU_BY_ROLE[role] ?? [];
   const handleLogout = () => {
     logout();
     router.replace('/auth');
   };
+  const displayName = user?.name || 'Usuario';
+  const displayRole = ROLE_LABEL[(user?.role as RoleName) || role] || 'Rol';
+  const displayEmail = user?.email || 'usuario@olimpiadas.edu';
+  const initials = getInitials(user?.name, user?.email);
   
   return (
     <aside
@@ -114,14 +131,15 @@ export default function SideMenu({
       </nav>
 
       {/* Footer fijo abajo */}
-      <div className="border-t px-3 py-3 h-30">
+      <div className="border-t-3 px-3 py-3 h-30">
         <div className="flex items-center gap-3 mb-3">
           <div className="h-10 w-10 rounded-full bg-[var(--azul)] flex items-center justify-center">
             <FiUser className="text-[var(--blanco)]" />
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-bold text-gray-900 truncate">Usuario</p>
-            <p className="text-xs font-semibold text-gray-500 truncate">rol@olimpiadas.edu</p>
+            <p className="text-sm font-bold text-[var(--negro)] truncate">{displayName}</p>
+            <p className="text-xs font-semibold text-[var(--azul)] truncate">{displayRole}</p>
+            <p className="text-xs font-semibold text-gray-500 truncate">{displayEmail}</p>
           </div>
         </div>
         <button
