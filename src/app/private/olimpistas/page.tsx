@@ -1,14 +1,50 @@
-// src/app/private/olimpistas/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Download, Plus } from "lucide-react";
+import AreaCarousel from "@/components/olimpistas/AreaCarousel";
+import OlimpistasTable from "@/components/olimpistas/OlimpistasTable";
+import { fetchAreaCounters, fetchOlimpistas } from "@/libs/olimpistas.api";
+import type { AreaCounter, OlimpistaRow } from "@/types/olimpista";
 import RegisterOlimpistaModal from "@/components/olimpistas/RegisterOlimpistaModal";
 
 export default function OlimpistasPage() {
-  const [show, setShow] = useState(false);
+  const [areas, setAreas] = useState<AreaCounter[]>([]);
+  const [activeArea, setActiveArea] = useState<string | null>(null);
+  const [rows, setRows] = useState<OlimpistaRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [q, setQ] = useState("");
+  const [showModal, setShowModal] = useState(false);
+
+  const loadAreas = async () => {
+    const data = await fetchAreaCounters();
+    setAreas(data);
+  };
+
+  const loadRows = async () => {
+    setLoading(true);
+    try {
+      const data = await fetchOlimpistas({ area: activeArea ?? undefined, q });
+      setRows(data);
+    } catch (e) {
+      console.error("Error cargando olimpistas", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadAreas();
+  }, []);
+  useEffect(() => {
+    loadRows();
+  }, [activeArea, q]);
+
+  const total = useMemo(() => rows.length, [rows]);
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6 overflow-hidden">
+      {}
       <div>
         <h1 className="text-2xl font-bold text-black">Gestión de Olimpistas</h1>
         <p className="text-gray-500 text-sm">
@@ -16,38 +52,54 @@ export default function OlimpistasPage() {
         </p>
       </div>
 
+      {}
+      <AreaCarousel
+        items={areas}
+        active={activeArea ?? undefined}
+        onSelect={setActiveArea}
+      />
+
+      {}
       <div className="flex gap-3">
         <button
-          onClick={() => setShow(true)}
-          className="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium"
+          onClick={() => setShowModal(true)}
+          className="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium inline-flex items-center gap-2"
         >
-          + Agregar Olimpista
+          <Plus size={18} /> Agregar Olimpista
         </button>
-        <button className="px-5 py-2 bg-blue-600/90 text-white rounded-md font-medium opacity-70 cursor-not-allowed">
-          + Agregar Grupo Olimpista
+
+        <button className="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium inline-flex items-center gap-2">
+          <Plus size={18} /> Agregar Grupo Olimpista
         </button>
-        <button className="px-5 py-2 bg-blue-600/90 text-white rounded-md font-medium opacity-70 cursor-not-allowed">
-          Importar CSV
+
+        <button className="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium inline-flex items-center gap-2">
+          <Download size={18} /> Importar csv
         </button>
       </div>
 
       {}
-      <div className="bg-white rounded-lg shadow p-4">
-        <h2 className="font-semibold text-gray-700 mb-2">
-          Olimpistas Registrados
-        </h2>
-        <p className="text-gray-500 text-sm">
-          Lista Completa de los Olimpistas registrados en el sistema
-        </p>
-        <div className="border rounded-md p-6 text-gray-500 text-center">
-          En construcción…
-        </div>
+      <div className="relative">
+        <input
+          type="text"
+          placeholder="Buscar por nombre, área, unidad o departamento"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          className="w-full pl-4 border rounded-md h-11 text-gray-600"
+        />
       </div>
 
-      {show && (
+      {}
+      <OlimpistasTable rows={rows} loading={loading} />
+
+      {}
+      {showModal && (
         <RegisterOlimpistaModal
-          onClose={() => setShow(false)}
-          onSuccess={() => {}}
+          onClose={() => setShowModal(false)}
+          onSuccess={() => {
+            loadAreas();
+            loadRows();
+            setShowModal(false);
+          }}
         />
       )}
     </div>
