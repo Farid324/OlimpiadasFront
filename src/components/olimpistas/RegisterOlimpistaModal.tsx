@@ -15,6 +15,7 @@ import {
   NivelCompetencia,
 } from "@/config/catalogs";
 import { composeNivelCodigo } from "@/libs/nivel";
+import RegisterTutorModal from "@/components/olimpistas/RegisterTutorModal";
 
 type Area = { id_area: number; nombre_area: string };
 
@@ -57,6 +58,9 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
       nivelCompetencia: "Primaria" as NivelCompetencia,
     },
   });
+
+  const [showTutor, setShowTutor] = useState(false);
+  const [tutorMsg, setTutorMsg] = useState<string | null>(null);
 
   const nivelCompetencia = watch("nivelCompetencia");
 
@@ -174,17 +178,50 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
               <label className="block text-sm font-bold text-gray-700 mb-1">
                 Contacto del tutor legal
               </label>
-              <Input
-                placeholder="+591 12345678"
-                className="placeholder: text-gray-700"
-                {...register("tutorContacto")}
-              />
+              <div className="flex gap-2">
+                <Input
+                  className="flex-1 text-gray-700"
+                  placeholder="+591 70123456"
+                  {...register("tutorContacto")}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowTutor(true)}
+                  className="px-1 py-2 border rounded-md bg-blue-600 text-white hover:bg-blue-700 whitespace-nowrap"
+                >
+                  Registrar tutor
+                </button>
+              </div>
               {errors.tutorContacto && (
                 <p className="text-red-500 text-sm">
                   {errors.tutorContacto.message}
                 </p>
               )}
+              {tutorMsg && (
+                <p className="text-green-700 text-sm mt-1">{tutorMsg}</p>
+              )}
+
+              {showTutor && (
+                <RegisterTutorModal
+                  onClose={() => setShowTutor(false)}
+                  onSuccess={({ telefono, linked, tutorNombre }) => {
+                    setValue("tutorContacto", telefono, {
+                      shouldValidate: true,
+                      shouldDirty: true,
+                    });
+
+                    setTutorMsg(
+                      `Tutor “${tutorNombre}” guardado. ${linked} olimpista(s) vinculados automáticamente.`
+                    );
+
+                    setShowTutor(false);
+
+                    setTimeout(() => setTutorMsg(null), 3500);
+                  }}
+                />
+              )}
             </div>
+
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">
                 Departamento de procedencia
