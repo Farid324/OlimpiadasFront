@@ -166,19 +166,19 @@ export default function ImportCsvOlimpistasModal({
                 <div className="mt-2 grid grid-cols-4 gap-2 text-sm">
                   <div>
                     <span className="text-gray-500">Total: </span>
-                    <b>{summary.total}</b>
+                    <b className="text-black">{summary.total}</b>
                   </div>
                   <div>
                     <span className="text-gray-500">OK: </span>
-                    <b>{summary.ok}</b>
+                    <b className="text-black">{summary.ok}</b>
                   </div>
                   <div>
                     <span className="text-gray-500">Creadas: </span>
-                    <b>{summary.createdInsc ?? "-"}</b>
+                    <b className="text-black">{summary.createdInsc ?? "-"}</b>
                   </div>
                   <div>
                     <span className="text-gray-500">Saltadas: </span>
-                    <b>{summary.skippedInsc ?? "-"}</b>
+                    <b className="text-black">{summary.skippedInsc ?? "-"}</b>
                   </div>
                 </div>
 

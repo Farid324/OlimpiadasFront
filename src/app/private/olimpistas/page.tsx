@@ -7,6 +7,7 @@ import OlimpistasTable from "@/components/olimpistas/OlimpistasTable";
 import { fetchAreaCounters, fetchOlimpistas } from "@/libs/olimpistas.api";
 import type { AreaCounter, OlimpistaRow } from "@/types/olimpista";
 import RegisterOlimpistaModal from "@/components/olimpistas/RegisterOlimpistaModal";
+import ImportCsvOlimpistasModal from "@/components/olimpistas/ImportCsvOlimpistasModal";
 
 export default function OlimpistasPage() {
   const [areas, setAreas] = useState<AreaCounter[]>([]);
@@ -15,6 +16,7 @@ export default function OlimpistasPage() {
   const [loading, setLoading] = useState(false);
   const [q, setQ] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [showImport, setShowImport] = useState(false);
 
   const loadAreas = async () => {
     const data = await fetchAreaCounters();
@@ -72,7 +74,10 @@ export default function OlimpistasPage() {
           <Plus size={18} /> Agregar Grupo Olimpista
         </button>
 
-        <button className="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium inline-flex items-center gap-2">
+        <button
+          onClick={() => setShowImport(true)}
+          className="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium inline-flex items-center gap-2"
+        >
           <Download size={18} /> Importar csv
         </button>
       </div>
@@ -99,6 +104,17 @@ export default function OlimpistasPage() {
             loadAreas();
             loadRows();
             setShowModal(false);
+          }}
+        />
+      )}
+
+      {}
+      {showImport && (
+        <ImportCsvOlimpistasModal
+          onClose={() => setShowImport(false)}
+          onImported={() => {
+            loadAreas();
+            loadRows();
           }}
         />
       )}
