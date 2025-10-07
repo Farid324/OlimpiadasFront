@@ -36,7 +36,7 @@ export default function AddEvaluatorModal({ onClose, onSuccess }: Props) {
   const toggleArea = (id: number) =>
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
-  function validateFields() {
+  async function validateFields() {
     const newErrors: { [k: string]: string } = {};
 
     // Nombre completo obligatorio (mínimo dos palabras)
@@ -58,11 +58,21 @@ export default function AddEvaluatorModal({ onClose, onSuccess }: Props) {
       newErrors.correo = 'Debe ingresar un correo válido';
     }
 
-    // Teléfono obligatorio
+    // Teléfono obligatorio + validación de duplicado
     if (!telefono.trim()) {
       newErrors.telefono = 'El teléfono es obligatorio';
     } else if (!/^\+?\d{7,15}$/.test(telefono.trim())) {
       newErrors.telefono = 'El teléfono debe tener entre 7 y 15 dígitos (opcional + al inicio)';
+    } else {
+      // consulta backend para ver si ya existe
+      try {
+        const { data } = await api.get(`/evaluadores?telefono=${telefono.trim()}`);
+        if (Array.isArray(data) && data.length > 0) {
+          newErrors.telefono = 'El teléfono ya está registrado en otro evaluador';
+        }
+      } catch {
+        // si falla la API, lo ignoramos aquí
+      }
     }
 
     // Institución obligatoria
@@ -75,11 +85,14 @@ export default function AddEvaluatorModal({ onClose, onSuccess }: Props) {
       newErrors.especialidad = 'La especialidad es obligatoria';
     }
 
-    // Experiencia obligatoria
+    // Experiencia obligatoria, >0 y <60
     if (!experiencia.trim()) {
       newErrors.experiencia = 'La experiencia es obligatoria';
-    } else if (!/^\d+$/.test(experiencia)) {
-      newErrors.experiencia = 'La experiencia debe ser un número';
+    } else {
+      const expNum = Number(experiencia);
+      if (isNaN(expNum) || expNum <= 0 || expNum >= 60) {
+        newErrors.experiencia = 'La experiencia debe ser mayor que 0 y menor que 60 años';
+      }
     }
 
     // Áreas obligatorias
@@ -93,7 +106,7 @@ export default function AddEvaluatorModal({ onClose, onSuccess }: Props) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!validateFields()) {
+    if (!(await validateFields())) {
       setMsg('❌ Debe completar todos los campos correctamente.');
       return;
     }
@@ -202,8 +215,6 @@ export default function AddEvaluatorModal({ onClose, onSuccess }: Props) {
             <Input
               className="text-gray-900 placeholder:text-gray-400"
               type="number"
-              min={0}
-              max={60}
               placeholder="Ej: 7"
               value={experiencia}
               onChange={(e) => setExperiencia(e.target.value)}
