@@ -1,4 +1,4 @@
-// src/app/private/olimpistas/page.tsx
+// src/app/private/controlFases/page.tsx
 'use client';
 
 export default function controlFasesPage() {

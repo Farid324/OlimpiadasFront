@@ -26,8 +26,17 @@ export default function LoginForm() {
       const userStr = localStorage.getItem('user');
       const role = userStr ? (JSON.parse(userStr).role as keyof typeof ROLE_HOME) : 'ADMINISTRADOR';
       router.replace(ROLE_HOME[role]);
-    } catch (err: any) {
-      setError(err?.response?.data?.message ?? 'Credenciales incorrectas');
+    } catch (err: unknown) {
+        let errorMessage = 'Credenciales incorrectas';
+        
+        if (err instanceof Error) {
+          errorMessage = err.message;
+        } else if (err && typeof err === 'object' && 'response' in err) {
+          const apiError = err as { response?: { data?: { message?: string } } };
+          errorMessage = apiError?.response?.data?.message ?? 'Credenciales incorrectas';
+        }
+        
+        setError(errorMessage);
     } finally {
       setLoading(false);
     }
