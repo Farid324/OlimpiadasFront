@@ -28,3 +28,30 @@ export async function fetchOlimpistas(params?: { area?: string; q?: string }) {
   });
   return data;
 }
+
+export type CsvSummary = {
+  total: number;
+  ok: number;
+  createdInsc?: number;
+  skippedInsc?: number;
+  errors: string[];
+};
+
+export async function validateCsvOlimpistas(file: File): Promise<CsvSummary> {
+  const fd = new FormData();
+  fd.append("file", file);
+  const { data } = await api.post<CsvSummary>("/olimpistas/register", fd, {
+    params: { dryRun: true },
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data;
+}
+
+export async function importCsvOlimpistas(file: File): Promise<CsvSummary> {
+  const fd = new FormData();
+  fd.append("file", file);
+  const { data } = await api.post<CsvSummary>("/olimpistas/register", fd, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data;
+}
