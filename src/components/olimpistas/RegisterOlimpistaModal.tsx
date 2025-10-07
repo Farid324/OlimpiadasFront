@@ -88,7 +88,7 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
         nivelCompetidor: f.nivelCompetencia,
         grado: f.grado,
       });
-      setSuccess("✅ Olimpista registrado correctamente");
+      setSuccess("Olimpista registrado correctamente");
       onSuccess();
       setTimeout(onClose, 900);
     } catch (e) {
@@ -210,9 +210,11 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
               <label className="block text-sm font-bold text-gray-700 mb-1">
                 Unidad Educativa
               </label>
-              <Input placeholder="U.E."
-              className="placeholder:text-gray-400 text-gray-700" 
-              {...register("unidadEducativa")} />
+              <Input
+                placeholder="U.E."
+                className="placeholder:text-gray-400 text-gray-700"
+                {...register("unidadEducativa")}
+              />
               {errors.unidadEducativa && (
                 <p className="text-red-500 text-sm">
                   {errors.unidadEducativa.message}
