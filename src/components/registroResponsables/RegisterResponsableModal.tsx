@@ -19,7 +19,7 @@ interface Area {
   nombre_area: string;
 }
 
-//Esquema de validación con Zod
+// Esquema de validación con Zod
 const schema = z.object({
   nombre: z.string()
     .min(1, "El nombre es obligatorio")
@@ -57,11 +57,14 @@ export default function RegisterResponsableModal({ onClose, onSuccess }: Props) 
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [dupError, setDupError] = useState<string | null>(null);
 
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<FormData>({
+  const { register, handleSubmit, formState: { errors }, reset, watch } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
 
-  // 🔹 Cargar áreas
+  // Ver el valor de id_area en tiempo real
+  const selectedArea = watch("id_area");
+
+  // Cargar áreas
   useEffect(() => {
     async function fetchAreas() {
       try {
@@ -74,14 +77,14 @@ export default function RegisterResponsableModal({ onClose, onSuccess }: Props) 
     fetchAreas();
   }, []);
 
-  // 🔹 Enviar formulario
+  // Enviar formulario
   const onSubmit = async (data: FormData) => {
     setLoading(true);
     setSuccessMsg(null);
     setDupError(null);
 
     try {
-      //Validar duplicados antes de registrar
+      // Validar duplicados
       const telCheck = await api.get(`/responsables/check-telefono/${data.telefono}`);
       if (telCheck.data.exists) {
         setDupError("❌ El teléfono ya está registrado");
@@ -96,7 +99,7 @@ export default function RegisterResponsableModal({ onClose, onSuccess }: Props) 
         return;
       }
 
-      //Separar nombre y apellido según cantidad de palabras
+      // Separar nombre y apellido según cantidad de palabras
       const palabras = data.nombre.trim().split(/\s+/);
       let nombre = "";
       let apellido = "";
@@ -115,7 +118,7 @@ export default function RegisterResponsableModal({ onClose, onSuccess }: Props) 
         apellido = "";
       }
 
-      //Enviar al backend
+      // Enviar al backend
       await api.post('/responsables', {
         ...data,
         nombre,
@@ -124,7 +127,7 @@ export default function RegisterResponsableModal({ onClose, onSuccess }: Props) 
         id_area: Number(data.id_area),
       });
 
-      setSuccessMsg("✅ Registro realizado con éxito");
+      setSuccessMsg("Registro realizado con éxito");
       reset();
       onSuccess();
 
@@ -208,17 +211,27 @@ export default function RegisterResponsableModal({ onClose, onSuccess }: Props) 
 
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">Área Designada</label>
-              <select {...register("id_area")} className="border rounded-md p-2 w-full">
-                <option value="0">Seleccione un área</option>
+              <select
+                {...register("id_area")}
+                className={`border rounded-md p-2 w-full text-sm ${
+                  watch("id_area") === "0" ? "text-gray-400" : "text-black"
+                }`}
+              >
+                <option value="0" hidden>
+                  Seleccione un área
+                </option>
+
                 {areas.map((a) => (
-                  <option key={a.id_area} value={a.id_area}>
+                  <option key={a.id_area} value={a.id_area} className="text-black">
                     {a.nombre_area}
                   </option>
                 ))}
               </select>
-              {errors.id_area && <p className="text-red-500 text-sm">{errors.id_area.message}</p>}
+              {errors.id_area && (
+                <p className="text-red-500 text-sm">{errors.id_area.message}</p>
+              )}
             </div>
-          </div>
+        </div>
 
           <div className="flex justify-end mt-6">
             <Button onClick={onClose} variant="outline" type="button">Cancelar</Button>

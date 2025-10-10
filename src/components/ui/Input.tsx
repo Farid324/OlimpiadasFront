@@ -11,7 +11,7 @@ export function Input({ className, type, ...props }: React.ComponentProps<'input
       className={cn(
         'border border-gray-300 rounded-md h-10 w-full px-3 text-sm outline-none',
         'focus:border-blue-500 focus:ring-2 focus:ring-blue-200',
-        'text-gray-300 placeholder-gray-300', // 👈 nuevo
+        'text-black placeholder-gray-400', //Al escribir en el input es de color negro
         className
       )}
       {...props}
