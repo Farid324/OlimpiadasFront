@@ -23,30 +23,52 @@ interface Area {
 const schema = z.object({
   nombre: z.string()
     .min(1, "El nombre es obligatorio")
-    .regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s]+$/, "Solo se permiten letras"),
+    .regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s]+$/, "Solo se permiten letras")
+    .refine((val) => val.trim().split(/\s+/).length >= 2, {
+      message: "Debe ingresar nombre y apellido",
+    })
+    .refine((val) =>
+      val.trim().split(/\s+/).every(
+        (word) => /^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+$/.test(word)
+      ), {
+        message: "Cada nombre y apellido debe iniciar con mayúscula",
+    }),
+
   correo: z.string()
     .min(1, "El correo es obligatorio")
     .email("Correo inválido")
-    .refine((val) => !val.includes(" "), { message: "El correo no debe contener espacios" }),
+    .refine((val) => !val.includes(" "), {
+      message: "El correo no debe contener espacios",
+    }),
+
   telefono: z.string()
     .min(8, "El teléfono debe tener 8 dígitos")
     .max(8, "El teléfono debe tener 8 dígitos")
     .regex(/^[0-9]+$/, "Solo se permiten números"),
+
   ci: z.string()
     .min(6, "El CI debe tener entre 6 y 8 dígitos")
     .max(8, "El CI debe tener entre 6 y 8 dígitos")
     .regex(/^[0-9]+$/, "El CI solo debe contener números"),
+
   institucion: z.string()
     .min(2, "La institución es obligatoria")
     .regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s]+$/, "Solo se permiten letras"),
+
   experiencia: z.string()
     .regex(/^[0-9]{1,2}$/, "Debe tener entre 1 y 2 dígitos")
     .refine((val) => {
       const num = Number(val);
       return num >= 1 && num <= 30;
     }, { message: "La experiencia debe estar entre 1 y 30 años" }),
-  especialidad: z.string().min(2, "La especialidad es obligatoria"),
-  id_area: z.string().refine((val) => val !== "0", { message: "Debe seleccionar un área" }),
+
+  especialidad: z.string()
+    .min(2, "La especialidad es obligatoria"),
+
+  id_area: z.string()
+    .refine((val) => val !== "0", {
+      message: "Debe seleccionar un área",
+    }),
 });
 
 type FormData = z.infer<typeof schema>;
