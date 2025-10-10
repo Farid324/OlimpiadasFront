@@ -12,6 +12,7 @@ import { registerGrupo } from "@/libs/grupos.api";
 import type { GrupoMiembroInput } from "@/types/grupo";
 
 type Area = { id_area: number; nombre_area: string };
+type NivelCompetencia = "Primaria" | "Secundaria";
 
 export default function RegisterGrupoModal({
   onClose,
@@ -24,9 +25,7 @@ export default function RegisterGrupoModal({
   const [nombreEquipo, setNombreEquipo] = useState("");
   const [unidadEducativa, setUnidadEducativa] = useState("");
   const [departamento, setDepartamento] = useState<string>("La Paz");
-  const [nivelCompetencia, setNivelCompetencia] = useState<
-    "Primaria" | "Secundaria"
-  >("Secundaria");
+  const [nivelCompetencia, setNivelCompetencia] = useState<NivelCompetencia>("Secundaria");
   const [areaNombre, setAreaNombre] = useState<string>("");
   const [miembros, setMiembros] = useState<GrupoMiembroInput[]>([]);
   const [showAdd, setShowAdd] = useState(false);
@@ -170,7 +169,7 @@ export default function RegisterGrupoModal({
                 <Pill
                   key={n}
                   active={nivelCompetencia === n}
-                  onClick={() => setNivelCompetencia(n as any)}
+                  onClick={() => setNivelCompetencia(n as NivelCompetencia)}
                 >
                   {n}
                 </Pill>

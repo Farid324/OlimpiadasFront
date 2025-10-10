@@ -1,7 +1,7 @@
 //src/components/olimpistas/RegisterTutorModal.tsx
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -48,7 +48,7 @@ export default function RegisterTutorModal({
     handleSubmit,
     setValue,
     formState: { errors },
-    reset,
+
   } = useForm<FormData>({
     resolver: zodResolver(schema),
   });

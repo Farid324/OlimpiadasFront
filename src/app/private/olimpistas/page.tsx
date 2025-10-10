@@ -1,6 +1,7 @@
+// src/app/private/olimpistas/page.tsx
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Download, Plus } from "lucide-react";
 import AreaCarousel from "@/components/olimpistas/AreaCarousel";
 import OlimpistasTable from "@/components/olimpistas/OlimpistasTable";
@@ -20,12 +21,12 @@ export default function OlimpistasPage() {
   const [showImport, setShowImport] = useState(false);
   const [showGrupo, setShowGrupo] = useState(false);
 
-  const loadAreas = async () => {
+  const loadAreas = useCallback(async () => {
     const data = await fetchAreaCounters();
     setAreas(data);
-  };
+  }, []);
 
-  const loadRows = async () => {
+  const loadRows = useCallback(async () => {
     setLoading(true);
     try {
       const data = await fetchOlimpistas({ area: activeArea ?? undefined, q });
@@ -35,16 +36,14 @@ export default function OlimpistasPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    loadAreas();
-  }, []);
-  useEffect(() => {
-    loadRows();
   }, [activeArea, q]);
 
-  const total = useMemo(() => rows.length, [rows]);
+  useEffect(() => {
+    void loadAreas();
+  }, [loadAreas]);
+  useEffect(() => {
+    void loadRows();
+  }, [loadRows]);
 
   return (
     <div className="p-6 space-y-6 overflow-hidden">

@@ -8,11 +8,23 @@ import {
   importCsvOlimpistas,
   type CsvSummary,
 } from "@/libs/olimpistas.api";
-
+import type { AxiosError } from "axios";
 type Props = {
   onClose: () => void;
   onImported: () => void;
 };
+
+function getErrorMessage(err: unknown): string {
+  // AxiosError con response.message del backend
+  if (typeof err === "object" && err !== null && "isAxiosError" in err) {
+    const ax = err as AxiosError<{ message?: string }>;
+    return ax.response?.data?.message ?? ax.message ?? "Ocurrió un error.";
+  }
+  // Error normal
+  if (err instanceof Error) return err.message;
+  // Fallback
+  return "Ocurrió un error.";
+}
 
 export default function ImportCsvOlimpistasModal({
   onClose,
@@ -24,7 +36,7 @@ export default function ImportCsvOlimpistasModal({
   const [summary, setSummary] = useState<CsvSummary | null>(null);
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+ 
   const onPick = (e: React.ChangeEvent<HTMLInputElement>) => {
     setError(null);
     setSummary(null);
@@ -38,12 +50,13 @@ export default function ImportCsvOlimpistasModal({
     try {
       const res = await validateCsvOlimpistas(file);
       setSummary(res);
-    } catch (e: any) {
-      setError(e?.response?.data?.message || "No se pudo validar el CSV.");
+    } catch (e: unknown) {
+      setError(getErrorMessage(e));
     } finally {
       setValidating(false);
     }
   };
+
 
   const onImport = async () => {
     if (!file) return;
@@ -53,8 +66,8 @@ export default function ImportCsvOlimpistasModal({
       await importCsvOlimpistas(file);
       onImported();
       onClose();
-    } catch (e: any) {
-      setError(e?.response?.data?.message || "No se pudo importar el CSV.");
+    } catch (e: unknown) {
+      setError(getErrorMessage(e));
     } finally {
       setImporting(false);
     }
@@ -83,6 +96,7 @@ export default function ImportCsvOlimpistasModal({
     a.download = "plantilla_olimpistas.csv";
     a.click();
     URL.revokeObjectURL(url);
+    
   };
 
   return (
