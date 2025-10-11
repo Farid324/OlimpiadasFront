@@ -5,6 +5,7 @@ import { api } from '@/libs/api';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { LuUsers, LuUserCog, LuLayers, LuAward } from 'react-icons/lu';
+import { Mail, Phone } from 'lucide-react';
 import AddEvaluatorModal from '@/components/features/RegistroEva/AddEvaluatorModal';
 
 type Area = { id_area: number; nombre_area: string };
@@ -69,127 +70,190 @@ export default function EvaluadoresPage() {
   }, [evaluadores]);
 
   const refetch = () => load(q.trim() || undefined);
+  const filtered = q ? evaluadores.filter(filtra(q)) : evaluadores;
 
   return (
-    <div className="p-6 space-y-5">
-      {/* Cards */}
-      <section className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <CardMetric label="Total Evaluadores" value={metrics.total} icon={<LuUsers />} />
-          <CardMetric label="Evaluadores Activos" value={metrics.activos} icon={<LuUserCog />} />
-          <CardMetric label="Áreas Cubiertas" value={metrics.areasCubiertas} icon={<LuLayers />} />
-          <CardMetric label="Promedio Experiencia" value={`${metrics.promExp} años`} icon={<LuAward />} />
-        </div>
+    <div className="p-6 space-y-6 overflow-hidden">
+      {/* Encabezado */}
+      <div>
+        <h1 className="text-2xl font-bold text-black">Gestión de Evaluadores</h1>
+        <p className="text-gray-500 text-sm">Administración de Evaluadores por Área de competencia</p>
+      </div>
 
-        <div>
-          <Button onClick={() => setShowModal(true)} className="bg-blue-600 hover:bg-blue-700">
-            + Agregar Evaluador
-          </Button>
-        </div>
-      </section>
+      {/* Cards (mismo estilo que tu referencia) */}
+      <div className="grid grid-cols-4 gap-6">
+        <CardMetric label="Total Evaluadores" value={metrics.total} icon={<LuUsers />} />
+        <CardMetric label="Evaluadores Activos" value={metrics.activos} icon={<LuUserCog />} />
+        <CardMetric label="Áreas Cubiertas" value={metrics.areasCubiertas} icon={<LuLayers />} />
+        <CardMetric label="Promedio Experiencia" value={`${metrics.promExp} años`} icon={<LuAward />} />
+      </div>
+
+      {/* Botón */}
+      <div>
+        <Button onClick={() => setShowModal(true)} className="bg-blue-600 hover:bg-blue-700">
+          + Agregar Evaluador
+        </Button>
+      </div>
 
       {/* Buscador */}
-      <section className="flex items-center gap-3">
+      <div className="flex items-center gap-3">
         <Input
           className="text-gray-900 placeholder:text-gray-400"
           placeholder="Buscar por nombre, apellido, correo o institución…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
-      </section>
+      </div>
 
-      {/* Tabla */}
-      <section className="border rounded-md overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-100 text-gray-700">
-              <tr>
-                <Th>Nombre</Th>
-                <Th>Correo</Th>
-                <Th>Institución</Th>
-                <Th>Especialidad</Th>
-                <Th>Exp.</Th>
-                <Th>Áreas</Th>
-                <Th>Estado</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={7} className="p-6 text-center text-gray-500">Cargando…</td>
+      {/* Tabla – ajustes finos para igualar la referencia */}
+      <div className="bg-white rounded-lg shadow p-4">
+        <h2 className="font-semibold text-gray-700 mb-2">Evaluadores Registrados ({filtered.length})</h2>
+        <p className="text-sm text-gray-500 mb-4">Lista completa de evaluadores por área de competencia</p>
+
+        {loading ? (
+          <p className="text-gray-500 text-center">Cargando...</p>
+        ) : filtered.length === 0 ? (
+          <div className="border rounded-md p-6 text-gray-500 text-center">
+            No hay evaluadores {q ? 'para la búsqueda actual' : 'registrados'}
+          </div>
+        ) : (
+          <div className="max-h-[450px] overflow-y-auto overflow-x-hidden">
+            <table className="min-w-full border-collapse text-sm">
+              <thead className="sticky top-0 bg-white z-10 border-b border-black">
+                <tr className="text-gray-700">
+                  <th className="py-3 px-4 text-left font-semibold">Evaluador</th>
+                  <th className="py-3 px-4 text-left font-semibold">Contacto</th>
+                  <th className="py-3 px-4 text-left font-semibold">Especialización</th>
+                  <th className="py-3 px-4 text-left font-semibold">Áreas</th>
+                  <th className="py-3 px-4 text-left font-semibold">Institución</th>
+                  <th className="py-3 px-4 text-left font-semibold">Experiencia</th>
+                  <th className="py-3 px-4 text-center font-semibold">Rol</th>
+                  <th className="py-3 px-4 text-center font-semibold">Activo</th>
                 </tr>
-              ) : evaluadores.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="p-6 text-center text-gray-500">
-                    No hay evaluadores {q ? 'para la búsqueda actual' : 'registrados'}.
-                  </td>
-                </tr>
-              ) : (
-                evaluadores.map((e) => (
-                  <tr key={e.id_usuario} className="border-t">
-                    <Td>
-                      <div className="font-semibold">{e.nombre} {e.apellido}</div>
-                      <div className="text-xs text-gray-500">{e.telefono || ''}</div>
-                    </Td>
-                    <Td><span className="text-gray-900">{e.correo}</span></Td>
-                    <Td>{e.institucion || '-'}</Td>
-                    <Td>{e.especialidad || '-'}</Td>
-                    <Td>{typeof e.experiencia === 'number' ? e.experiencia : 0}</Td>
-                    <Td>
-                      <div className="flex flex-wrap gap-1">
+              </thead>
+
+              <tbody>
+                {filtered.map((e) => {
+                  <tr key={e.id_usuario} className="border-b border-gray-200"></tr>
+                  const initials = (e.nombre?.[0] || '').concat(e.apellido?.[0] || '').toUpperCase() || 'EV';
+                  return (
+                    <tr key={e.id_usuario} className="border-b border-gray-200">
+                      {/* Evaluador */}
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 shrink-0 flex items-center justify-center rounded-full bg-gray-200 text-gray-700 font-bold">
+                            {initials}
+                          </div>
+                          <span className="font-bold text-black break-normal">
+                            {e.nombre} {e.apellido}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Contacto */}
+                      <td className="py-4 px-4 text-gray-800">
+                        <div className="flex items-center gap-2">
+                          <Mail size={16} className="text-black" />
+                          <span className="truncate">{e.correo}</span>
+                        </div>
+                        {e.telefono && (
+                          <div className="flex items-center gap-2">
+                            <Phone size={16} className="text-black" /> {e.telefono}
+                          </div>
+                        )}
+                      </td>
+
+                      {/* Especialización */}
+                      <td className="py-4 px-4 text-black">{e.especialidad || '-'}</td>
+
+                      {/* Áreas (chips estilo referencia) */}
+                      <td className="py-4 px-4">
                         {e.evaluadores_area?.length ? (
-                          e.evaluadores_area.map(({ area }) => (
-                            <span
-                              key={area.id_area}
-                              className="px-2 py-0.5 text-xs rounded-full bg-gray-900 text-white"
-                              title={area.nombre_area}
-                            >
-                              {area.nombre_area}
-                            </span>
-                          ))
+                          <div className="flex flex-wrap gap-2">
+                            {e.evaluadores_area.map(({ area }) => (
+                              <span
+                                key={area.id_area}
+                                className="px-2 py-1 rounded-md bg-gray-200 text-black text-xs font-bold"
+                              >
+                                {area.nombre_area}
+                              </span>
+                            ))}
+                          </div>
                         ) : (
                           <span className="text-gray-400">—</span>
                         )}
-                      </div>
-                    </Td>
-                    <Td>
-                      <span className={`px-2 py-0.5 text-xs rounded ${e.activo ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}`}>
-                        {e.activo ? 'Activo' : 'Inactivo'}
-                      </span>
-                    </Td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+                      </td>
+
+                      {/* Institución */}
+                      <td className="py-4 px-4 whitespace-normal text-black break-words">
+                        {e.institucion || '-'}
+                      </td>
+
+                      {/* Experiencia */}
+                      <td className="py-4 px-4 text-black">
+                        {typeof e.experiencia === 'number' ? `${e.experiencia} años` : '-'}
+                      </td>
+
+                      {/* Rol (chip azul) */}
+                      <td className="py-4 px-4 text-center">
+                        <span className="px-2 py-1 rounded-md bg-blue-100 text-blue-700 text-xs font-bold">
+                          Evaluador
+                        </span>
+                      </td>
+
+                      {/* Estado (chip verde/rojo) */}
+                      <td className="py-4 px-4 text-center">
+                        {e.activo ? (
+                          <span className="px-2 py-1 rounded-md bg-green-100 text-green-800 text-xs font-bold">
+                            Activo
+                          </span>
+                        ) : (
+                          <span className="px-2 py-1 rounded-md bg-red-100 text-red-800 text-xs font-bold">
+                            Inactivo
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       {showModal && (
         <AddEvaluatorModal
           onClose={() => setShowModal(false)}
-          onSuccess={() => { setShowModal(false); refetch(); }}
+          onSuccess={() => {
+            setShowModal(false);
+            refetch();
+          }}
         />
       )}
     </div>
   );
 }
 
-/* helpers UI inline */
+/** Filtro auxiliar (como en la referencia, aplicado a evaluadores) */
+function filtra(q: string) {
+  const s = q.toLowerCase();
+  return (e: Evaluador) =>
+    e.nombre?.toLowerCase().includes(s) ||
+    e.apellido?.toLowerCase().includes(s) ||
+    e.correo?.toLowerCase().includes(s) ||
+    e.institucion?.toLowerCase().includes(s);
+}
+
+/* helpers UI inline – Cards con el estilo del ejemplo */
 function CardMetric({ label, value, icon }: { label: string; value: React.ReactNode; icon: React.ReactNode }) {
   return (
-    <div className="rounded-lg border p-4 flex items-center gap-3">
-      <div className="text-2xl">{icon}</div>
-      <div>
-        <div className="text-xs text-gray-500">{label}</div>
-        <div className="text-xl font-bold">{value}</div>
+    <div className="bg-white p-4 rounded-lg shadow relative h-28">
+      <div className="absolute top-4 right-4 text-black text-3xl">
+        <div className="[&>*]:w-6 [&>*]:h-6">{icon}</div>
       </div>
+      <p className="text-sm text-gray-500">{label}</p>
+      <p className="text-2xl font-bold text-black mt-2">{value}</p>
     </div>
   );
-}
-function Th({ children }: { children: React.ReactNode }) {
-  return <th className="text-left font-semibold px-3 py-3">{children}</th>;
-}
-function Td({ children }: { children: React.ReactNode }) {
-  return <td className="px-3 py-3 align-top">{children}</td>;
 }
