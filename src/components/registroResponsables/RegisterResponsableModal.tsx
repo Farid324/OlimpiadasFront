@@ -93,16 +93,24 @@ export default function RegisterResponsableModal({ onClose, onSuccess }: Props) 
     setDupError(null);
 
     try {
-      // Duplicados
+      // Validar duplicados en backend
       const tel = await api.get(`/responsables/check-telefono/${data.telefono}`);
       if (tel.data.exists) {
         setDupError("❌ El teléfono ya está registrado");
         setLoading(false);
         return;
       }
+
       const ci = await api.get(`/responsables/check-ci/${data.ci}`);
       if (ci.data.exists) {
         setDupError("❌ El documento de identidad ya está registrado");
+        setLoading(false);
+        return;
+      }
+
+      const correo = await api.get(`/responsables/check-correo/${data.correo}`);
+      if (correo.data.exists) {
+        setDupError("❌ El correo electrónico ya está registrado");
         setLoading(false);
         return;
       }
@@ -192,7 +200,6 @@ export default function RegisterResponsableModal({ onClose, onSuccess }: Props) 
                 }}
                 onInput={(e) => {
                   const el = e.currentTarget as HTMLInputElement;
-                  // permitir solo dígitos y recortar a 2 caracteres
                   el.value = el.value.replace(/\D/g, '').slice(0, 2);
                 }}
                 onPaste={(e) => {
