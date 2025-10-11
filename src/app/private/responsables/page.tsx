@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import RegisterResponsableModal from '@/components/registroResponsables/RegisterResponsableModal';
-import { Mail, Phone } from "lucide-react"; // iconos estilo mockup
+import { Mail, Phone } from "lucide-react"; 
 import { LuUsers, LuUserCog, LuBookOpenCheck, LuAward } from 'react-icons/lu';
 import { FiSearch } from 'react-icons/fi';
 import { api } from '@/libs/api';
@@ -58,7 +58,7 @@ export default function ResponsablesPage() {
   });
 
   return (
-    <div className="p-6 space-y-6 overflow-hidden">
+    <div className="p-6 space-y-6">
       {/* Título */}
       <div>
         <h1 className="text-2xl font-bold text-black">Gestión de Responsables</h1>
@@ -67,31 +67,42 @@ export default function ResponsablesPage() {
         </p>
       </div>
 
-      {/* Cards */}
-      <div className="grid grid-cols-4 gap-6">
-        <div className="bg-white p-4 rounded-lg shadow relative h-28">
-          <LuUsers className="absolute top-4 right-4 text-black text-3xl" />
-          <p className="text-sm text-gray-500">Total Evaluadores</p>
-          <p className="text-2xl font-bold text-black mt-2">{responsables.length}</p>
+      {/* Cards métricas (responsivas y con íconos bien posicionados) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-white p-4 rounded-lg shadow h-28 flex flex-col justify-between relative">
+          <div className="flex justify-between items-start">
+            <p className="text-sm text-gray-500">Total Evaluadores</p>
+            <LuUsers className="text-black text-2xl shrink-0" />
+          </div>
+          <p className="text-2xl font-bold text-black">{responsables.length}</p>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow relative h-28">
-          <LuUserCog className="absolute top-4 right-4 text-black text-3xl" />
-          <p className="text-sm text-gray-500">Responsables de Área</p>
-          <p className="text-2xl font-bold text-black mt-2">
+
+        <div className="bg-white p-4 rounded-lg shadow h-28 flex flex-col justify-between relative">
+          <div className="flex justify-between items-start">
+            <p className="text-sm text-gray-500">Responsables de Área</p>
+            <LuUserCog className="text-black text-2xl shrink-0" />
+          </div>
+          <p className="text-2xl font-bold text-black">
             {responsables.filter(r => r.activo).length}
           </p>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow relative h-28">
-          <LuBookOpenCheck className="absolute top-4 right-4 text-black text-3xl" />
-          <p className="text-sm text-gray-500">Áreas Cubiertas</p>
-          <p className="text-2xl font-bold text-black mt-2">
+
+        <div className="bg-white p-4 rounded-lg shadow h-28 flex flex-col justify-between relative">
+          <div className="flex justify-between items-start">
+            <p className="text-sm text-gray-500">Áreas Cubiertas</p>
+            <LuBookOpenCheck className="text-black text-2xl shrink-0" />
+          </div>
+          <p className="text-2xl font-bold text-black">
             {new Set(responsables.map(r => r.area.nombre_area)).size}
           </p>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow relative h-28">
-          <LuAward className="absolute top-4 right-4 text-black text-3xl" />
-          <p className="text-sm text-gray-500">Promedio Experiencia</p>
-          <p className="text-2xl font-bold text-black mt-2">
+
+        <div className="bg-white p-4 rounded-lg shadow h-28 flex flex-col justify-between relative">
+          <div className="flex justify-between items-start">
+            <p className="text-sm text-gray-500">Promedio Experiencia</p>
+            <LuAward className="text-black text-2xl shrink-0" />
+          </div>
+          <p className="text-2xl font-bold text-black">
             {responsables.length > 0
               ? `${Math.round(
                   responsables.reduce((acc, r) => acc + (r.usuario.experiencia || 0), 0) /
@@ -124,7 +135,7 @@ export default function ResponsablesPage() {
         />
       </div>
 
-    {/* Tabla */}
+      {/* Tabla con scroll horizontal en pantallas pequeñas */}
       <div className="bg-white rounded-lg shadow p-4">
         <h2 className="font-semibold text-gray-700 mb-2">
           Responsables Registrados ({filtered.length})
@@ -140,8 +151,8 @@ export default function ResponsablesPage() {
             No hay responsables registrados
           </div>
         ) : (
-          // Scroll solo dentro de la tabla
-          <div className="max-h-[450px] overflow-y-auto overflow-x-hidden">
+          // Scroll horizontal SOLO para tabla
+          <div className="overflow-x-auto">
             <table className="min-w-full border-collapse text-sm">
               <thead className="sticky top-0 bg-white shadow-sm z-10">
                 <tr className="text-gray-700 border-b">
@@ -224,14 +235,14 @@ export default function ResponsablesPage() {
             </table>
           </div>
         )}
-      </div>  
+      </div>
 
-    {/* Modal */}
+      {/* Modal */}
       {showModal && (
         <RegisterResponsableModal
           onClose={() => setShowModal(false)}
           onSuccess={() => {
-            fetchResponsables(); // recargar después de registrar
+            fetchResponsables();
             setShowModal(false);
           }}
         />

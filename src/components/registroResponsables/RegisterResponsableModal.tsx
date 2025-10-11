@@ -19,7 +19,7 @@ interface Area {
   nombre_area: string;
 }
 
-// Esquema de validación con Zod
+// ✅ Esquema de validación con Zod
 const schema = z.object({
   nombre: z.string()
     .min(1, "El nombre es obligatorio")
@@ -121,7 +121,7 @@ export default function RegisterResponsableModal({ onClose, onSuccess }: Props) 
         return;
       }
 
-      // Separar nombre y apellido según cantidad de palabras
+      // Separar nombre y apellido
       const palabras = data.nombre.trim().split(/\s+/);
       let nombre = "";
       let apellido = "";
@@ -166,8 +166,10 @@ export default function RegisterResponsableModal({ onClose, onSuccess }: Props) 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white p-6 rounded-xl w-[500px] relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-2">
+      {/* 📱 Responsivo con max-w */}
+      <div className="bg-white p-6 rounded-xl w-full max-w-lg sm:max-w-xl md:max-w-2xl relative">
+        
         {/* Botón de cierre */}
         <button
           onClick={onClose}
@@ -188,7 +190,8 @@ export default function RegisterResponsableModal({ onClose, onSuccess }: Props) 
         )}
 
         <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="grid grid-cols-2 gap-4">
+          {/* 📱 Grid responsiva: 1 columna en móviles, 2 en pantallas md */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">Nombre Completo</label>
               <Input placeholder="Nombre del responsable" {...register("nombre")} />
@@ -242,7 +245,6 @@ export default function RegisterResponsableModal({ onClose, onSuccess }: Props) 
                 <option value="0" hidden>
                   Seleccione un área
                 </option>
-
                 {areas.map((a) => (
                   <option key={a.id_area} value={a.id_area} className="text-black">
                     {a.nombre_area}
@@ -253,11 +255,11 @@ export default function RegisterResponsableModal({ onClose, onSuccess }: Props) 
                 <p className="text-red-500 text-sm">{errors.id_area.message}</p>
               )}
             </div>
-        </div>
+          </div>
 
-          <div className="flex justify-end mt-6">
-            <Button onClick={onClose} variant="outline" type="button">Cancelar</Button>
-            <Button type="submit" disabled={loading} className="ml-2">
+          <div className="flex flex-col md:flex-row justify-end gap-2 mt-6">
+            <Button onClick={onClose} variant="outline" type="button" className="w-full md:w-auto">Cancelar</Button>
+            <Button type="submit" disabled={loading} className="w-full md:w-auto">
               {loading ? 'Guardando...' : 'Registrar'}
             </Button>
           </div>
