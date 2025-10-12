@@ -5,51 +5,58 @@ import { api } from '@/libs/api';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 
-type Props = { onClose: () => void; onSuccess: () => void };
+type Props = {
+  onClose: () => void;
+  onSuccess: () => void;
+  mode?: 'create' | 'edit';
+  initial?: {
+    id_usuario?: number;
+    nombre?: string;
+    apellido?: string;
+    correo?: string;
+    telefono?: string;
+    ci?: string;
+    institucion?: string;
+    especialidad?: string;
+    experiencia?: number;
+    id_areas?: number[];
+  } | undefined;
+};
+
 type Area = { id_area: number; nombre_area: string };
 
 /** Lee mensajes de error de Axios/Nest/Prisma de forma robusta */
 function getBackendError(err: any): string {
   const apiData = err?.response?.data;
 
-  // 1) message string
   if (typeof apiData?.message === 'string') return apiData.message;
-
-  // 2) message array (class-validator normalmente)
-  if (Array.isArray(apiData?.message) && apiData.message.length) {
-    return apiData.message.join(', ');
-  }
-
-  // 3) errors array
-  if (Array.isArray(apiData?.errors) && apiData.errors.length) {
-    return apiData.errors.join(', ');
-  }
-
-  // 4) estructura de class-validator: [{ constraints: { a: '...', b:'...' } }, ...]
+  if (Array.isArray(apiData?.message) && apiData.message.length) return apiData.message.join(', ');
+  if (Array.isArray(apiData?.errors) && apiData.errors.length) return apiData.errors.join(', ');
   if (Array.isArray(apiData) && apiData.length && apiData[0]?.constraints) {
-    const msgs = apiData
-      .flatMap((e: any) => Object.values(e.constraints ?? {}))
-      .filter(Boolean);
+    const msgs = apiData.flatMap((e: any) => Object.values(e.constraints ?? {})).filter(Boolean);
     if (msgs.length) return msgs.join(', ');
   }
-
-  // 5) Fallbacks
   if (typeof apiData === 'string') return apiData;
   if (err?.message) return String(err.message);
   return 'No se pudo registrar (revisa conexión, token o duplicados).';
 }
 
-export default function AddEvaluatorModal({ onClose, onSuccess }: Props) {
+export default function AddEvaluatorModal({
+  onClose,
+  onSuccess,
+  mode = 'create',
+  initial,
+}: Props) {
   // form
   const [nombreCompleto, setNombreCompleto] = useState('');
   const [correo, setCorreo] = useState('');
   const [telefono, setTelefono] = useState('');
-  const [ci, setCi] = useState(''); // 🔹 CI
+  const [ci, setCi] = useState(''); // CI
   const [institucion, setInstitucion] = useState('');
   const [especialidad, setEspecialidad] = useState('');
   const [experiencia, setExperiencia] = useState('');
 
-  // errores específicos por campo
+  // errores por campo
   const [errors, setErrors] = useState<{ [k: string]: string }>({});
 
   // áreas
@@ -59,6 +66,24 @@ export default function AddEvaluatorModal({ onClose, onSuccess }: Props) {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [msgType, setMsgType] = useState<'ok' | 'err' | null>(null);
+
+  // precarga en modo edición
+  useEffect(() => {
+    if (mode === 'edit' && initial) {
+      const nc = `${initial.nombre ?? ''} ${initial.apellido ?? ''}`.trim();
+      setNombreCompleto(nc);
+      setCorreo(initial.correo ?? '');
+      setTelefono(initial.telefono ?? '');
+      setCi(initial.ci ?? '');
+      setInstitucion(initial.institucion ?? '');
+      setEspecialidad(initial.especialidad ?? '');
+      setExperiencia(
+        typeof initial.experiencia === 'number' ? String(initial.experiencia) : ''
+      );
+      setSelected(Array.isArray(initial.id_areas) ? initial.id_areas : []);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, initial?.id_usuario]);
 
   useEffect(() => {
     api
@@ -73,7 +98,7 @@ export default function AddEvaluatorModal({ onClose, onSuccess }: Props) {
   async function validateFields() {
     const newErrors: { [k: string]: string } = {};
 
-    // Nombre completo: solo letras + espacios, mínimo 2 palabras
+    // Nombre completo
     if (!nombreCompleto.trim()) {
       newErrors.nombreCompleto = 'El nombre completo es obligatorio';
     } else if (!/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s]+$/.test(nombreCompleto.trim())) {
@@ -96,15 +121,14 @@ export default function AddEvaluatorModal({ onClose, onSuccess }: Props) {
       newErrors.telefono = 'El teléfono es obligatorio';
     } else if (!/^\d{8}$/.test(telefono.trim())) {
       newErrors.telefono = 'El teléfono debe tener 8 dígitos';
-    } else {
+    } else if (!(mode === 'edit' && telefono.trim() === (initial?.telefono ?? ''))) {
+      // solo consultamos duplicados si cambió
       try {
         const { data } = await api.get(`/evaluadores?telefono=${telefono.trim()}`);
         if (Array.isArray(data) && data.length > 0) {
           newErrors.telefono = 'El teléfono ya está registrado en otro evaluador';
         }
-      } catch {
-        /* ignoramos errores de red en esta verificación */
-      }
+      } catch {/* ignore */}
     }
 
     // CI: 6–8 dígitos
@@ -112,15 +136,13 @@ export default function AddEvaluatorModal({ onClose, onSuccess }: Props) {
       newErrors.ci = 'El CI es obligatorio';
     } else if (!/^\d{6,8}$/.test(ci.trim())) {
       newErrors.ci = 'El CI debe tener entre 6 y 8 dígitos numéricos';
-    } else {
+    } else if (!(mode === 'edit' && ci.trim() === (initial?.ci ?? ''))) {
       try {
         const { data } = await api.get(`/evaluadores?ci=${ci.trim()}`);
         if (Array.isArray(data) && data.length > 0) {
           newErrors.ci = 'El CI ya está registrado en otro evaluador';
         }
-      } catch {
-        /* ignoramos errores de red en esta verificación */
-      }
+      } catch {/* ignore */}
     }
 
     // Institución
@@ -139,7 +161,7 @@ export default function AddEvaluatorModal({ onClose, onSuccess }: Props) {
       newErrors.especialidad = 'La especialidad es muy corta';
     }
 
-    // Experiencia 1–30
+    // Experiencia 1–30 (conservamos tu regla)
     if (!experiencia.trim()) {
       newErrors.experiencia = 'La experiencia es obligatoria';
     } else {
@@ -170,22 +192,37 @@ export default function AddEvaluatorModal({ onClose, onSuccess }: Props) {
     setMsg(null);
     setMsgType(null);
 
-    try {
-      await api.post('/evaluadores', {
-        nombreCompleto: nombreCompleto.trim(),
-        correo: correo.trim(),
-        telefono: telefono.trim(),
-        ci: ci.trim(),
-        institucion: institucion.trim(),
-        especialidad: especialidad.trim(),
-        experiencia: Number(experiencia),
-        id_areas: selected,
-      });
+    // separa nombreCompleto
+    const [first, ...rest] = nombreCompleto.trim().split(/\s+/);
+    const nombre = first ?? '';
+    const apellido = rest.join(' ') || '';
 
-      setMsgType('ok');
-      setMsg('✅ Evaluador registrado con éxito');
+    const payload = {
+      nombreCompleto: nombreCompleto.trim(), // si tu backend lo usa
+      nombre,
+      apellido,
+      correo: correo.trim(),
+      telefono: telefono.trim(),
+      ci: ci.trim(),
+      institucion: institucion.trim(),
+      especialidad: especialidad.trim(),
+      experiencia: Number(experiencia),
+      id_areas: selected,
+    };
+
+    try {
+      if (mode === 'edit' && initial?.id_usuario) {
+        await api.patch(`/evaluadores/${initial.id_usuario}`, payload);
+        setMsgType('ok');
+        setMsg('✅ Evaluador actualizado');
+      } else {
+        await api.post('/evaluadores', payload);
+        setMsgType('ok');
+        setMsg('✅ Evaluador registrado');
+      }
+
       onSuccess();
-      setTimeout(() => onClose(), 1200);
+      setTimeout(() => onClose(), 800);
     } catch (err: any) {
       const backendMsg = getBackendError(err);
       setMsgType('err');
@@ -196,20 +233,29 @@ export default function AddEvaluatorModal({ onClose, onSuccess }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      {/* tamaño compacto como el ejemplo */}
-      <div className="bg-white p-6 rounded-xl w-[520px] max-w-[95vw] relative text-black shadow">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-3 sm:p-6"
+      role="dialog"
+      aria-modal="true"
+    >
+      {/* Contenido responsive con scroll interno */}
+      <div className="bg-white p-4 sm:p-6 rounded-xl w-full max-w-screen-md sm:max-w-3xl md:max-w-4xl relative text-black shadow max-h-[90vh] overflow-y-auto">
         {/* Cerrar */}
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
           aria-label="Cerrar"
+          type="button"
         >
           ✕
         </button>
 
-        <h2 className="text-xl mb-1 font-bold text-black">Registrar Nuevo Evaluador</h2>
-        <p className="text-gray-500 mb-4">Complete la información del evaluador</p>
+        <h2 className="text-2xl font-bold mb-1">
+          {mode === 'edit' ? 'Editar Evaluador' : 'Registrar Nuevo Evaluador'}
+        </h2>
+        <p className="text-gray-500 mb-4">
+          {mode === 'edit' ? 'Actualice la información del evaluador' : 'Complete la información del evaluador'}
+        </p>
 
         {msg && (
           <div
@@ -223,13 +269,14 @@ export default function AddEvaluatorModal({ onClose, onSuccess }: Props) {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Nombre (span 2) */}
-          <div className="md:col-span-2">
+          <div className="sm:col-span-2">
             <label className="block text-sm font-bold text-gray-700 mb-1">Nombre Completo</label>
             <Input
               className="text-gray-900 placeholder:text-gray-400"
               placeholder="Ej: Juan Pérez"
+              autoComplete="name"
               value={nombreCompleto}
               onChange={(e) => setNombreCompleto(e.target.value)}
             />
@@ -242,6 +289,7 @@ export default function AddEvaluatorModal({ onClose, onSuccess }: Props) {
             <Input
               className="text-gray-900 placeholder:text-gray-400"
               placeholder="correo@ejemplo.com"
+              autoComplete="email"
               value={correo}
               onChange={(e) => setCorreo(e.target.value)}
             />
@@ -254,6 +302,8 @@ export default function AddEvaluatorModal({ onClose, onSuccess }: Props) {
             <Input
               className="text-gray-900 placeholder:text-gray-400"
               placeholder="78987654"
+              inputMode="numeric"
+              autoComplete="tel"
               value={telefono}
               onChange={(e) => setTelefono(e.target.value)}
             />
@@ -266,6 +316,7 @@ export default function AddEvaluatorModal({ onClose, onSuccess }: Props) {
             <Input
               className="text-gray-900 placeholder:text-gray-400"
               placeholder="Ej: 9329167"
+              inputMode="numeric"
               value={ci}
               onChange={(e) => setCi(e.target.value)}
             />
@@ -310,7 +361,7 @@ export default function AddEvaluatorModal({ onClose, onSuccess }: Props) {
           </div>
 
           {/* Áreas */}
-          <div className="md:col-span-2">
+          <div className="sm:col-span-2">
             <label className="block text-sm font-bold mb-2">Áreas de Evaluación</label>
             <div className="rounded-md border border-gray-200 p-2 max-h-48 overflow-y-auto">
               <div className="flex flex-wrap gap-2">
@@ -339,12 +390,12 @@ export default function AddEvaluatorModal({ onClose, onSuccess }: Props) {
           </div>
 
           {/* Botones */}
-          <div className="md:col-span-2 flex justify-end gap-2 mt-2">
-            <Button type="button" variant="outline" onClick={onClose}>
+          <div className="sm:col-span-2 flex flex-col sm:flex-row justify-end gap-2 mt-2">
+            <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto">
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? 'Guardando…' : 'Registrar'}
+            <Button type="submit" disabled={loading} className="w-full sm:w-auto">
+              {loading ? (mode === 'edit' ? 'Guardando…' : 'Guardando…') : mode === 'edit' ? 'Guardar cambios' : 'Registrar'}
             </Button>
           </div>
         </form>

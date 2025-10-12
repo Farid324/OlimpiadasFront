@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '@/libs/api';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { LuUsers, LuUserCog, LuLayers, LuAward } from 'react-icons/lu';
-import { Mail, Phone } from 'lucide-react';
+import { Mail, Phone, Search, MoreVertical, Pencil, Trash2, X } from 'lucide-react';
 import AddEvaluatorModal from '@/components/features/RegistroEva/AddEvaluatorModal';
 
 type Area = { id_area: number; nombre_area: string };
@@ -20,6 +20,7 @@ type Evaluador = {
   experiencia?: number | null;
   activo?: boolean | null;
   evaluadores_area?: { area: Area }[];
+  ci?: string | null;
 };
 
 export default function EvaluadoresPage() {
@@ -27,6 +28,12 @@ export default function EvaluadoresPage() {
   const [loading, setLoading] = useState(false);
   const [evaluadores, setEvaluadores] = useState<Evaluador[]>([]);
   const [showModal, setShowModal] = useState(false);
+
+  // --- nuevo: soporte edición & menú por fila ---
+  const [editData, setEditData] = useState<Evaluador | null>(null);
+  const [menuOpenId, setMenuOpenId] = useState<number | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: number; nombre: string } | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
   async function load(query?: string) {
     setLoading(true);
@@ -52,6 +59,24 @@ export default function EvaluadoresPage() {
     return () => clearTimeout(t);
   }, [q]);
 
+  // cerrar menú al hacer click fuera o con Escape
+  useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      if (!menuRef.current) return;
+      const target = e.target as Node;
+      if (menuRef.current && !menuRef.current.contains(target)) setMenuOpenId(null);
+    }
+    function onEsc(e: KeyboardEvent) {
+      if (e.key === 'Escape') setMenuOpenId(null);
+    }
+    document.addEventListener('click', onDocClick);
+    document.addEventListener('keydown', onEsc);
+    return () => {
+      document.removeEventListener('click', onDocClick);
+      document.removeEventListener('keydown', onEsc);
+    };
+  }, []);
+
   const metrics = useMemo(() => {
     const total = evaluadores.length;
     const activos = evaluadores.filter((e) => !!e.activo).length;
@@ -72,6 +97,32 @@ export default function EvaluadoresPage() {
   const refetch = () => load(q.trim() || undefined);
   const filtered = q ? evaluadores.filter(filtra(q)) : evaluadores;
 
+  // --- handlers de acciones ---
+  const openCreate = () => {
+    setEditData(null);
+    setShowModal(true);
+  };
+  const openEdit = (row: Evaluador) => {
+    setEditData(row);
+    setShowModal(true);
+    setMenuOpenId(null);
+  };
+  const askDelete = (row: Evaluador) => {
+    setConfirmDelete({ id: row.id_usuario, nombre: `${row.nombre} ${row.apellido}` });
+    setMenuOpenId(null);
+  };
+  const doDelete = async () => {
+    if (!confirmDelete) return;
+    try {
+      await api.delete(`/evaluadores/${confirmDelete.id}`);
+      setConfirmDelete(null);
+      refetch();
+    } catch {
+      // opcional: podrías mostrar un toast
+      setConfirmDelete(null);
+    }
+  };
+
   return (
     <div className="p-6 space-y-6 overflow-hidden">
       {/* Encabezado */}
@@ -80,8 +131,8 @@ export default function EvaluadoresPage() {
         <p className="text-gray-500 text-sm">Administración de Evaluadores por Área de competencia</p>
       </div>
 
-      {/* Cards (mismo estilo que tu referencia) */}
-      <div className="grid grid-cols-4 gap-6">
+      {/* Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <CardMetric label="Total Evaluadores" value={metrics.total} icon={<LuUsers />} />
         <CardMetric label="Evaluadores Activos" value={metrics.activos} icon={<LuUserCog />} />
         <CardMetric label="Áreas Cubiertas" value={metrics.areasCubiertas} icon={<LuLayers />} />
@@ -90,22 +141,24 @@ export default function EvaluadoresPage() {
 
       {/* Botón */}
       <div>
-        <Button onClick={() => setShowModal(true)} className="bg-blue-600 hover:bg-blue-700">
+        <Button onClick={openCreate} className="bg-blue-600 hover:bg-blue-700">
           + Agregar Evaluador
         </Button>
       </div>
 
-      {/* Buscador */}
-      <div className="flex items-center gap-3">
+      {/* Buscador (debajo del botón) con lupa */}
+      <div className="relative max-w-full">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
         <Input
-          className="text-gray-900 placeholder:text-gray-400"
+          className="w-full pl-9 text-gray-900 placeholder:text-gray-400"
           placeholder="Buscar por nombre, apellido, correo o institución…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
+          aria-label="Buscar evaluadores"
         />
       </div>
 
-      {/* Tabla – ajustes finos para igualar la referencia */}
+      {/* Tabla con scroll vertical y HORIZONTAL (en pantallas pequeñas) */}
       <div className="bg-white rounded-lg shadow p-4">
         <h2 className="font-semibold text-gray-700 mb-2">Evaluadores Registrados ({filtered.length})</h2>
         <p className="text-sm text-gray-500 mb-4">Lista completa de evaluadores por área de competencia</p>
@@ -117,111 +170,165 @@ export default function EvaluadoresPage() {
             No hay evaluadores {q ? 'para la búsqueda actual' : 'registrados'}
           </div>
         ) : (
-          <div className="max-h-[450px] overflow-y-auto overflow-x-hidden">
-            <table className="min-w-full border-collapse text-sm">
-              <thead className="sticky top-0 bg-white z-10 border-b border-black">
-                <tr className="text-gray-700">
-                  <th className="py-3 px-4 text-left font-semibold">Evaluador</th>
-                  <th className="py-3 px-4 text-left font-semibold">Contacto</th>
-                  <th className="py-3 px-4 text-left font-semibold">Especialización</th>
-                  <th className="py-3 px-4 text-left font-semibold">Áreas</th>
-                  <th className="py-3 px-4 text-left font-semibold">Institución</th>
-                  <th className="py-3 px-4 text-left font-semibold">Experiencia</th>
-                  <th className="py-3 px-4 text-center font-semibold">Rol</th>
-                  <th className="py-3 px-4 text-center font-semibold">Activo</th>
-                </tr>
-              </thead>
+          <div className="max-h-[450px] overflow-y-auto">
+            <div
+              className="w-full overflow-x-auto md:overflow-x-visible"
+              role="region"
+              aria-label="Lista de evaluadores con desplazamiento horizontal"
+              tabIndex={0}
+              ref={menuRef}
+            >
+              <table className="min-w-[1100px] md:min-w-full border-collapse text-sm">
+                <thead className="sticky top-0 bg-white z-10 border-b border-black">
+                  <tr className="text-gray-700">
+                    <th className="py-3 px-4 text-left font-semibold">Evaluador</th>
+                    <th className="py-3 px-4 text-left font-semibold">Contacto</th>
+                    <th className="py-3 px-4 text-left font-semibold">Especialización</th>
+                    <th className="py-3 px-4 text-left font-semibold">Áreas</th>
+                    <th className="py-3 px-4 text-left font-semibold">Institución</th>
+                    <th className="py-3 px-4 text-left font-semibold">Experiencia</th>
+                    <th className="py-3 px-4 text-center font-semibold">Rol</th>
+                    <th className="py-3 px-4 text-center font-semibold">Activo</th>
+                    <th className="py-3 px-2 text-right font-semibold"> {/* Acciones */}</th>
+                  </tr>
+                </thead>
 
-              <tbody>
-                {filtered.map((e) => {
-                  <tr key={e.id_usuario} className="border-b border-gray-200"></tr>
-                  const initials = (e.nombre?.[0] || '').concat(e.apellido?.[0] || '').toUpperCase() || 'EV';
-                  return (
-                    <tr key={e.id_usuario} className="border-b border-gray-200">
-                      {/* Evaluador */}
-                      <td className="py-4 px-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 shrink-0 flex items-center justify-center rounded-full bg-gray-200 text-gray-700 font-bold">
-                            {initials}
+                <tbody>
+                  {filtered.map((e) => {
+                    const initials =
+                      (e.nombre?.[0] || '').concat(e.apellido?.[0] || '').toUpperCase() || 'EV';
+                    const isMenuOpen = menuOpenId === e.id_usuario;
+
+                    return (
+                      <tr key={e.id_usuario} className="border-b border-gray-200">
+                        {/* Evaluador */}
+                        <td className="py-4 px-4">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-10 h-10 shrink-0 flex items-center justify-center rounded-full bg-gray-200 text-gray-700 font-bold">
+                              {initials}
+                            </div>
+                            <span className="font-bold text-black truncate">
+                              {e.nombre} {e.apellido}
+                            </span>
                           </div>
-                          <span className="font-bold text-black break-normal">
-                            {e.nombre} {e.apellido}
+                        </td>
+
+                        {/* Contacto */}
+                        <td className="py-4 px-4 text-gray-800">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Mail size={16} className="text-black shrink-0" />
+                            <span className="truncate break-all" title={e.correo}>
+                              {e.correo}
+                            </span>
+                          </div>
+                          {e.telefono && (
+                            <div className="flex items-center gap-2">
+                              <Phone size={16} className="text-black" /> {e.telefono}
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Especialización */}
+                        <td className="py-4 px-4 text-black">{e.especialidad || '-'}</td>
+
+                        {/* Áreas */}
+                        <td className="py-4 px-4">
+                          {e.evaluadores_area?.length ? (
+                            <div className="flex flex-wrap gap-2">
+                              {e.evaluadores_area.map(({ area }) => (
+                                <span
+                                  key={area.id_area}
+                                  className="px-2 py-1 rounded-md bg-gray-200 text-black text-xs font-bold"
+                                >
+                                  {area.nombre_area}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">—</span>
+                          )}
+                        </td>
+
+                        {/* Institución */}
+                        <td className="py-4 px-4 whitespace-normal text-black break-words">
+                          {e.institucion || '-'}
+                        </td>
+
+                        {/* Experiencia */}
+                        <td className="py-4 px-4 text-black">
+                          {typeof e.experiencia === 'number' ? `${e.experiencia} años` : '-'}
+                        </td>
+
+                        {/* Rol */}
+                        <td className="py-4 px-4 text-center">
+                          <span className="px-2 py-1 rounded-md bg-blue-100 text-blue-700 text-xs font-bold">
+                            Evaluador
                           </span>
-                        </div>
-                      </td>
+                        </td>
 
-                      {/* Contacto */}
-                      <td className="py-4 px-4 text-gray-800">
-                        <div className="flex items-center gap-2">
-                          <Mail size={16} className="text-black" />
-                          <span className="truncate">{e.correo}</span>
-                        </div>
-                        {e.telefono && (
-                          <div className="flex items-center gap-2">
-                            <Phone size={16} className="text-black" /> {e.telefono}
-                          </div>
-                        )}
-                      </td>
+                        {/* Estado */}
+                        <td className="py-4 px-4 text-center">
+                          {e.activo ? (
+                            <span className="px-2 py-1 rounded-md bg-green-100 text-green-800 text-xs font-bold">
+                              Activo
+                            </span>
+                          ) : (
+                            <span className="px-2 py-1 rounded-md bg-red-100 text-red-800 text-xs font-bold">
+                              Inactivo
+                            </span>
+                          )}
+                        </td>
 
-                      {/* Especialización */}
-                      <td className="py-4 px-4 text-black">{e.especialidad || '-'}</td>
+                        {/* Acciones */}
+                        <td className="py-4 px-2 text-right relative">
+                          <button
+                            type="button"
+                            onClick={(ev) => {
+                              ev.stopPropagation();
+                              setMenuOpenId((id) => (id === e.id_usuario ? null : e.id_usuario));
+                            }}
+                            className="inline-flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 focus:outline-none"
+                            aria-haspopup="menu"
+                            aria-expanded={isMenuOpen}
+                            aria-label="Acciones de evaluador"
+                          >
+                            <MoreVertical className="w-5 h-5 text-gray-700" />
+                          </button>
 
-                      {/* Áreas (chips estilo referencia) */}
-                      <td className="py-4 px-4">
-                        {e.evaluadores_area?.length ? (
-                          <div className="flex flex-wrap gap-2">
-                            {e.evaluadores_area.map(({ area }) => (
-                              <span
-                                key={area.id_area}
-                                className="px-2 py-1 rounded-md bg-gray-200 text-black text-xs font-bold"
+                          {/* Menú contextual */}
+                          {isMenuOpen && (
+                            <div
+                              role="menu"
+                              className="absolute right-2 top-10 z-20 w-40 rounded-md border bg-white shadow-lg overflow-hidden"
+                            >
+                              <button
+                                type="button"
+                                onClick={() => openEdit(e)}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-gray-50"
                               >
-                                {area.nombre_area}
-                              </span>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="text-gray-400">—</span>
-                        )}
-                      </td>
-
-                      {/* Institución */}
-                      <td className="py-4 px-4 whitespace-normal text-black break-words">
-                        {e.institucion || '-'}
-                      </td>
-
-                      {/* Experiencia */}
-                      <td className="py-4 px-4 text-black">
-                        {typeof e.experiencia === 'number' ? `${e.experiencia} años` : '-'}
-                      </td>
-
-                      {/* Rol (chip azul) */}
-                      <td className="py-4 px-4 text-center">
-                        <span className="px-2 py-1 rounded-md bg-blue-100 text-blue-700 text-xs font-bold">
-                          Evaluador
-                        </span>
-                      </td>
-
-                      {/* Estado (chip verde/rojo) */}
-                      <td className="py-4 px-4 text-center">
-                        {e.activo ? (
-                          <span className="px-2 py-1 rounded-md bg-green-100 text-green-800 text-xs font-bold">
-                            Activo
-                          </span>
-                        ) : (
-                          <span className="px-2 py-1 rounded-md bg-red-100 text-red-800 text-xs font-bold">
-                            Inactivo
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                                <Pencil className="w-4 h-4" /> Editar
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => askDelete(e)}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-4 h-4" /> Eliminar
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
 
+      {/* Modal crear/editar */}
       {showModal && (
         <AddEvaluatorModal
           onClose={() => setShowModal(false)}
@@ -229,13 +336,55 @@ export default function EvaluadoresPage() {
             setShowModal(false);
             refetch();
           }}
+          mode={editData ? 'edit' : 'create'}
+          initial={
+            editData
+              ? {
+                  id_usuario: editData.id_usuario,
+                  nombre: editData.nombre,
+                  apellido: editData.apellido,
+                  correo: editData.correo,
+                  telefono: editData.telefono ?? '',
+                  ci: editData.ci ?? '',
+                  institucion: editData.institucion ?? '',
+                  especialidad: editData.especialidad ?? '',
+                  experiencia: editData.experiencia ?? undefined,
+                  id_areas: editData.evaluadores_area?.map((ea) => ea.area?.id_area).filter(Boolean) as number[],
+                }
+              : undefined
+          }
         />
+      )}
+
+      {/* Confirmación eliminar */}
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow w-full max-w-md">
+            <div className="flex items-center justify-between px-4 py-3 border-b">
+              <h3 className="font-semibold">Eliminar evaluador</h3>
+              <button
+                className="p-1 rounded hover:bg-gray-100"
+                onClick={() => setConfirmDelete(null)}
+                aria-label="Cerrar"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="px-4 py-4 text-sm">
+              ¿Seguro que deseas eliminar a <span className="font-semibold">{confirmDelete.nombre}</span>? Esta acción no se puede deshacer.
+            </div>
+            <div className="px-4 py-3 border-t flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setConfirmDelete(null)}>Cancelar</Button>
+              <Button className="bg-red-600 hover:bg-red-700" onClick={doDelete}>Eliminar</Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
 }
 
-/** Filtro auxiliar (como en la referencia, aplicado a evaluadores) */
+/** Filtro auxiliar */
 function filtra(q: string) {
   const s = q.toLowerCase();
   return (e: Evaluador) =>
@@ -245,7 +394,7 @@ function filtra(q: string) {
     e.institucion?.toLowerCase().includes(s);
 }
 
-/* helpers UI inline – Cards con el estilo del ejemplo */
+/* Cards métricas */
 function CardMetric({ label, value, icon }: { label: string; value: React.ReactNode; icon: React.ReactNode }) {
   return (
     <div className="bg-white p-4 rounded-lg shadow relative h-28">
