@@ -10,6 +10,7 @@ import type { AreaCounter, OlimpistaRow } from "@/types/olimpista";
 import RegisterOlimpistaModal from "@/components/olimpistas/RegisterOlimpistaModal";
 import ImportCsvOlimpistasModal from "@/components/olimpistas/ImportCsvOlimpistasModal";
 import RegisterGrupoModal from "@/components/olimpistas/RegisterGrupoModal";
+import { usePageHeader } from '@/contexts/pageHeader';
 
 export default function OlimpistasPage() {
   const [areas, setAreas] = useState<AreaCounter[]>([]);
@@ -20,6 +21,7 @@ export default function OlimpistasPage() {
   const [showModal, setShowModal] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [showGrupo, setShowGrupo] = useState(false);
+  const { setTitle } = usePageHeader();
 
   const loadAreas = useCallback(async () => {
     const data = await fetchAreaCounters();
@@ -44,6 +46,9 @@ export default function OlimpistasPage() {
   useEffect(() => {
     void loadRows();
   }, [loadRows]);
+  useEffect(() => {
+    setTitle('Olimpistas');
+  }, [setTitle]);
 
   return (
     <div className="p-6 space-y-6 overflow-hidden">

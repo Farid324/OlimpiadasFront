@@ -6,7 +6,7 @@ import { Mail, Phone } from "lucide-react"; // iconos estilo mockup
 import { LuUsers, LuUserCog, LuBookOpenCheck, LuAward } from 'react-icons/lu';
 import { FiSearch } from 'react-icons/fi';
 import { api } from '@/libs/api';
-
+import { usePageHeader } from '@/contexts/pageHeader';
 interface Responsable {
   id_responsable_area: number;
   usuario: {
@@ -29,7 +29,7 @@ export default function ResponsablesPage() {
   const [responsables, setResponsables] = useState<Responsable[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
-
+  const { setTitle } = usePageHeader();
   const fetchResponsables = async () => {
     setLoading(true);
     try {
@@ -45,6 +45,9 @@ export default function ResponsablesPage() {
   useEffect(() => {
     fetchResponsables();
   }, []);
+  useEffect(() => {
+    setTitle('Responsables');
+  }, [setTitle]);
 
   //Filtro
   const filtered = responsables.filter((r) => {

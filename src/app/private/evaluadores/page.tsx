@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { LuUsers, LuUserCog, LuLayers, LuAward } from 'react-icons/lu';
 import AddEvaluatorModal from '@/components/features/RegistroEva/AddEvaluatorModal';
-
+import { usePageHeader } from '@/contexts/pageHeader';
 type Area = { id_area: number; nombre_area: string };
 type Evaluador = {
   id_usuario: number;
@@ -26,6 +26,7 @@ export default function EvaluadoresPage() {
   const [loading, setLoading] = useState(false);
   const [evaluadores, setEvaluadores] = useState<Evaluador[]>([]);
   const [showModal, setShowModal] = useState(false);
+  const { setTitle } = usePageHeader();
 
   async function load(query?: string) {
     setLoading(true);
@@ -50,6 +51,10 @@ export default function EvaluadoresPage() {
     }, 350);
     return () => clearTimeout(t);
   }, [q]);
+
+  useEffect(() => {
+    setTitle('Evaluadores');
+  }, [setTitle]);
 
   const metrics = useMemo(() => {
     const total = evaluadores.length;

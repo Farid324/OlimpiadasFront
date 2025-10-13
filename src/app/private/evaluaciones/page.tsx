@@ -1,7 +1,12 @@
 // src/app/private/olimpistas/page.tsx
 'use client';
-
-export default function evaluacionesPage() {
+import { useEffect} from 'react';
+import { usePageHeader } from '@/contexts/pageHeader';
+export default function EvaluacionesPage() {
+  const { setTitle } = usePageHeader();
+  useEffect(() => {
+    setTitle('Evaluaciones');
+  }, [setTitle]);
   return (
     <div className="bg-white border rounded-xl p-6 shadow-sm">
       <h2 className="text-xl font-semibold mb-2">Listado de Evaluaciones</h2>
