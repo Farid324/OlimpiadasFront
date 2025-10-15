@@ -16,6 +16,7 @@ import {
 } from "@/config/catalogs";
 import { composeNivelCodigo } from "@/libs/nivel";
 import RegisterTutorModal from "@/components/olimpistas/RegisterTutorModal";
+import { VM } from "@/config/validation-messages";
 
 type Area = { id_area: number; nombre_area: string };
 
@@ -95,10 +96,15 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
       setSuccess("Olimpista registrado correctamente");
       onSuccess();
       setTimeout(onClose, 900);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
+    } catch (e: any) {
+      const msg =
+        e?.response?.data?.message ||
+        (Array.isArray(e?.response?.data?.message)
+          ? e.response.data.message.join("\n")
+          : null) ||
+        e?.message ||
+        "Ocurrió un error al registrar.";
+      alert(msg);
     }
   };
 
@@ -182,8 +188,16 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
                 <Input
                   className="flex-1 text-gray-700"
                   placeholder="+591 70123456"
-                  {...register("tutorContacto")}
+                  {...register("tutorContacto", {
+                    required: VM.tutorRequired,
+                    pattern: { value: /^\d{7,12}$/, message: VM.phoneDigits },
+                  })}
                 />
+                {errors.tutorContacto && (
+                  <p className="text-red-500 text-sm">
+                    {errors.tutorContacto.message}
+                  </p>
+                )}
                 <button
                   type="button"
                   onClick={() => setShowTutor(true)}

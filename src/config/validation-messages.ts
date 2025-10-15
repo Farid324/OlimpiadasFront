@@ -14,4 +14,6 @@ export const VM = {
   max80: "Máximo 80 caracteres.",
   max120: "Máximo 120 caracteres.",
   minGroupMembers: "Agrega al menos 2 olimpistas al grupo.",
+  tutorRequired: "Debe registrar un tutor antes de asociar un olimpista.",
+  phoneDigits: "El contacto del tutor debe tener entre 7 y 12 dígitos.",
 };
