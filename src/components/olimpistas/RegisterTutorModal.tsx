@@ -147,7 +147,7 @@ export default function RegisterTutorModal({
               size={18}
             />
             <input
-              className="w-full pl-10 h-10 border rounded-md"
+              className="w-full pl-10 h-10 border rounded-md text-black"
               placeholder="Buscar por nombre, email o CI"
               value={q}
               onChange={(e) => setQ(e.target.value)}
