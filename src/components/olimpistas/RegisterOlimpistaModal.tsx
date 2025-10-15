@@ -141,6 +141,23 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
     </button>
   );
 
+  const getOrdinalSuffix = (num: number): string => {
+    switch (num) {
+      case 1:
+        return "ro";
+      case 2:
+        return "do";
+      case 3:
+        return "ro";
+      case 4:
+      case 5:
+      case 6:
+        return "to";
+      default:
+        return "ro";
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="bg-white p-6 rounded-xl w-[640px] relative">
@@ -300,7 +317,8 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
               >
                 {GRADOS.map((g) => (
                   <option key={g} value={g}>
-                    {g}ro.
+                    {g}
+                    {getOrdinalSuffix(g)}.{" "}
                   </option>
                 ))}
               </select>
