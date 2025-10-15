@@ -81,7 +81,7 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
     setLoading(true);
     setSuccess(null);
     try {
-      const nivelCatalogo = composeNivelCodigo(f.nivelCompetencia, f.grado);
+      const gradoEscolar = composeNivelCodigo(f.nivelCompetencia, f.grado);
       await api.post("/olimpistas/register", {
         nombreCompleto: f.nombreCompleto,
         ci: f.ci,
@@ -89,9 +89,9 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
         unidadEducativa: f.unidadEducativa,
         departamento: f.departamento,
         area: f.areaNombre,
-        nivel: nivelCatalogo,
-        nivelCompetidor: f.nivelCompetencia,
+        nivel: f.nivelCompetencia,
         grado: f.grado,
+        gradoEscolar,
       });
       setSuccess("Olimpista registrado correctamente");
       onSuccess();
@@ -105,6 +105,8 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
         e?.message ||
         "Ocurrió un error al registrar.";
       alert(msg);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -193,11 +195,7 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
                     pattern: { value: /^\d{7,12}$/, message: VM.phoneDigits },
                   })}
                 />
-                {errors.tutorContacto && (
-                  <p className="text-red-500 text-sm">
-                    {errors.tutorContacto.message}
-                  </p>
-                )}
+
                 <button
                   type="button"
                   onClick={() => setShowTutor(true)}
