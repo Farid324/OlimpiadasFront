@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { DEPARTAMENTOS, GRADOS } from "@/config/catalogs";
 import type { GrupoMiembroInput } from "@/types/grupo";
+import { useState } from "react";
+import { checkMiembroPorCI } from "@/libs/grupos.api";
 
 const schema = z.object({
   nombreCompleto: z
@@ -37,20 +39,45 @@ export default function AddMiembroGrupoModal({
     register,
     handleSubmit,
     formState: { errors },
+    setError,
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { grado: 1 },
   });
 
-  const submit = (f: FormData) => {
-    onAdd({
-      nombreCompleto: f.nombreCompleto,
-      ci: f.ci,
-      tutorContacto: f.tutorContacto || undefined,
-      departamento: f.departamento || undefined,
-      grado: f.grado,
-    });
-    onClose();
+  const [submitting, setSubmitting] = useState(false);
+
+  const submit = async (f: FormData) => {
+    setSubmitting(true);
+    try {
+      const res = await checkMiembroPorCI(f.ci.trim());
+      if (res.inGroup) {
+        setError("ci", {
+          type: "manual",
+          message: `El olimpista ya pertenece al grupo “${
+            res.group?.nombre ?? "existente"
+          }”.`,
+        });
+        setSubmitting(false);
+        return;
+      }
+
+      onAdd({
+        nombreCompleto: f.nombreCompleto,
+        ci: f.ci,
+        tutorContacto: f.tutorContacto || undefined,
+        departamento: f.departamento || undefined,
+        grado: f.grado,
+      });
+      onClose();
+    } catch {
+      setError("ci", {
+        type: "manual",
+        message: "No se pudo validar la pertenencia. Intente nuevamente.",
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -163,7 +190,9 @@ export default function AddMiembroGrupoModal({
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
-            <Button type="submit">Agregar</Button>
+            <Button type="submit" disabled={submitting}>
+              {submitting ? "Verificando..." : "Agregar"}
+            </Button>
           </div>
         </form>
       </div>
