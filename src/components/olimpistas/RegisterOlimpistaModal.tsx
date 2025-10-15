@@ -28,7 +28,12 @@ const schema = z.object({
   ci: z.string().min(6).max(12).regex(/^\d+$/, "Solo números"),
   tutorContacto: z.string().min(7).max(12).regex(/^\d+$/, "Solo números"),
   departamento: z.enum(DEPARTAMENTOS),
-  unidadEducativa: z.string().min(2, "Requerido"),
+  unidadEducativa: z
+    .string()
+    .trim()
+    .min(2, VM.ueMin)
+    .max(80, VM.max80)
+    .regex(/^[\p{L}\s.'-]+$/u, VM.onlyLetters),
   nivelCompetencia: z.enum(NIVELES_COMPETENCIA),
   grado: z.number().int().min(1).max(6),
   areaNombre: z.string().min(1, "Seleccione un área"),
@@ -45,11 +50,13 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
   const [areas, setAreas] = useState<Area[]>([]);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
+  const UE_REGEX = /^[\p{L}\s.'-]+$/u;
+  const [ueError, setUeError] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isValid },
     setValue,
     watch,
   } = useForm<FormData>({
@@ -58,6 +65,8 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
       grado: 1,
       nivelCompetencia: "Primaria" as NivelCompetencia,
     },
+    mode: "onChange",
+    reValidateMode: "onChange",
   });
 
   const [showTutor, setShowTutor] = useState(false);
@@ -261,6 +270,16 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
               </label>
               <Input
                 placeholder="U.E."
+                inputMode="text"
+                pattern="[\\p{L}\\s.'-]+"
+                maxLength={80}
+                onInput={(e) => {
+                  const t = e.currentTarget;
+                  t.value = t.value
+                    .replace(/[^ \p{L}.'-]/gu, "")
+                    .replace(/\s+/g, " ")
+                    .trimStart();
+                }}
                 className="placeholder:text-gray-400 text-gray-700"
                 {...register("unidadEducativa")}
               />
@@ -342,7 +361,7 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
             <Button onClick={onClose} type="button" variant="outline">
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading || !isValid}>
               {loading ? "Guardando..." : "Registrar"}
             </Button>
           </div>
