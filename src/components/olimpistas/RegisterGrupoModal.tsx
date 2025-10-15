@@ -11,6 +11,7 @@ import { api } from "@/libs/api";
 import { registerGrupo } from "@/libs/grupos.api";
 import type { GrupoMiembroInput } from "@/types/grupo";
 import RegisterTutorModal from "./RegisterTutorModal";
+import { VM } from "@/config/validation-messages";
 
 type Area = { id_area: number; nombre_area: string };
 type NivelCompetencia = "Primaria" | "Secundaria";
@@ -61,8 +62,8 @@ export default function RegisterGrupoModal({
     departamento &&
     areaNombre &&
     nivelCompetencia &&
-    miembros.length > 0;
-  tutorSeleccionado;
+    miembros.length >= 2 &&
+    tutorSeleccionado;
 
   const submit = async () => {
     if (!canSubmit) return;
@@ -281,6 +282,9 @@ export default function RegisterGrupoModal({
                   ))}
                 </tbody>
               </table>
+            )}
+            {miembros.length > 0 && miembros.length < 2 && (
+              <p className="mt-2 text-sm text-red-600">{VM.minGroupMembers}</p>
             )}
           </div>
         </div>
