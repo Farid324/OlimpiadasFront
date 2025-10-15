@@ -16,22 +16,24 @@ export async function checkMiembroPorCI(ci: string) {
 }
 
 export async function registerGrupo(input: CreateGrupoInput) {
-  const gradoBase = input.miembros[0]?.grado ?? 1;
-  const nivelCatalogo = composeNivel(input.nivelCompetencia, gradoBase);
+  const nivelPlano = input.nivel ?? input.nivelCompetencia;
 
   const payload = {
     nombreEquipo: input.nombreEquipo,
     unidadEducativa: input.unidadEducativa,
     departamento: input.departamento,
     area: input.area,
-    nivel: nivelCatalogo,
+    nivel: nivelPlano,
     miembros: input.miembros.map((m) => ({
       nombreCompleto: m.nombreCompleto,
       ci: m.ci,
       tutorContacto: m.tutorContacto,
       departamento: m.departamento,
-      gradoEscolar: composeNivel(input.nivelCompetencia, m.grado),
+      grado: m.grado,
+      gradoEscolar: composeNivel(nivelPlano, m.grado),
     })),
+    ...(input.tutorId ? { tutorId: input.tutorId } : {}),
+    ...(input.tutorTelefono ? { tutorTelefono: input.tutorTelefono } : {}),
   };
 
   const { data } = await api.post("/grupos/register", payload);
