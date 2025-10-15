@@ -16,8 +16,8 @@ export async function checkMiembroPorCI(ci: string) {
 }
 
 export async function registerGrupo(input: CreateGrupoInput) {
-  const nivelPlano = input.nivel ?? input.nivelCompetencia;
-
+  const nivelPlano: "Primaria" | "Secundaria" =
+    input.nivel ?? input.nivelCompetencia ?? "Primaria";
   const payload = {
     nombreEquipo: input.nombreEquipo,
     unidadEducativa: input.unidadEducativa,
