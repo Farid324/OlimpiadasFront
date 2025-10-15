@@ -27,16 +27,17 @@ const schema = z.object({
     .regex(/^[\p{L}\s.'-]+$/u, "Solo letras"),
   ci: z.string().min(6).max(12).regex(/^\d+$/, "Solo números"),
   tutorContacto: z.string().min(7).max(12).regex(/^\d+$/, "Solo números"),
-  departamento: z.enum(DEPARTAMENTOS),
+  departamento: z.enum(DEPARTAMENTOS, { message: VM.deptRequired }),
+
   unidadEducativa: z
     .string()
     .trim()
     .min(2, VM.ueMin)
     .max(80, VM.max80)
     .regex(/^[\p{L}\s.'-]+$/u, VM.onlyLetters),
-  nivelCompetencia: z.enum(NIVELES_COMPETENCIA),
-  grado: z.number().int().min(1).max(6),
-  areaNombre: z.string().min(1, "Seleccione un área"),
+  nivelCompetencia: z.enum(NIVELES_COMPETENCIA, { message: VM.levelRequired }),
+  grado: z.number().int().min(1, VM.gradeRange).max(6, VM.gradeRange),
+  areaNombre: z.string().min(1, VM.areaRequired),
 });
 
 type FormData = z.infer<typeof schema>;
