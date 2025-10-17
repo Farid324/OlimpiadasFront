@@ -16,6 +16,8 @@ import {
 } from "@/config/catalogs";
 import { composeNivelCodigo } from "@/libs/nivel";
 import RegisterTutorModal from "@/components/olimpistas/RegisterTutorModal";
+import { VM } from "@/config/validation-messages";
+import axios from "axios"
 
 type Area = { id_area: number; nombre_area: string };
 
@@ -26,11 +28,17 @@ const schema = z.object({
     .regex(/^[\p{L}\s.'-]+$/u, "Solo letras"),
   ci: z.string().min(6).max(12).regex(/^\d+$/, "Solo números"),
   tutorContacto: z.string().min(7).max(12).regex(/^\d+$/, "Solo números"),
-  departamento: z.enum(DEPARTAMENTOS),
-  unidadEducativa: z.string().min(2, "Requerido"),
-  nivelCompetencia: z.enum(NIVELES_COMPETENCIA),
-  grado: z.number().int().min(1).max(6),
-  areaNombre: z.string().min(1, "Seleccione un área"),
+  departamento: z.enum(DEPARTAMENTOS, { message: VM.deptRequired }),
+
+  unidadEducativa: z
+    .string()
+    .trim()
+    .min(2, VM.ueMin)
+    .max(80, VM.max80)
+    .regex(/^[\p{L}\s.'-]+$/u, VM.onlyLetters),
+  nivelCompetencia: z.enum(NIVELES_COMPETENCIA, { message: VM.levelRequired }),
+  grado: z.number().int().min(1, VM.gradeRange).max(6, VM.gradeRange),
+  areaNombre: z.string().min(1, VM.areaRequired),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -44,11 +52,13 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
   const [areas, setAreas] = useState<Area[]>([]);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
+  //const UE_REGEX = /^[\p{L}\s.'-]+$/u;
+  //const [ueError, setUeError] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isValid },
     setValue,
     watch,
   } = useForm<FormData>({
@@ -57,6 +67,8 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
       grado: 1,
       nivelCompetencia: "Primaria" as NivelCompetencia,
     },
+    mode: "onChange",
+    reValidateMode: "onChange",
   });
 
   const [showTutor, setShowTutor] = useState(false);
@@ -80,7 +92,7 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
     setLoading(true);
     setSuccess(null);
     try {
-      const nivelCatalogo = composeNivelCodigo(f.nivelCompetencia, f.grado);
+      const gradoEscolar = composeNivelCodigo(f.nivelCompetencia, f.grado);
       await api.post("/olimpistas/register", {
         nombreCompleto: f.nombreCompleto,
         ci: f.ci,
@@ -88,18 +100,30 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
         unidadEducativa: f.unidadEducativa,
         departamento: f.departamento,
         area: f.areaNombre,
-        nivel: nivelCatalogo,
-        nivelCompetidor: f.nivelCompetencia,
+        nivel: f.nivelCompetencia,
         grado: f.grado,
+        gradoEscolar,
       });
       setSuccess("Olimpista registrado correctamente");
       onSuccess();
       setTimeout(onClose, 900);
-    } catch (e) {
-      console.error(e);
+    } catch (err: unknown) {
+      let msg = "Ocurrió un error al registrar.";
+      if (axios.isAxiosError(err)) {
+        const data = err.response?.data as { message?: string | string[] } | undefined;
+        const m = data?.message;
+        if (Array.isArray(m)) msg = m.join("\n");
+        else if (typeof m === "string") msg = m;
+        else if (typeof err.message === "string") msg = err.message;
+      } else if (err instanceof Error) {
+        msg = err.message;
+      } else if (typeof err === "string") {
+        msg = err;
+      }
+      alert(msg);
     } finally {
       setLoading(false);
-    }
+    } 
   };
 
   const Pill = ({
@@ -123,6 +147,23 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
       {children}
     </button>
   );
+
+  const getOrdinalSuffix = (num: number): string => {
+    switch (num) {
+      case 1:
+        return "ro";
+      case 2:
+        return "do";
+      case 3:
+        return "ro";
+      case 4:
+      case 5:
+      case 6:
+        return "to";
+      default:
+        return "ro";
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -182,8 +223,12 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
                 <Input
                   className="flex-1 text-gray-700"
                   placeholder="+591 70123456"
-                  {...register("tutorContacto")}
+                  {...register("tutorContacto", {
+                    required: VM.tutorRequired,
+                    pattern: { value: /^\d{7,12}$/, message: VM.phoneDigits },
+                  })}
                 />
+
                 <button
                   type="button"
                   onClick={() => setShowTutor(true)}
@@ -249,6 +294,16 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
               </label>
               <Input
                 placeholder="U.E."
+                inputMode="text"
+                pattern="[\\p{L}\\s.'-]+"
+                maxLength={80}
+                onInput={(e) => {
+                  const t = e.currentTarget;
+                  t.value = t.value
+                    .replace(/[^ \p{L}.'-]/gu, "")
+                    .replace(/\s+/g, " ")
+                    .trimStart();
+                }}
                 className="placeholder:text-gray-400 text-gray-700"
                 {...register("unidadEducativa")}
               />
@@ -269,7 +324,8 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
               >
                 {GRADOS.map((g) => (
                   <option key={g} value={g}>
-                    {g}ro.
+                    {g}
+                    {getOrdinalSuffix(g)}.{" "}
                   </option>
                 ))}
               </select>
@@ -330,7 +386,7 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
             <Button onClick={onClose} type="button" variant="outline">
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading || !isValid}>
               {loading ? "Guardando..." : "Registrar"}
             </Button>
           </div>

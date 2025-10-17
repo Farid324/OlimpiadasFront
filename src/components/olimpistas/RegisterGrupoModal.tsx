@@ -10,6 +10,8 @@ import { DEPARTAMENTOS, NIVELES_COMPETENCIA } from "@/config/catalogs";
 import { api } from "@/libs/api";
 import { registerGrupo } from "@/libs/grupos.api";
 import type { GrupoMiembroInput } from "@/types/grupo";
+import RegisterTutorModal from "./RegisterTutorModal";
+import { VM } from "@/config/validation-messages";
 
 type Area = { id_area: number; nombre_area: string };
 type NivelCompetencia = "Primaria" | "Secundaria";
@@ -25,12 +27,19 @@ export default function RegisterGrupoModal({
   const [nombreEquipo, setNombreEquipo] = useState("");
   const [unidadEducativa, setUnidadEducativa] = useState("");
   const [departamento, setDepartamento] = useState<string>("La Paz");
-  const [nivelCompetencia, setNivelCompetencia] = useState<NivelCompetencia>("Secundaria");
+  const [nivelCompetencia, setNivelCompetencia] =
+    useState<NivelCompetencia>("Secundaria");
   const [areaNombre, setAreaNombre] = useState<string>("");
   const [miembros, setMiembros] = useState<GrupoMiembroInput[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
+  const [showTutorModal, setShowTutorModal] = useState(false);
+  const [tutorSeleccionado, setTutorSeleccionado] = useState<{
+    id?: number;
+    nombre?: string;
+    telefono?: string;
+  } | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -53,7 +62,8 @@ export default function RegisterGrupoModal({
     departamento &&
     areaNombre &&
     nivelCompetencia &&
-    miembros.length > 0;
+    miembros.length >= 2 &&
+    tutorSeleccionado;
 
   const submit = async () => {
     if (!canSubmit) return;
@@ -64,8 +74,10 @@ export default function RegisterGrupoModal({
         unidadEducativa,
         departamento,
         area: areaNombre,
-        nivelCompetencia,
+        nivel: nivelCompetencia,
         miembros,
+        tutorId: tutorSeleccionado?.id,
+        tutorTelefono: tutorSeleccionado?.telefono,
       });
       setSuccess("Grupo registrado correctamente");
       onSuccess();
@@ -195,6 +207,35 @@ export default function RegisterGrupoModal({
           </div>
         </div>
 
+        {/*tutor responsable GR*/}
+        <div className="border rounded-lg mb-4 p-4">
+          <h3 className="font-semibold text-gray-700 mb-2">
+            Tutor académico responsable
+          </h3>
+          {tutorSeleccionado ? (
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-gray-800 font-medium">
+                  {tutorSeleccionado.nombre}
+                </p>
+                <p className="text-sm text-gray-500">
+                  Teléfono: {tutorSeleccionado.telefono}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => setTutorSeleccionado(null)}
+              >
+                Eliminar tutor
+              </Button>
+            </div>
+          ) : (
+            <Button onClick={() => setShowTutorModal(true)}>
+              Registrar / Seleccionar tutor
+            </Button>
+          )}
+        </div>
+
         {/*miembros*/}
         <div className="border rounded-lg">
           <div className="flex items-center justify-between p-3">
@@ -222,7 +263,9 @@ export default function RegisterGrupoModal({
                 <tbody>
                   {miembros.map((m) => (
                     <tr key={m.ci} className="border-b">
-                      <td className="py-2 px-2 text-gray-700">{m.nombreCompleto}</td>
+                      <td className="py-2 px-2 text-gray-700">
+                        {m.nombreCompleto}
+                      </td>
                       <td className="py-2 px-2 text-gray-700">{m.ci}</td>
                       <td className="py-2 px-2 text-gray-700">
                         {m.grado}ro. {nivelCompetencia}
@@ -239,6 +282,9 @@ export default function RegisterGrupoModal({
                   ))}
                 </tbody>
               </table>
+            )}
+            {miembros.length > 0 && miembros.length < 2 && (
+              <p className="mt-2 text-sm text-red-600">{VM.minGroupMembers}</p>
             )}
           </div>
         </div>
@@ -257,6 +303,20 @@ export default function RegisterGrupoModal({
           <AddMiembroGrupoModal
             onClose={() => setShowAdd(false)}
             onAdd={addMiembro}
+          />
+        )}
+
+        {showTutorModal && (
+          <RegisterTutorModal
+            onClose={() => setShowTutorModal(false)}
+            onSuccess={({ telefono, tutorId, tutorNombre }) => {
+              setTutorSeleccionado({
+                id: tutorId,
+                telefono,
+                nombre: tutorNombre,
+              });
+              setShowTutorModal(false);
+            }}
           />
         )}
       </div>

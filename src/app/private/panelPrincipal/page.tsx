@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/libs/api';
 import { AxiosError } from 'axios'; // <- Importar AxiosError
-
+import { usePageHeader } from '@/contexts/pageHeader';
 type Nivel = {
   id_nivel: number;
   nombre_nivel: string;
@@ -22,7 +22,10 @@ export default function PanelPrincipalPage() {
   const [areas, setAreas] = useState<Area[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+  const { setTitle } = usePageHeader();
+  useEffect(() => {
+    setTitle('Panel Principal');
+  }, [setTitle]);
   useEffect(() => {
     async function fetchAreas() {
       try {
