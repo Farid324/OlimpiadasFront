@@ -17,6 +17,7 @@ import {
 import { composeNivelCodigo } from "@/libs/nivel";
 import RegisterTutorModal from "@/components/olimpistas/RegisterTutorModal";
 import { VM } from "@/config/validation-messages";
+import axios from "axios"
 
 type Area = { id_area: number; nombre_area: string };
 
@@ -51,8 +52,8 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
   const [areas, setAreas] = useState<Area[]>([]);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
-  const UE_REGEX = /^[\p{L}\s.'-]+$/u;
-  const [ueError, setUeError] = useState<string | null>(null);
+  //const UE_REGEX = /^[\p{L}\s.'-]+$/u;
+  //const [ueError, setUeError] = useState<string | null>(null);
 
   const {
     register,
@@ -106,18 +107,23 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
       setSuccess("Olimpista registrado correctamente");
       onSuccess();
       setTimeout(onClose, 900);
-    } catch (e: any) {
-      const msg =
-        e?.response?.data?.message ||
-        (Array.isArray(e?.response?.data?.message)
-          ? e.response.data.message.join("\n")
-          : null) ||
-        e?.message ||
-        "Ocurrió un error al registrar.";
+    } catch (err: unknown) {
+      let msg = "Ocurrió un error al registrar.";
+      if (axios.isAxiosError(err)) {
+        const data = err.response?.data as { message?: string | string[] } | undefined;
+        const m = data?.message;
+        if (Array.isArray(m)) msg = m.join("\n");
+        else if (typeof m === "string") msg = m;
+        else if (typeof err.message === "string") msg = err.message;
+      } else if (err instanceof Error) {
+        msg = err.message;
+      } else if (typeof err === "string") {
+        msg = err;
+      }
       alert(msg);
     } finally {
       setLoading(false);
-    }
+    } 
   };
 
   const Pill = ({

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '@/libs/api';
-import { Mail, Phone, MoreVertical, Pencil, Trash2, X } from 'lucide-react';
+import { Mail, Phone, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { LuUsers, LuUserCog, LuBookOpenCheck, LuAward } from 'react-icons/lu';
 import { FiSearch } from 'react-icons/fi';
 import { usePageHeader } from '@/contexts/pageHeader';
