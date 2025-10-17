@@ -48,7 +48,6 @@ export default function RegisterTutorModal({
     handleSubmit,
     setValue,
     formState: { errors },
-
   } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
@@ -144,17 +143,17 @@ export default function RegisterTutorModal({
           {}
           <div className="relative mb-4">
             <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
               size={18}
             />
             <input
-              className="w-full pl-10 h-10 border rounded-md"
+              className="w-full pl-10 h-10 border rounded-md text-black"
               placeholder="Buscar por nombre, email o CI"
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
             {loadingSearch && (
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-black italic">
                 buscando…
               </span>
             )}
@@ -163,23 +162,44 @@ export default function RegisterTutorModal({
             {results.length > 0 && (
               <div className="absolute z-[1001] mt-2 w-full bg-white border rounded-md max-h-60 overflow-y-auto">
                 {results.map((r) => (
-                  <button
+                  <div
                     key={r.id}
-                    type="button"
-                    onClick={() => {
-                      pickTutor(r);
-                      setResults([]);
-                      setQ("");
-                    }}
-                    className="w-full text-left px-3 py-2 hover:bg-gray-50"
+                    className="flex items-center justify-between px-3 py-2 hover:bg-gray-50"
                   >
-                    <div className="font-medium text-black">
-                      {r.nombreCompleto}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      CI: {r.ci || "-"} · Tel: {r.telefono} · {r.correo || "-"}
-                    </div>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await pickTutor(r);
+                        setResults([]);
+                        setQ("");
+                      }}
+                      className="text-left"
+                    >
+                      <div className="font-medium text-black">
+                        {r.nombreCompleto}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        CI: {r.ci || "-"} · Tel: {r.telefono} ·{" "}
+                        {r.correo || "-"}
+                      </div>
+                    </button>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        onSuccess({
+                          telefono: r.telefono,
+                          tutorId: r.id,
+                          linked: r.relacionados ?? 0,
+                          tutorNombre: r.nombreCompleto,
+                        });
+                        onClose();
+                      }}
+                    >
+                      Usar
+                    </Button>
+                  </div>
                 ))}
               </div>
             )}
@@ -239,7 +259,7 @@ export default function RegisterTutorModal({
                   Teléfono
                 </label>
                 <Input
-                  placeholder="+591 7xxxxxxx"
+                  placeholder="7xxxxxxx"
                   className="text-gray-700"
                   {...register("telefono")}
                 />

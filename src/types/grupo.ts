@@ -13,6 +13,10 @@ export type CreateGrupoInput = {
   unidadEducativa: string;
   departamento: string;
   area: string;
-  nivelCompetencia: "Primaria" | "Secundaria";
+  nivelCompetencia?: "Primaria" | "Secundaria";
+  nivel?: "Primaria" | "Secundaria";
+
   miembros: GrupoMiembroInput[];
+  tutorId?: number;
+  tutorTelefono?: string;
 };
