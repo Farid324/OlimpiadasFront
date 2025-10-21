@@ -46,3 +46,24 @@ async function getAreas(): Promise<AreaDTO[]> {
     }))
     .filter((x) => !Number.isNaN(x.id) && x.nombre.length > 0);
 }
+
+async function getNiveles(): Promise<NivelDTO[]> {
+  const { data } = await api.get<any[]>('/niveles');
+  const arr = Array.isArray(data) ? data : [];
+  return arr
+    .map((n) => ({
+      id: Number(n.id_nivel ?? n.id ?? n.value),
+      nombre: String(n.nombre_nivel ?? n.nombre ?? n.label ?? '').trim(),
+    }))
+    .filter((x) => !Number.isNaN(x.id) && x.nombre.length > 0);
+}
+
+async function getListaClasificados(filters?: ReportFilters): Promise<ClasificadoItemDTO[]> {
+  const { data } = await api.get<ClasificadoItemDTO[]>('/reportes/clasificados', { params: toParams(filters) });
+  return data;
+}
+
+async function exportClasificados(filters?: ReportFilters): Promise<Blob> {
+  const res = await api.get('/reportes/clasificados/export', { params: toParams(filters), responseType: 'blob' });
+  return res.data as Blob;
+}
