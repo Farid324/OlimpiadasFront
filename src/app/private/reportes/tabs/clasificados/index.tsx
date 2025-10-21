@@ -222,3 +222,67 @@ export default function ClasificadosTab() {
           </div>
         </div>
       </div>
+
+      {/* TABLA + ACCIONES */}
+      <div className="bg-white rounded-lg shadow p-4">
+        <div className="mb-2 flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="font-semibold text-gray-700">Lista de Clasificados ({rows.length})</h2>
+            <p className="text-sm text-gray-500">Olimpistas que pasaron a la ronda final</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button variant="outline">
+              <Eye className="mr-2 w-4 h-4" />
+              Vista Previa
+            </Button>
+            <Button onClick={onExport} disabled={loadingRows || loadingExport} className="bg-blue-600 hover:bg-blue-700">
+              <Download className="mr-2 w-4 h-4" />
+              Exportar Lista
+            </Button>
+          </div>
+        </div>
+
+        {loadingRows ? (
+          <p className="text-center text-gray-500">Cargando...</p>
+        ) : rows.length === 0 ? (
+          <div className="border rounded-md p-6 text-gray-500 text-center">No hay clasificados</div>
+        ) : (
+          <div className="max-h-[500px] overflow-y-auto overflow-x-auto" tabIndex={0}>
+            <table className="min-w-[1100px] border-collapse text-sm">
+              <thead className="sticky top-0 bg-white z-10 border-b border-black">
+                <tr className="text-gray-700">
+                  <th className="py-3 px-4 text-left font-semibold w-24">Posición</th>
+                  <th className="py-3 px-4 text-left font-semibold">Nombre</th>
+                  <th className="py-3 px-4 text-left font-semibold">Área</th>
+                  <th className="py-3 px-4 text-left font-semibold">Nivel</th>
+                  <th className="py-3 px-4 text-left font-semibold">Puntuación</th>
+                  <th className="py-3 px-4 text-left font-semibold">Unidad Educativa</th>
+                  <th className="py-3 px-4 text-left font-semibold">Departamento</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={r.id_inscripcion} className="border-b border-gray-200 hover:bg-gray-50">
+                    <td className="py-3 px-4 text-black tabular-nums">
+                      <span className="text-gray-500 mr-1">#</span>{r.posicion ?? '-'}
+                    </td>
+                    <td className="py-3 px-4 text-black">{r.nombreCompleto}</td>
+                    <td className="py-3 px-4">
+                      <span className="px-2 py-1 rounded-md bg-gray-200 text-black text-xs font-bold">{r.area}</span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="px-2 py-1 rounded-md bg-gray-200 text-black text-xs font-bold">{r.nivel}</span>
+                    </td>
+                    <td className="py-3 px-4 text-black tabular-nums">{r.puntaje}</td>
+                    <td className="py-3 px-4 text-black">{r.unidadEducativa}</td>
+                    <td className="py-3 px-4 text-black">{r.departamento}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
