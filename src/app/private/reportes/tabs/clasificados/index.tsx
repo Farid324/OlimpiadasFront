@@ -67,3 +67,69 @@ async function exportClasificados(filters?: ReportFilters): Promise<Blob> {
   const res = await api.get('/reportes/clasificados/export', { params: toParams(filters), responseType: 'blob' });
   return res.data as Blob;
 }
+
+export default function ClasificadosTab() {
+  const [filters, setFilters] = useState<ReportFilters>({
+    id_area: null,
+    id_nivel: null,
+    estado: null,
+  });
+
+  const [areas, setAreas] = useState<AreaDTO[]>([]);
+  const [niveles, setNiveles] = useState<NivelDTO[]>([]);
+  const [rows, setRows] = useState<ClasificadoItemDTO[]>([]);
+
+  const [loadingCatalogs, setLoadingCatalogs] = useState(true);
+  const [loadingRows, setLoadingRows] = useState(false);
+  const [loadingExport, setLoadingExport] = useState(false);
+
+  useEffect(() => {
+    let cancel = false;
+    (async () => {
+      try {
+        setLoadingCatalogs(true);
+        const [a, n] = await Promise.all([getAreas(), getNiveles()]);
+        if (!cancel) {
+          setAreas(a);
+          setNiveles(n);
+        }
+      } finally {
+        if (!cancel) setLoadingCatalogs(false);
+      }
+    })();
+    return () => {
+      cancel = true;
+    };
+  }, []);
+
+  const fetchRows = async (f: ReportFilters) => {
+    setLoadingRows(true);
+    try {
+      const data = await getListaClasificados(f);
+      setRows(Array.isArray(data) ? data : []);
+    } catch {
+      setRows([]);
+    } finally {
+      setLoadingRows(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRows(filters);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.id_area, filters.id_nivel, filters.estado]);
+
+  const onExport = async () => {
+    try {
+      setLoadingExport(true);
+      const blob = await exportClasificados(filters);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'clasificados.xlsx';
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } finally {
+      setLoadingExport(false);
+    }
+  };
