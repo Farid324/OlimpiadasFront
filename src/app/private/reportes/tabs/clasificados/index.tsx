@@ -133,3 +133,42 @@ export default function ClasificadosTab() {
       setLoadingExport(false);
     }
   };
+
+  const safeAreas   = useMemo(() => (areas ?? []).filter((a): a is AreaDTO => !!a && typeof a.id === 'number' && !!a.nombre), [areas]);
+  const safeNiveles = useMemo(() => (niveles ?? []).filter((n): n is NivelDTO => !!n && typeof n.id === 'number' && !!n.nombre), [niveles]);
+
+  const areaPlaceholder   = filters.id_area == null;
+  const nivelPlaceholder  = filters.id_nivel == null;
+  const estadoPlaceholder = filters.estado == null;
+
+  return (
+    <>
+      {/* FILTROS */}
+      <div className="bg-white rounded-lg shadow p-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {/* Área */}
+          <div className="relative">
+            <select
+              className={`h-11 w-full appearance-none rounded-md border px-3 pr-9 ${areaPlaceholder ? 'text-gray-500' : 'text-black'}`}
+              value={filters.id_area ?? ''}
+              onChange={(e) =>
+                setFilters((f) => ({
+                  ...f,
+                  id_area: e.target.value === '' ? null : Number(e.target.value),
+                }))
+              }
+              aria-label="Filtrar por área"
+              disabled={loadingCatalogs}
+            >
+              {/* Placeholder (gris), oculto en el menú */}
+              <option value="" disabled hidden style={{ color: '#6B7280' }}>Filtrar por área</option>
+              {/* Opciones reales: SIEMPRE negras */}
+              <option value={0} style={{ color: '#111827' }}>Todas las áreas</option>
+              {safeAreas.map((a) => (
+                <option key={`area-${a.id}`} value={a.id} style={{ color: '#111827' }}>
+                  {a.nombre}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+          </div>
