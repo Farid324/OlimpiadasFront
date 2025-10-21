@@ -172,3 +172,53 @@ export default function ClasificadosTab() {
             </select>
             <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
           </div>
+
+          {/* Nivel */}
+          <div className="relative">
+            <select
+              className={`h-11 w-full appearance-none rounded-md border px-3 pr-9 ${nivelPlaceholder ? 'text-gray-500' : 'text-black'}`}
+              value={filters.id_nivel ?? ''}
+              onChange={(e) =>
+                setFilters((f) => ({
+                  ...f,
+                  id_nivel: e.target.value === '' ? null : Number(e.target.value),
+                }))
+              }
+              aria-label="Filtrar por nivel"
+              disabled={loadingCatalogs}
+            >
+              <option value="" disabled hidden style={{ color: '#6B7280' }}>Filtrar por nivel</option>
+              <option value={0} style={{ color: '#111827' }}>Todos los niveles</option>
+              {safeNiveles.map((n) => (
+                <option key={`nivel-${n.id}`} value={n.id} style={{ color: '#111827' }}>
+                  {n.nombre}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+          </div>
+
+          {/* Estado */}
+          <div className="relative">
+            <select
+              className={`h-11 w-full appearance-none rounded-md border px-3 pr-9 ${estadoPlaceholder ? 'text-gray-500' : 'text-black'}`}
+              value={filters.estado ?? ''}
+              onChange={(e) =>
+                setFilters((f) => ({
+                  ...f,
+                  estado: (e.target.value || null) as EstadoClasificado | null,
+                }))
+              }
+              aria-label="Filtrar por estado"
+              disabled={loadingCatalogs}
+            >
+              <option value="" disabled hidden style={{ color: '#6B7280' }}>Filtrar por Estado</option>
+              <option value="TODOS" style={{ color: '#111827' }}>Todos los Estados</option>
+              <option value="CLASIFICADO" style={{ color: '#111827' }}>Clasificado</option>
+              <option value="NO_CLASIFICADO" style={{ color: '#111827' }}>No clasificado</option>
+              <option value="DESCALIFICADO" style={{ color: '#111827' }}>Descalificado</option>
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+          </div>
+        </div>
+      </div>
