@@ -55,7 +55,7 @@ export default function PrivateLayoutContent({ children }: { children: React.Rea
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <SideMenu open={open} role={role} onClose={() => setOpen(false)} />
+      <SideMenu open={open} onClose={() => setOpen(false)} />
 
       <div className="flex-1 min-w-0 flex flex-col">
         <Header

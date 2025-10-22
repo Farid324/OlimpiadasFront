@@ -22,7 +22,7 @@ export default function PrivateLayout({ children }: { children: React.ReactNode 
 
   return (
     <PageHeaderProvider>
-      <SideMenu open={open} role="ADMINISTRADOR" />
+      <SideMenu open={open} />
       <div className={['min-h-screen flex flex-col transition-[padding] duration-300 ease-out', open ? 'pl-[var(--sidebar-w)]' : 'pl-0'].join(' ')}>
         <HeaderFromContext onToggle={() => setOpen(v => !v)} />
         <main className="flex-1 overflow-auto bg-[var(--fondoAzulGris)]">

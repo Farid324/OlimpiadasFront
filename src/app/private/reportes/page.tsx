@@ -1,4 +1,4 @@
-//src/app/private/reportes/page.tsx
+// src/app/private/reportes/page.tsx
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
