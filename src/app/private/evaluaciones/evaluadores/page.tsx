@@ -10,9 +10,19 @@ import SearchBar from '@/components/evaluador/buscador';
 import FilterTabs from '@/components/evaluador/filtros';
 import CompetidorList from '@/components/evaluador/listaOlimpistas';
 import ModalEvaluacion from '@/components/evaluador/modalEvaluacion';
-import { Competidor } from '@/types/notas';
+//import { Competidor } from '@/types/notas';
 
 type ConstraintItem = { constraints?: Record<string, string> };
+type Competidor = {
+  id_competidor: number;
+  nombres: string;
+  apellidos: string;
+  ci: string;
+  escuela: string;
+  nota?: number | null;
+  inscripcion?: number;
+};
+
 
 type BackendErrorResponse =
   | {
@@ -104,22 +114,23 @@ export default function EvaluacionesEvaluadoresPage() {
 
   // ===== Filtrado + búsqueda =====
   const filteredCompetidores = useMemo(() => {
-    return competidores
-      .filter(c => {
-        if (activeFilter === 'Pendientes') return c.nota === null;
-        if (activeFilter === 'Evaluados') return c.nota !== null;
-        return true;
-      })
-      .filter(c => {
-        const term = searchQuery.toLowerCase();
-        return (
-          c.nombres.toLowerCase().includes(term) ||
-          c.apellidos.toLowerCase().includes(term) ||
-          c.ci.toLowerCase().includes(term) ||
-          (c.escuela?.toLowerCase().includes(term) ?? false)
-        );
-      });
-  }, [competidores, searchQuery, activeFilter]);
+  return competidores
+    ?.filter(c => {
+      if (activeFilter === 'Pendientes') return c.nota === null;
+      if (activeFilter === 'Evaluados') return c.nota !== null;
+      return true;
+    })
+    ?.filter(c => {
+      const term = searchQuery?.toLowerCase() ?? '';
+      return (
+        (c?.nombres?.toLowerCase() ?? '').includes(term) ||
+        (c?.apellidos?.toLowerCase() ?? '').includes(term) ||
+        (c?.ci?.toLowerCase() ?? '').includes(term) ||
+        (c?.escuela?.toLowerCase() ?? '').includes(term)
+      );
+    }) ?? [];
+}, [competidores, searchQuery, activeFilter]);
+
 
   // ===== Registrar nota =====
   const handleSubmitNota = async (nota: number) => {
