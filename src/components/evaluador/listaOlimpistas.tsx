@@ -24,10 +24,10 @@ export default function CompetidorList({ data, onEvaluar, onEditar }: Props) {
       </thead>
       <tbody>
         {data.map(c => (
-          <tr key={c.id_competidor} className="border-b hover:bg-gray-50">
-            <td className="p-2">{c.nombres} {c.apellidos}</td>
-            <td className="p-2 text-center">{c.ci}</td>
-            <td className="p-2 text-center">{c.escuela}</td>
+          <tr key={c.competidor.id_competidor} className="border-b hover:bg-gray-50">
+            <td className="p-2">{c.competidor.nombres} {c.competidor.apellidos}</td>
+            <td className="p-2 text-center">{c.competidor.ci}</td>
+            <td className="p-2 text-center">{c.competidor.escuela}</td>
             <td className="p-2 text-center">{c.nota ?? '—'}</td>
             <td className="p-2 flex justify-center gap-2">
               {!c.nota ? (
