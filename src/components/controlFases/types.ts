@@ -9,6 +9,8 @@ export type ResumenClasificacion = {
 
 export type FilaFase = {
   id: string;
+  idArea?: number;
+  idNivel?: number;
   area: string;
   nivel: string;
   faseActual: FaseActual;

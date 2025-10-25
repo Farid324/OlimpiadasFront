@@ -1,27 +1,60 @@
-'use client';
+//src/app/private/controlFases/page.tsx
+"use client";
 
-import { useEffect, useState } from 'react';
-import { usePageHeader } from '@/contexts/pageHeader';
-import { fetchControlFases } from '@/components/controlFases/service';
-import type { ControlFasesResponse } from '@/components/controlFases/types';
-import StatCard from '@/components/controlFases/StatCard';
-import PhaseTable from '@/components/controlFases/PhaseTable';
+import { useEffect, useState } from "react";
+import { usePageHeader } from "@/contexts/pageHeader";
+import { fetchControlFases } from "@/components/controlFases/service";
+import type { ControlFasesResponse } from "@/components/controlFases/types";
+import StatCard from "@/components/controlFases/StatCard";
+import PhaseTable from "@/components/controlFases/PhaseTable";
 
 export default function ControlFasesPage() {
   const { setTitle } = usePageHeader();
   const [data, setData] = useState<ControlFasesResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => setTitle('Control de Fases'), [setTitle]);
+  useEffect(() => setTitle("Control de Fases"), [setTitle]);
+
+  const load = async () => {
+    try {
+      setLoading(true);
+      const d = await fetchControlFases();
+      setData(d);
+      setError(null);
+    } catch (e: any) {
+      setError(e?.message || "No se pudo cargar la información.");
+      setData(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    fetchControlFases()
-      .then(setData)
-      .catch((e) => setError(e.message));
+    load();
   }, []);
 
+  if (loading && !data) {
+    return (
+      <div className="rounded-xl border bg-white p-6 text-slate-600">
+        Cargando…
+      </div>
+    );
+  }
+
   if (!data) {
-    return <div className="rounded-xl border bg-white p-6 text-slate-600">Cargando…</div>;
+    return (
+      <div className="space-y-4">
+        {error && (
+          <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-amber-700 text-sm">
+            {error}
+          </div>
+        )}
+        <div className="rounded-xl border bg-white p-6 text-slate-600">
+          No hay datos para mostrar.
+        </div>
+      </div>
+    );
   }
 
   const { kpis, filas } = data;
@@ -30,11 +63,11 @@ export default function ControlFasesPage() {
     <div className="space-y-6">
       {error && (
         <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-amber-700 text-sm">
-          Mostrando datos de ejemplo (sin conexión al backend).
+          {error}
         </div>
       )}
 
-      {/* KPIs: 1 col (móvil), 2 cols (tablet), 4 cols (desktop) */}
+      {/*KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Evaluaciones Completadas"
@@ -58,11 +91,12 @@ export default function ControlFasesPage() {
         />
       </div>
 
-      {/* Tabla / Cards responsive */}
+      {/*tabla */}
       <PhaseTable
         title="Estado de fases por Área"
         subtitle="Control y Aprobación de Fases de Evaluación"
         filas={filas}
+        onRefresh={load}      
       />
     </div>
   );

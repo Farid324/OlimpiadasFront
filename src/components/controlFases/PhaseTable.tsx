@@ -1,16 +1,28 @@
-import React from 'react';
-import type { FilaFase } from './types';
-import { LuCircle } from 'react-icons/lu';
+import React, { useState } from "react";
+import type { FilaFase } from "./types";
+import { LuCircle } from "react-icons/lu";
+import ApprovePhaseModal from "./ApprovePhaseModal";
 
 export default function PhaseTable({
   title,
   subtitle,
   filas,
+  onRefresh,
 }: {
   title: string;
   subtitle?: string;
   filas: FilaFase[];
+  onRefresh?: () => void;
 }) {
+  const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState<FilaFase | null>(null);
+
+  const abrirModal = (row: FilaFase) => {
+    setSelected(row);
+    setOpen(true);
+  };
+  const cerrarModal = () => setOpen(false);
+
   return (
     <div className="rounded-xl border bg-white shadow-sm">
       <div className="px-4 py-4 md:px-6 md:py-5 border-b">
@@ -20,10 +32,7 @@ export default function PhaseTable({
 
       {/* Contenedor con scroll horizontal */}
       <div className="overflow-x-auto">
-        {/* 
-          min-w-* obliga a que la tabla no colapse en móvil y aparezca el scroll.
-          Ajusta el valor si necesitas más/menos ancho.
-        */}
+        {/* min-w-* obliga a que la tabla no colapse en móvil y aparezca el scroll */}
         <table className="min-w-[1100px] w-full text-sm text-left">
           <thead className="bg-slate-50/70 text-xs text-slate-600">
             <tr className="[&>th]:px-6 [&>th]:py-3">
@@ -42,7 +51,9 @@ export default function PhaseTable({
               <tr key={f.id} className="hover:bg-slate-50/50 transition-colors">
                 {/* Área / Nivel */}
                 <td className="px-6 py-4 align-top">
-                  <div className="font-medium text-slate-900 whitespace-nowrap">{f.area}</div>
+                  <div className="font-medium text-slate-900 whitespace-nowrap">
+                    {f.area}
+                  </div>
                   <div className="text-xs text-slate-500">{f.nivel}</div>
                 </td>
 
@@ -50,11 +61,11 @@ export default function PhaseTable({
                 <td className="px-6 py-4 align-top">
                   <Badge
                     color={
-                      f.faseActual === 'Completado'
-                        ? 'green'
-                        : f.faseActual === 'Evaluación Final'
-                        ? 'amber'
-                        : 'blue'
+                      f.faseActual === "Completado"
+                        ? "green"
+                        : f.faseActual === "Evaluación Final"
+                        ? "amber"
+                        : "blue"
                     }
                     label={f.faseActual}
                   />
@@ -74,13 +85,16 @@ export default function PhaseTable({
                 <td className="px-6 py-4 align-top">
                   <ul className="space-y-1 text-xs">
                     <li className="flex items-center gap-1 text-emerald-600">
-                      <LuCircle className="shrink-0" /> Clasificados: {f.resumen.clasificados}
+                      <LuCircle className="shrink-0" /> Clasificados:{" "}
+                      {f.resumen.clasificados}
                     </li>
                     <li className="flex items-center gap-1 text-amber-600">
-                      <LuCircle className="shrink-0" /> No clasificados: {f.resumen.noClasificados}
+                      <LuCircle className="shrink-0" /> No clasificados:{" "}
+                      {f.resumen.noClasificados}
                     </li>
                     <li className="flex items-center gap-1 text-red-600">
-                      <LuCircle className="shrink-0" /> Descalificados: {f.resumen.descalificados}
+                      <LuCircle className="shrink-0" /> Descalificados:{" "}
+                      {f.resumen.descalificados}
                     </li>
                   </ul>
                 </td>
@@ -88,18 +102,20 @@ export default function PhaseTable({
                 {/* Responsable */}
                 <td className="px-6 py-4 align-top">
                   <div className="text-slate-900">{f.responsable}</div>
-                  <div className="text-xs text-slate-500 whitespace-nowrap">{f.fechaHora}</div>
+                  <div className="text-xs text-slate-500 whitespace-nowrap">
+                    {f.fechaHora}
+                  </div>
                 </td>
 
                 {/* Estado */}
                 <td className="px-6 py-4 align-top">
                   <Badge
                     color={
-                      f.estado === 'Completado'
-                        ? 'green'
-                        : f.estado === 'Listo para aprobar'
-                        ? 'amber'
-                        : 'slate'
+                      f.estado === "Completado"
+                        ? "green"
+                        : f.estado === "Listo para aprobar"
+                        ? "amber"
+                        : "slate"
                     }
                     label={f.estado}
                   />
@@ -108,10 +124,15 @@ export default function PhaseTable({
                 {/* Acción */}
                 <td className="px-6 py-4 align-top text-right">
                   <ActionButton
-                    label={f.accionLabel ?? ''}
-                    color={f.accionColor ?? 'neutral'}
+                    label={f.accionLabel ?? ""}
+                    color={f.accionColor ?? "neutral"}
                     disabled={f.accionDisabled ?? true}
-                    onClick={() => {}}
+                    onClick={() => {
+                      // Solo si es el primario (aprobar) y no está disabled
+                      if (!f.accionDisabled && f.accionColor === "primary") {
+                        abrirModal(f);
+                      }
+                    }}
                   />
                 </td>
               </tr>
@@ -119,7 +140,10 @@ export default function PhaseTable({
 
             {filas.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-6 py-10 text-center text-sm text-slate-500">
+                <td
+                  colSpan={7}
+                  className="px-6 py-10 text-center text-sm text-slate-500"
+                >
                   No hay datos para mostrar.
                 </td>
               </tr>
@@ -127,6 +151,17 @@ export default function PhaseTable({
           </tbody>
         </table>
       </div>
+
+      {/* 🔻 Un solo modal, fuera del map */}
+      <ApprovePhaseModal
+        open={open}
+        row={selected}
+        onClose={cerrarModal}
+        onSuccess={() => {
+          cerrarModal();
+          onRefresh?.();
+        }}
+      />
     </div>
   );
 }
@@ -140,7 +175,7 @@ function pct(done: number, total: number) {
 
 function Progress({ value }: { value: number }) {
   return (
-    <div className="h-2 rounded-full bg-slate-200">
+    <div className="h-2 rounded-full bg-slate-200" aria-label="Progreso">
       <div
         className="h-2 rounded-full bg-blue-600"
         style={{ width: `${value}%` }}
@@ -157,17 +192,19 @@ function Badge({
   color,
 }: {
   label: string;
-  color: 'green' | 'amber' | 'blue' | 'slate';
+  color: "green" | "amber" | "blue" | "slate";
 }) {
-  const cls: Record<'green' | 'amber' | 'blue' | 'slate', string> = {
-    green: 'bg-emerald-100 text-emerald-700',
-    amber: 'bg-amber-100 text-amber-700',
-    blue: 'bg-blue-100 text-blue-700',
-    slate: 'bg-slate-100 text-slate-700',
+  const cls: Record<"green" | "amber" | "blue" | "slate", string> = {
+    green: "bg-emerald-100 text-emerald-700",
+    amber: "bg-amber-100 text-amber-700",
+    blue: "bg-blue-100 text-blue-700",
+    slate: "bg-slate-100 text-slate-700",
   };
 
   return (
-    <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs ${cls[color]}`}>
+    <span
+      className={`inline-flex items-center rounded-full px-3 py-1 text-xs ${cls[color]}`}
+    >
       {label}
     </span>
   );
@@ -180,23 +217,30 @@ function ActionButton({
   onClick,
 }: {
   label: string;
-  color: 'primary' | 'neutral' | 'success';
+  color: "primary" | "neutral" | "success";
   disabled?: boolean;
   onClick: () => void;
 }) {
   const style =
-    color === 'primary'
-      ? 'bg-blue-600 text-white hover:bg-blue-700'
-      : color === 'success'
-      ? 'bg-emerald-100 text-emerald-700'
-      : 'bg-slate-100 text-slate-600';
+    color === "primary"
+      ? "bg-blue-600 text-white hover:bg-blue-700"
+      : color === "success"
+      ? "bg-emerald-100 text-emerald-700"
+      : "bg-slate-100 text-slate-600";
 
   const base =
-    'inline-flex items-center rounded-lg px-3 py-1.5 text-xs font-medium transition-colors';
-  const classes = disabled ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : style;
+    "inline-flex items-center rounded-lg px-3 py-1.5 text-xs font-medium transition-colors";
+  const classes = disabled
+    ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+    : style;
 
   return (
-    <button type="button" onClick={onClick} disabled={disabled} className={`${base} ${classes}`}>
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={`${base} ${classes}`}
+    >
       {label}
     </button>
   );
