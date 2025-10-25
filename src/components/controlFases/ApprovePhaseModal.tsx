@@ -7,6 +7,7 @@ import type { FilaFase } from "./types";
 import { closePhase } from "./phaseApi";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { RiErrorWarningLine } from "react-icons/ri";
+import { FiCheckCircle } from "react-icons/fi";
 
 export default function ApprovePhaseModal({
   open,
@@ -120,11 +121,11 @@ export default function ApprovePhaseModal({
 
             {/* Comentario */}
             <section>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className=" block text-sm font-medium text-black mb-1">
                 Comentarios de Aprobación
               </label>
               <textarea
-                className="w-full min-h-24 rounded-md border px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                className="w-full min-h-24 rounded-md border border-gray-300 px-3 py-2 text-sm text-black placeholder-gray-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                 placeholder="Comentarios sobre la aprobación de esta fase..."
                 value={comentario}
                 onChange={(e) => setComentario(e.target.value)}
@@ -147,7 +148,7 @@ export default function ApprovePhaseModal({
           <div className="flex items-center justify-end gap-3 px-5 py-4 border-t">
             <button
               type="button"
-              className="rounded-md border bg-white px-4 py-2 text-sm hover:bg-gray-50"
+              className="rounded-md border bg-white px-4 py-2 text-sm text-black hover:bg-gray-200"
               onClick={onClose}
               disabled={submitting}
             >
@@ -155,11 +156,18 @@ export default function ApprovePhaseModal({
             </button>
             <button
               type="button"
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
+              className="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
               onClick={enviar}
               disabled={submitting}
             >
-              {submitting ? "Aprobando…" : "Aprobar Fase"}
+              {submitting ? (
+                "Aprobando…"
+              ) : (
+                <>
+                  <FiCheckCircle className="w-4 h-4 text-white" />
+                  Aprobar Fase
+                </>
+              )}
             </button>
           </div>
         </div>
