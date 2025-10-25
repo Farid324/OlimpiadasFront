@@ -1,4 +1,4 @@
-// src/app/private/reportes/layout.tsx
+// src/app/private/evaluaciones/evaluadores/layout.tsx
 'use client';
 
 export default function PrivateLayout({ children }: { children: React.ReactNode }) {

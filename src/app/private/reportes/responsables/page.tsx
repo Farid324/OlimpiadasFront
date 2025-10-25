@@ -1,8 +1,8 @@
-// src/app/private/reportes/page.tsx
+// src/app/private/reportes/responsables/page.tsx
 'use client';
 import { useEffect} from 'react';
 import { usePageHeader } from '@/contexts/pageHeader';
-export default function ReportesPage() {
+export default function ReportesResponsablePage() {
   const { setTitle } = usePageHeader();
   useEffect(() => {
     setTitle('Reportes');

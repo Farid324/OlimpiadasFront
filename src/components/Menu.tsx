@@ -43,19 +43,17 @@ export const MENU_BY_ROLE: Record<RoleName, MenuItem[]> = {
     { icon: 'LuFilePen', label: 'Evaluaciones', href: '/private/evaluaciones' },
     { icon: 'LuGitBranch', label: 'Control de Fases', href: '/private/controlFases' },
     { icon: 'LuChartColumn', label: 'Reportes', href: '/private/reportes' },
-    { icon: 'FiSmartphone', label: 'Evaluación Móvil', href: '/private/evaluacionMovil' },
     { icon: 'LuActivity', label: 'Registro de Actividades', href: '/private/registroActividades' },
     { icon: 'LuSettings', label: 'Configuración', href: '/private/configuracion' },
   ],
   EVALUADOR: [
     { icon: 'LuHouse', label: 'Panel Principal', href: '/private/panelPrincipal' },
-    { icon: 'LuFilePen', label: 'Evaluaciones', href: '/private/evaluaciones' },
-    { icon: 'FiSmartphone', label: 'Evaluación Móvil', href: '/private/evaluacionMovil' },
+    { icon: 'LuFilePen', label: 'Evaluaciones', href: '/private/evaluaciones/evaluadores' },
   ],
   RESPONSABLE_DE_AREA: [
     { icon: 'LuHouse', label: 'Panel Principal', href: '/private/panelPrincipal' },
-    { icon: 'LuGitBranch', label: 'Control de Fases', href: '/private/controlFases' },
-    { icon: 'LuChartColumn', label: 'Reportes', href: '/private/reportes' },
+    { icon: 'LuGitBranch', label: 'Control de Fases', href: '/private/controlFases/responsables' },
+    { icon: 'LuChartColumn', label: 'Reportes', href: '/private/reportes/responsables' },
   ],
 };
 
@@ -67,18 +65,16 @@ const ROLE_LABEL: Record<RoleName, string> = {
 
 export default function SideMenu({
   open,
-  role,
   onClose,
 }: {
   open: boolean;
-  role: RoleName;
   onClose?: () => void; 
 }) {
   const { user, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-
-  const items = MENU_BY_ROLE[role] ?? [];
+  const userRole = user?.role as RoleName;
+  const items = userRole ? MENU_BY_ROLE[userRole] : [];
 
   const handleLogout = () => {
     logout();
@@ -86,7 +82,7 @@ export default function SideMenu({
   };
 
   const displayName = user?.name || 'Usuario';
-  const displayRole = ROLE_LABEL[(user?.role as RoleName) || role] || 'Rol';
+  const displayRole = ROLE_LABEL[userRole] || 'Rol';
   const displayEmail = user?.email || 'usuario@olimpiadas.edu';
 
   const isActive = (href: string) =>
