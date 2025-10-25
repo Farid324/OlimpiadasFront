@@ -27,6 +27,24 @@ type ReportFilters = {
 
 type AreaDTO = { id: number; nombre: string };
 type NivelDTO = { id: number; nombre: string };
+type RawAreaDTO = {
+  id_area?: number | string;
+  id?: number | string;
+  value?: number | string;
+  nombre_area?: string;
+  nombre?: string;
+  label?: string;
+};
+
+// 👇 TIPO PARA LA RESPUESTA CRUDA DE 'niveles' (en lugar de any)
+type RawNivelDTO = {
+  id_nivel?: number | string;
+  id?: number | string;
+  value?: number | string;
+  nombre_nivel?: string;
+  nombre?: string;
+  label?: string;
+};
 
 const toParams = (filters?: ReportFilters) => {
   const p = new URLSearchParams();
@@ -37,7 +55,8 @@ const toParams = (filters?: ReportFilters) => {
 };
 
 async function getAreas(): Promise<AreaDTO[]> {
-  const { data } = await api.get<any[]>('/areas');
+  // CORREGIDO: Usamos el tipo RawAreaDTO[] en lugar de any[]
+  const { data } = await api.get<RawAreaDTO[]>('/areas');
   const arr = Array.isArray(data) ? data : [];
   return arr
     .map((a) => ({
@@ -48,7 +67,8 @@ async function getAreas(): Promise<AreaDTO[]> {
 }
 
 async function getNiveles(): Promise<NivelDTO[]> {
-  const { data } = await api.get<any[]>('/niveles');
+  // CORREGIDO: Usamos el tipo RawNivelDTO[] en lugar de any[]
+  const { data } = await api.get<RawNivelDTO[]>('/niveles');
   const arr = Array.isArray(data) ? data : [];
   return arr
     .map((n) => ({
