@@ -95,6 +95,16 @@ export default function EvaluacionesEvaluadoresPage() {
 
   const [modalCompetidor, setModalCompetidor] = useState<Competidor | null>(null);
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [evaluaciones, setEvaluaciones] = useState<unknown[]>([]);
+
+  const handleOpen = () => setIsModalOpen(true);
+  const handleClose = () => setIsModalOpen(false);
+
+  const handleSubmit = (data: unknown) => {
+    console.log("Datos enviados:", data);
+  };
+
   // ===== Fetch competidores asignados =====
   const fetchCompetidores = async () => {
     setLoading(true);
@@ -133,20 +143,26 @@ export default function EvaluacionesEvaluadoresPage() {
 
 
   // ===== Registrar nota =====
-  const handleSubmitNota = async (nota: number) => {
+  const handleSubmitNota = async (formData: any) => {
     if (!modalCompetidor) return;
 
     try {
-      await api.post('/admin/evaluaciones/nota', {
+      // Aquí envías la evaluación al backend
+      await api.post("/admin/evaluaciones/nota", {
         idInscripcion: modalCompetidor.inscripcion,
-        nota,
+        nota: formData.nota,
+        descripcionConceptual: formData.descripcionConceptual,
+        etica: formData.etica,
+        observaciones: formData.observaciones,
       });
+
       setModalCompetidor(null);
-      fetchCompetidores(); // refrescar lista
+      fetchCompetidores(); // refresca la lista
     } catch (err) {
-      console.error(err);
+      console.error("Error al registrar evaluación:", err);
     }
   };
+
 
 
   return (
@@ -177,11 +193,14 @@ export default function EvaluacionesEvaluadoresPage() {
       {/* Modal de evaluación */}
       {modalCompetidor && (
         <ModalEvaluacion
-          competidor={modalCompetidor}
+          isOpen={!!modalCompetidor}
           onClose={() => setModalCompetidor(null)}
           onSubmit={handleSubmitNota}
+          title={`Evaluar a ${modalCompetidor.nombres} ${modalCompetidor.apellidos}`}
         />
       )}
+
+
     </div>
   );
       {/* {modalEditar && (
