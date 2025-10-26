@@ -7,12 +7,13 @@ import { Search, FileText, Edit, CheckCircle } from 'lucide-react';
 import { usePageHeader } from '@/contexts/pageHeader';
 
 type Log = {
-  id_log: number;
+  id: number;
   usuario: string;
-  accion: 'REGISTRO' | 'MODIFICACIÓN';
-  entidad: string;
+  accion: 'REGISTRO' | 'MODIFICACION';
+  objetivo: string;
   fecha: string;
   descripcion?: string;
+  cambios?: string;
 };
 
 export default function LogsPage() {
@@ -21,35 +22,34 @@ export default function LogsPage() {
   const [loading, setLoading] = useState(false);
   const { setTitle } = usePageHeader();
 
-  // 🔹 Cargar datos
+  // 🔹 Función para cargar logs
+  const fetchLogs = async (query = '') => {
+    setLoading(true);
+    try {
+      const res = await api.get('/logs', {
+        params: query.trim() ? { q: query.trim() } : {},
+      });
+      setLogs(Array.isArray(res.data) ? res.data : []);
+    } catch (error) {
+      console.error('Error cargando logs:', error);
+      setLogs([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🔹 Cargar datos al montar el componente
   useEffect(() => {
     setTitle('Registro de Actividades');
-
-    const fetchLogs = async () => {
-      setLoading(true);
-      try {
-        const res = await api.get('/logs', {
-          params: q.trim() ? { q: q.trim() } : {},
-        });
-        setLogs(Array.isArray(res.data) ? res.data : []);
-      } catch (error) {
-        console.error('Error cargando logs:', error);
-        setLogs([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const timeout = setTimeout(fetchLogs, 300);
-    return () => clearTimeout(timeout);
-  }, [q]);
+    fetchLogs(q);
+  }, [q, setTitle]);
 
   // 🔹 Métricas
   const metrics = useMemo(() => {
     if (!Array.isArray(logs)) return { total: 0, registros: 0, modificaciones: 0 };
     const total = logs.length;
     const registros = logs.filter((l) => l.accion === 'REGISTRO').length;
-    const modificaciones = logs.filter((l) => l.accion === 'MODIFICACIÓN').length;
+    const modificaciones = logs.filter((l) => l.accion === 'MODIFICACION').length;
     return { total, registros, modificaciones };
   }, [logs]);
 
@@ -132,22 +132,15 @@ export default function LogsPage() {
                   <th className="py-2 px-4 font-medium">Fecha/Hora</th>
                   <th className="py-2 px-4 font-medium">Usuario</th>
                   <th className="py-2 px-4 font-medium">Acción</th>
-                  <th className="py-2 px-4 font-medium">Entidad</th>
+                  <th className="py-2 px-4 font-medium">Objetivo</th>
                   <th className="py-2 px-4 font-medium">Descripción</th>
+                  <th className="py-2 px-4 font-medium">Cambios</th>
                 </tr>
               </thead>
               <tbody>
-                {logs.map((l) => (
-                  <tr key={l.id_log} className="bg-white shadow-sm rounded-md">
-                    <td className="py-2 px-4 text-gray-600">
-                      {new Date(l.fecha).toLocaleString('es-BO', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </td>
+                {logs.map((l, idx) => (
+                  <tr key={l.id ?? idx} className="bg-white shadow-sm rounded-md">
+                    <td className="py-2 px-4 text-gray-600">{l.fecha}</td>
                     <td className="py-2 px-4 font-medium text-gray-900">{l.usuario}</td>
                     <td className="py-2 px-4">
                       {l.accion === 'REGISTRO' ? (
@@ -160,8 +153,9 @@ export default function LogsPage() {
                         </span>
                       )}
                     </td>
-                    <td className="py-2 px-4 text-gray-700">{l.entidad}</td>
+                    <td className="py-2 px-4 text-gray-700">{l.objetivo}</td>
                     <td className="py-2 px-4 text-gray-600">{l.descripcion || '—'}</td>
+                    <td className="py-2 px-4 text-gray-600">{l.cambios || '—'}</td>
                   </tr>
                 ))}
               </tbody>
