@@ -97,3 +97,21 @@ const PhaseTabs = ({
     </button>
   </div>
 );
+
+/** Banner de “Fase Aprobada” */
+const ApprovedBanner = () => (
+  <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3">
+    <div className="flex items-start gap-2">
+      <CircleCheck className="h-4 w-4 text-black mt-[2px]" strokeWidth={2.25} />
+      <div>
+        <p className="text-[14px] font-semibold text-black leading-5">
+          Fase Aprobada
+        </p>
+        <p className="text-[13px] text-gray-700 leading-5">
+          La fase de clasificación ha sido aprobada. Todos los reportes están
+          disponibles para descarga.
+        </p>
+      </div>
+    </div>
+  </div>
+);
