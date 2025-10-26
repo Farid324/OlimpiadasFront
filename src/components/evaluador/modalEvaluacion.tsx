@@ -1,25 +1,50 @@
+// src/components/evaluador/modalEvaluacion.tsx
 "use client";
 import React, { useState, useEffect } from "react";
 
 interface EvaluacionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: unknown) => void;
+  onSubmit: (data: {
+    nota: number;
+    descripcionConceptual: string;
+    etica: string;
+    observaciones: string;
+  }) => void;
   title?: string;
+  initialData?: {
+    nota?: number;
+    descripcionConceptual?: string;
+    etica?: string;
+    observaciones?: string;
+  };
 }
 
-export default function EvaluacionModal({
+export default function ModalEvaluacion({
   isOpen,
   onClose,
   onSubmit,
   title = "Registrar Evaluación",
+  initialData,
 }: EvaluacionModalProps) {
   const [formData, setFormData] = useState({
-    nota: "",
-    descripcionConceptual: "",
-    etica: "",
-    observaciones: "",
+    nota: initialData?.nota?.toString() ?? "",
+    descripcionConceptual: initialData?.descripcionConceptual ?? "",
+    etica: initialData?.etica ?? "",
+    observaciones: initialData?.observaciones ?? "",
   });
+
+  // Actualiza datos si cambian
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        nota: initialData.nota?.toString() ?? "",
+        descripcionConceptual: initialData.descripcionConceptual ?? "",
+        etica: initialData.etica ?? "",
+        observaciones: initialData.observaciones ?? "",
+      });
+    }
+  }, [initialData]);
 
   // Cierra el modal con tecla Esc
   useEffect(() => {
@@ -37,8 +62,13 @@ export default function EvaluacionModal({
   };
 
   const handleSubmit = () => {
-    onSubmit(formData);
-    onClose();
+    const dataToSubmit = {
+      nota: Number(formData.nota),
+      descripcionConceptual: formData.descripcionConceptual,
+      etica: formData.etica,
+      observaciones: formData.observaciones,
+    };
+    onSubmit(dataToSubmit);
   };
 
   if (!isOpen) return null;
@@ -66,61 +96,49 @@ export default function EvaluacionModal({
 
         {/* Form */}
         <div className="space-y-3">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Nota
-            </label>
-            <input
-              type="number"
-              name="nota"
-              value={formData.nota}
-              onChange={handleChange}
-              className="w-full mt-1 rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-              placeholder="Ej. 85"
-            />
-          </div>
+          <label className="block text-sm font-medium text-gray-700">Nota</label>
+          <input
+            type="number"
+            name="nota"
+            value={formData.nota}
+            onChange={handleChange}
+            className="w-full mt-1 rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+            placeholder="Ej. 85"
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Descripción conceptual
-            </label>
-            <input
-              type="text"
-              name="descripcionConceptual"
-              value={formData.descripcionConceptual}
-              onChange={handleChange}
-              className="w-full mt-1 rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-              placeholder="Ej. Muy bueno"
-            />
-          </div>
+          <label className="block text-sm font-medium text-gray-700">
+            Descripción conceptual
+          </label>
+          <input
+            type="text"
+            name="descripcionConceptual"
+            value={formData.descripcionConceptual}
+            onChange={handleChange}
+            className="w-full mt-1 rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+            placeholder="Ej. Muy bueno"
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Ética
-            </label>
-            <input
-              type="text"
-              name="etica"
-              value={formData.etica}
-              onChange={handleChange}
-              className="w-full mt-1 rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-              placeholder="Ej. Excelente conducta"
-            />
-          </div>
+          <label className="block text-sm font-medium text-gray-700">Ética</label>
+          <input
+            type="text"
+            name="etica"
+            value={formData.etica}
+            onChange={handleChange}
+            className="w-full mt-1 rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+            placeholder="Ej. Excelente conducta"
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Observaciones
-            </label>
-            <textarea
-              name="observaciones"
-              value={formData.observaciones}
-              onChange={handleChange}
-              className="w-full mt-1 rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-              rows={3}
-              placeholder="Escribe observaciones..."
-            />
-          </div>
+          <label className="block text-sm font-medium text-gray-700">
+            Observaciones
+          </label>
+          <textarea
+            name="observaciones"
+            value={formData.observaciones}
+            onChange={handleChange}
+            className="w-full mt-1 rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+            rows={3}
+            placeholder="Escribe observaciones..."
+          />
         </div>
 
         {/* Footer */}
@@ -142,25 +160,3 @@ export default function EvaluacionModal({
     </div>
   );
 }
-
-/* Animaciones Tailwind personalizadas:
-   Agrega en tu globals.css o tailwind.config.js lo siguiente si no lo tienes:
-
-@keyframes fadeIn {
-  from { opacity: 0 }
-  to { opacity: 1 }
-}
-
-@keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.95) }
-  to { opacity: 1; transform: scale(1) }
-}
-
-.animate-fadeIn {
-  animation: fadeIn 0.2s ease-out forwards;
-}
-
-.animate-scaleIn {
-  animation: scaleIn 0.2s ease-out forwards;
-}
-*/

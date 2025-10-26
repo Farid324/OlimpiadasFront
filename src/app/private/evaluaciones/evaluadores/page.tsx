@@ -1,29 +1,19 @@
 // src/app/private/evaluaciones/evaluadores/page.tsx
 'use client';
-import { useEffect, useState, useMemo} from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { usePageHeader } from '@/contexts/pageHeader';
-
-import { api } from '@/libs/api';
-
+import { evaluacionesService } from './evaluaciones-service';
 import CardsSummary from '@/components/evaluador/cards';
 import SearchBar from '@/components/evaluador/buscador';
 import FilterTabs from '@/components/evaluador/filtros';
 import CompetidorList from '@/components/evaluador/listaOlimpistas';
 import ModalEvaluacion from '@/components/evaluador/modalEvaluacion';
-//import { Competidor } from '@/types/notas';
+import { Competidor, CompetidorInscripcion } from '@/types/notas';
 
+// ==========================================================
+// ✅ Utilidades para manejo de errores del backend
+// ==========================================================
 type ConstraintItem = { constraints?: Record<string, string> };
-type Competidor = {
-  id_competidor: number;
-  nombres: string;
-  apellidos: string;
-  ci: string;
-  escuela: string;
-  nota?: number | null;
-  inscripcion?: number;
-};
-
-
 type BackendErrorResponse =
   | {
       message?: string | string[];
@@ -34,7 +24,6 @@ type BackendErrorResponse =
   | null
   | undefined;
 
-/** Type guards mínimos y seguros */
 function isRecord(x: unknown): x is Record<string, unknown> {
   return typeof x === 'object' && x !== null;
 }
@@ -47,136 +36,139 @@ function isConstraintArray(x: unknown): x is ConstraintItem[] {
 function hasResponseData(x: unknown): x is { response: { data?: unknown } } {
   return isRecord(x) && isRecord(x.response);
 }
-
-/** Lee mensajes de error de Axios/Nest/Prisma de forma robusta */
 function getBackendError(err: unknown): string {
   const apiData: BackendErrorResponse | undefined = hasResponseData(err)
     ? (err.response.data as BackendErrorResponse | undefined)
     : undefined;
 
-  // message: string
   if (isRecord(apiData) && typeof apiData.message === 'string') return apiData.message;
-
-  // message: string[]
   if (isRecord(apiData) && isStringArray(apiData.message)) return apiData.message.join(', ');
-
-  // errors: string[]
   if (isRecord(apiData) && isStringArray(apiData.errors)) return apiData.errors.join(', ');
 
-  // [{ constraints: {...} }, ...] (class-validator típicamente)
   if (isConstraintArray(apiData)) {
     const msgs = apiData
-      .flatMap((e: ConstraintItem) => (e.constraints ? Object.values(e.constraints) : []))
+      .flatMap((e) => (e.constraints ? Object.values(e.constraints) : []))
       .filter((t): t is string => typeof t === 'string' && t.length > 0);
     if (msgs.length) return msgs.join(', ');
   }
 
-  // data como string plano
   if (typeof apiData === 'string') return apiData;
-
-  // fallback a Error.message si lo es
   if (err instanceof Error && err.message) return String(err.message);
-
-  return 'No se pudo registrar (revisa conexión, token o duplicados).';
+  return 'No se pudo completar la operación (revisa conexión o duplicados).';
 }
 
-
+// ==========================================================
+// ✅ Componente principal
+// ==========================================================
 export default function EvaluacionesEvaluadoresPage() {
   const { setTitle } = usePageHeader();
+  const [competidores, setCompetidores] = useState<CompetidorInscripcion[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState<'Todos' | 'Pendientes' | 'Evaluados'>('Todos');
+  const [modalCompetidor, setModalCompetidor] = useState<Competidor | null>(null);
+
   useEffect(() => {
     setTitle('Evaluaciones');
   }, [setTitle]);
 
-  const [competidores, setCompetidores] = useState<Competidor[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState<'Todos' | 'Pendientes' | 'Evaluados'>('Todos');
-
-  const [modalCompetidor, setModalCompetidor] = useState<Competidor | null>(null);
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [evaluaciones, setEvaluaciones] = useState<unknown[]>([]);
-
-  const handleOpen = () => setIsModalOpen(true);
-  const handleClose = () => setIsModalOpen(false);
-
-  const handleSubmit = (data: unknown) => {
-    console.log("Datos enviados:", data);
-  };
-
-  // ===== Fetch competidores asignados =====
-  const fetchCompetidores = async () => {
+  // ==========================================================
+  // ✅ Fetch competidores asignados (useCallback evita warning de deps)
+  // ==========================================================
+  const fetchCompetidores = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await api.get('/admin/evaluaciones/mis-competidores');
+      const data = await evaluacionesService.listarCompetidores({
+        search: searchQuery || undefined,
+        filtro:
+          activeFilter === 'Pendientes'
+            ? 'PENDIENTE'
+            : activeFilter === 'Evaluados'
+            ? 'EVALUADO'
+            : 'TODOS',
+      });
       setCompetidores(data);
     } catch (err) {
-      console.error(err);
+      console.error('Error al cargar competidores:', getBackendError(err));
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchQuery, activeFilter]);
 
   useEffect(() => {
     fetchCompetidores();
-  }, []);
+  }, [fetchCompetidores]);
 
-  // ===== Filtrado + búsqueda =====
-  const filteredCompetidores = useMemo(() => {
-  return competidores
-    ?.filter(c => {
-      if (activeFilter === 'Pendientes') return c.nota === null;
-      if (activeFilter === 'Evaluados') return c.nota !== null;
-      return true;
-    })
-    ?.filter(c => {
-      const term = searchQuery?.toLowerCase() ?? '';
-      return (
-        (c?.nombres?.toLowerCase() ?? '').includes(term) ||
-        (c?.apellidos?.toLowerCase() ?? '').includes(term) ||
-        (c?.ci?.toLowerCase() ?? '').includes(term) ||
-        (c?.escuela?.toLowerCase() ?? '').includes(term)
-      );
-    }) ?? [];
-}, [competidores, searchQuery, activeFilter]);
-
-
-  // ===== Registrar nota =====
-  const handleSubmitNota = async (formData: any) => {
+  // ==========================================================
+  // ✅ Registrar / editar nota
+  // ==========================================================
+  const handleSubmitNota = async (formData: { nota: number }) => {
     if (!modalCompetidor) return;
 
+    const evaluacionExistente = modalCompetidor.evaluaciones?.[0];
     try {
-      // Aquí envías la evaluación al backend
-      await api.post("/admin/evaluaciones/nota", {
-        idInscripcion: modalCompetidor.inscripcion,
-        nota: formData.nota,
-        descripcionConceptual: formData.descripcionConceptual,
-        etica: formData.etica,
-        observaciones: formData.observaciones,
-      });
+      if (evaluacionExistente) {
+        await evaluacionesService.editarNota({
+          idEvaluacion: evaluacionExistente.id_evaluacion,
+          nuevaNota: Number(formData.nota),
+        });
+      } else {
+        await evaluacionesService.registrarNota({
+          idInscripcion: modalCompetidor.id_inscripcion,
+          nota: Number(formData.nota),
+        });
+      }
 
+      await fetchCompetidores();
       setModalCompetidor(null);
-      fetchCompetidores(); // refresca la lista
     } catch (err) {
-      console.error("Error al registrar evaluación:", err);
+      console.error('Error al registrar evaluación:', getBackendError(err));
     }
   };
 
+  // ==========================================================
+  // ✅ Filtrado y búsqueda
+  // ==========================================================
+  const filteredCompetidores = useMemo(() => {
+    return (
+      competidores
+        ?.filter((c) => {
+          const evaluaciones = c.evaluaciones ?? [];
+          const evaluacion = c.evaluaciones?.[0];
+          const nota = evaluacion ? evaluacion.nota : null;
+          if (activeFilter === 'Pendientes') return nota === null;
+          if (activeFilter === 'Evaluados') return nota !== null;
+          return true;
+        })
+        ?.filter((c) => {
+          const term = searchQuery.toLowerCase();
+          const comp = c.competidor;
+          return (
+            comp.nombres.toLowerCase().includes(term) ||
+            comp.apellidos.toLowerCase().includes(term) ||
+            comp.ci.toLowerCase().includes(term) ||
+            comp.escuela.toLowerCase().includes(term)
+          );
+        }) ?? []
+    );
+  }, [competidores, searchQuery, activeFilter]);
 
-
+  // ==========================================================
+  // ✅ Render
+  // ==========================================================
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold">Panel de Evaluador</h1>
 
-      {/* Cards */}
       <CardsSummary />
 
       {/* Buscador + filtros */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <SearchBar onSearch={setSearchQuery} />
-        <FilterTabs active={activeFilter} 
-        onChange={(filter) => setActiveFilter(filter as 'Todos' | 'Pendientes' | 'Evaluados')} />
+        <FilterTabs
+          active={activeFilter}
+          onChange={(filter) => setActiveFilter(filter as 'Todos' | 'Pendientes' | 'Evaluados')}
+        />
       </div>
 
       {/* Lista de competidores */}
@@ -185,8 +177,8 @@ export default function EvaluacionesEvaluadoresPage() {
       ) : (
         <CompetidorList
           data={filteredCompetidores}
-          onEvaluar={c => setModalCompetidor(c)}
-          onEditar={c => setModalCompetidor(c)}
+          onEvaluar={(ci) => setModalCompetidor(ci)}
+          onEditar={(ci) => setModalCompetidor(ci)}
         />
       )}
 
@@ -196,19 +188,24 @@ export default function EvaluacionesEvaluadoresPage() {
           isOpen={!!modalCompetidor}
           onClose={() => setModalCompetidor(null)}
           onSubmit={handleSubmitNota}
-          title={`Evaluar a ${modalCompetidor.nombres} ${modalCompetidor.apellidos}`}
+          title={`${
+            modalCompetidor.evaluaciones?.length > 0
+              ? `Editar nota de ${modalCompetidor.competidor.nombres} ${modalCompetidor.competidor.apellidos}`
+              : `Evaluar a ${modalCompetidor.competidor.nombres} ${modalCompetidor.competidor.apellidos}`
+          }`}
+          // 🔧 Asegura que nota sea numérica o undefined
+          initialData={
+            modalCompetidor.evaluaciones?.[0]
+              ? {
+                  nota:
+                    typeof modalCompetidor.evaluaciones[0].nota === 'number'
+                      ? modalCompetidor.evaluaciones[0].nota
+                      : undefined,
+                }
+              : undefined
+          }
         />
       )}
-
-
     </div>
   );
-      {/* {modalEditar && (
-        <ModalEditarNota
-          evaluacion={modalEditar}
-          onClose={() => setModalEditar(null)}
-          onSuccess={fetchCompetidores}
-        />
-      )} */
-}
 }
