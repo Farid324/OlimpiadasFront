@@ -43,6 +43,7 @@ const Card = ({
     <p className="text-2xl font-bold text-black">{value}</p>
   </div>
 );
+
 /** Botonera de fases: Fase de Clasificación / Fase Final con candados. */
 const pillBase =
   'px-3 py-1 text-sm rounded-full transition inline-flex items-center gap-2';
@@ -116,6 +117,15 @@ const ApprovedBanner = () => (
   </div>
 );
 
+/** Titulo de sección alineada a la izquierda (titulo “Clasificados”). */
+const SectionPillLeft = ({ children }: { children: React.ReactNode }) => (
+  <div className="flex justify-start">
+    <div className="inline-flex h-8 w-[260px] items-center justify-center rounded-full border border-gray-200 bg-white px-6 text-sm font-normal text-gray-800 shadow-sm">
+      {children}
+    </div>
+  </div>
+);
+
 /* Página principal*/
 export default function ReportesResponsablePage() {
   const { setTitle } = usePageHeader();
@@ -141,3 +151,51 @@ export default function ReportesResponsablePage() {
         }),
       );
   }, []);
+
+  const cards = useMemo(
+    () => [
+      { k: 'clasificados', label: 'Clasificados', value: resumen?.clasificados ?? 0, icon: <Users /> },
+      { k: 'oro',          label: 'Oro',          value: resumen?.oro ?? 0,          icon: <Trophy /> },
+      { k: 'plata',        label: 'Plata',        value: resumen?.plata ?? 0,        icon: <Medal /> },
+      { k: 'bronce',       label: 'Bronce',       value: resumen?.bronce ?? 0,       icon: <Medal /> },
+      { k: 'menciones',    label: 'Menciones',    value: resumen?.menciones ?? 0,    icon: <Medal /> },
+      { k: 'total',        label: 'Total Premiados', value: resumen?.totalPremiados ?? 0, icon: <Users /> },
+    ],
+    [resumen],
+  );
+
+  return (
+    <div className="p-6 space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-black">Sistema de Reportes</h1>
+        <p className="text-gray-500 text-sm">
+          Generación de listas y documentos para clasificados y premiados
+        </p>
+      </div>
+
+      {/* ===== Botones de fase (píldoras con candados) ===== */}
+      <PhaseTabs active={phase} onChange={setPhase} finalLocked />
+
+      {phase === 'CLASIF' && <ApprovedBanner />}
+
+      {/* ===== Grid de cards de métricas ===== */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6">
+        {cards.map((c) => (
+          <Card
+            key={c.k}
+            label={c.label}
+            value={c.value}
+            icon={<div className="w-6 h-6">{c.icon}</div>}
+          />
+        ))}
+      </div>
+
+      {/* ===== Píldora/título de sección alineada a la izquierda ===== */}
+      <SectionPillLeft>Clasificados</SectionPillLeft>
+
+      {/* ===== Contenido compartido: tabla/lista de Clasificados ===== */}
+      <ClasificadosTab />
+    </div>
+  );
+}
+
