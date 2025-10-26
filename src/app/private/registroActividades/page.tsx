@@ -21,7 +21,7 @@ export default function LogsPage() {
   const [loading, setLoading] = useState(false);
   const { setTitle } = usePageHeader();
 
-  // 🔹 Cargar datos y manejar búsqueda
+  // 🔹 Cargar datos
   useEffect(() => {
     setTitle('Registro de Actividades');
 
@@ -31,8 +31,6 @@ export default function LogsPage() {
         const res = await api.get('/logs', {
           params: q.trim() ? { q: q.trim() } : {},
         });
-
-        // Asegurarse de que res.data sea un arreglo
         setLogs(Array.isArray(res.data) ? res.data : []);
       } catch (error) {
         console.error('Error cargando logs:', error);
@@ -42,118 +40,132 @@ export default function LogsPage() {
       }
     };
 
-    const timeout = setTimeout(() => {
-      fetchLogs();
-    }, 300); // Pequeño delay para debounce de búsqueda
-
+    const timeout = setTimeout(fetchLogs, 300);
     return () => clearTimeout(timeout);
   }, [q]);
 
   // 🔹 Métricas
   const metrics = useMemo(() => {
     if (!Array.isArray(logs)) return { total: 0, registros: 0, modificaciones: 0 };
-
     const total = logs.length;
     const registros = logs.filter((l) => l.accion === 'REGISTRO').length;
     const modificaciones = logs.filter((l) => l.accion === 'MODIFICACIÓN').length;
-
     return { total, registros, modificaciones };
   }, [logs]);
 
   return (
-    <div className="p-6 space-y-6 overflow-hidden">
-      {/* Encabezado */}
+    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+      {/* ---- Encabezado ---- */}
       <div>
-        <h1 className="text-2xl font-bold text-black">Registro de Actividades</h1>
-        <p className="text-gray-500 text-sm">Historial de registro y modificación de notas</p>
+        <h1 className="text-2xl font-semibold text-gray-900">Registro de Actividades</h1>
+        <p className="text-gray-500 text-sm mt-1">
+          Historial completo de cambios y actividades del sistema
+        </p>
       </div>
 
-      {/* Cards métricas */}
+      {/* ---- Métricas ---- */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <CardMetric label="Total Acciones" value={metrics.total} icon={<FileText />} />
-        <CardMetric
-          label="Registros"
+        <MetricCard
+          title="Total Actividades"
+          value={metrics.total}
+          subtitle="Últimas 24 horas"
+          icon={<FileText />}
+        />
+        <MetricCard
+          title="Evaluaciones"
           value={metrics.registros}
+          subtitle="Registradas hoy"
           icon={<CheckCircle />}
-          color="text-green-700"
-          bg="bg-green-100"
+          color="text-purple-600"
+          badgeBg="bg-purple-50"
         />
-        <CardMetric
-          label="Modificaciones"
+        <MetricCard
+          title="Modificaciones"
           value={metrics.modificaciones}
+          subtitle="Cambios realizados"
           icon={<Edit />}
+          color="text-blue-700"
+          badgeBg="bg-blue-50"
         />
       </div>
 
-      {/* Buscador */}
-      <div className="relative max-w-full">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
-        <Input
-          className="w-full pl-9 text-gray-900 placeholder:text-gray-400"
-          placeholder="Buscar por usuario, acción o descripción..."
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-        />
+      {/* ---- Filtros ---- */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="relative w-full sm:w-1/2">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Input
+            className="w-full pl-9 rounded-lg border-gray-300 text-gray-900 placeholder:text-gray-400"
+            placeholder="Buscar por usuario, acción o descripción..."
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+        </div>
+
+        <button
+          className="mt-2 sm:mt-0 inline-flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-100 text-sm text-gray-700 px-4 py-2 rounded-lg shadow-sm transition"
+        >
+          <FileText className="w-4 h-4" />
+          Exportar
+        </button>
       </div>
 
-      {/* Tabla */}
-      <div className="bg-white rounded-lg shadow p-4">
-        <h2 className="font-semibold text-gray-700 mb-2">Historial de cambios ({logs.length})</h2>
+      {/* ---- Tabla ---- */}
+      <div className="bg-white rounded-xl shadow-md p-5">
+        <h2 className="font-semibold text-gray-700 mb-1">
+          Registro de Actividades ({logs.length})
+        </h2>
         <p className="text-sm text-gray-500 mb-4">
-          Acciones registradas en el sistema (registro o modificación de notas)
+          Historial detallado de todas las acciones realizadas en el sistema
         </p>
 
         {loading ? (
-          <p className="text-center text-gray-500">Cargando...</p>
+          <p className="text-center text-gray-500 py-6">Cargando...</p>
         ) : logs.length === 0 ? (
-          <div className="border rounded-md p-6 text-center text-gray-500">
+          <div className="border rounded-lg p-6 text-center text-gray-500 bg-gray-50">
             No hay registros disponibles
           </div>
         ) : (
-          <div className="max-h-[450px] overflow-y-auto">
-            <div className="overflow-x-auto">
-              <table className="min-w-[900px] text-sm border-collapse">
-                <thead className="sticky top-0 bg-white z-10 border-b border-black">
-                  <tr className="text-gray-700">
-                    <th className="py-3 px-4 text-left font-semibold">Usuario</th>
-                    <th className="py-3 px-4 text-left font-semibold">Acción</th>
-                    <th className="py-3 px-4 text-left font-semibold">Entidad</th>
-                    <th className="py-3 px-4 text-left font-semibold">Descripción</th>
-                    <th className="py-3 px-4 text-left font-semibold">Fecha</th>
+          <div className="overflow-x-auto max-h-[450px]">
+            <table className="min-w-full text-sm border-separate border-spacing-y-1">
+              <thead>
+                <tr className="bg-gray-100 text-gray-700 text-left">
+                  <th className="py-2 px-4 font-medium">Fecha/Hora</th>
+                  <th className="py-2 px-4 font-medium">Usuario</th>
+                  <th className="py-2 px-4 font-medium">Acción</th>
+                  <th className="py-2 px-4 font-medium">Entidad</th>
+                  <th className="py-2 px-4 font-medium">Descripción</th>
+                </tr>
+              </thead>
+              <tbody>
+                {logs.map((l) => (
+                  <tr key={l.id_log} className="bg-white shadow-sm rounded-md">
+                    <td className="py-2 px-4 text-gray-600">
+                      {new Date(l.fecha).toLocaleString('es-BO', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </td>
+                    <td className="py-2 px-4 font-medium text-gray-900">{l.usuario}</td>
+                    <td className="py-2 px-4">
+                      {l.accion === 'REGISTRO' ? (
+                        <span className="px-2 py-1 rounded-md bg-purple-100 text-purple-700 text-xs font-bold">
+                          Evaluación registrada
+                        </span>
+                      ) : (
+                        <span className="px-2 py-1 rounded-md bg-blue-100 text-blue-700 text-xs font-bold">
+                          Puntuación modificada
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-2 px-4 text-gray-700">{l.entidad}</td>
+                    <td className="py-2 px-4 text-gray-600">{l.descripcion || '—'}</td>
                   </tr>
-                </thead>
-
-                <tbody>
-                  {logs.map((l) => (
-                    <tr key={l.id_log} className="border-b border-gray-200">
-                      <td className="py-3 px-4 text-gray-900 font-semibold">{l.usuario}</td>
-                      <td className="py-3 px-4">
-                        {l.accion === 'REGISTRO' ? (
-                          <span className="px-2 py-1 rounded-md bg-green-100 text-green-800 text-xs font-bold">
-                            REGISTRO
-                          </span>
-                        ) : (
-                          <span className="px-2 py-1 rounded-md bg-yellow-100 text-yellow-800 text-xs font-bold">
-                            MODIFICACIÓN
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 text-gray-800">{l.entidad}</td>
-                      <td className="py-3 px-4 text-gray-700">{l.descripcion || '—'}</td>
-                      <td className="py-3 px-4 text-gray-600">
-                        {new Date(l.fecha).toLocaleString('es-BO', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
@@ -161,27 +173,34 @@ export default function LogsPage() {
   );
 }
 
-/* ---- COMPONENTE INTERNO PARA LAS TARJETAS ---- */
-function CardMetric({
-  label,
+/* ---- COMPONENTE: Tarjeta de Métrica ---- */
+function MetricCard({
+  title,
   value,
+  subtitle,
   icon,
   color,
-  bg,
+  badgeBg,
 }: {
-  label: string;
+  title: string;
   value: React.ReactNode;
+  subtitle: string;
   icon: React.ReactNode;
   color?: string;
-  bg?: string;
+  badgeBg?: string;
 }) {
   return (
-    <div className={`bg-white p-4 rounded-lg shadow relative h-28 ${bg || ''}`}>
-      <div className={`absolute top-4 right-4 text-3xl ${color || 'text-black'}`}>
-        <div className="[&>*]:w-6 [&>*]:h-6">{icon}</div>
+    <div className={`bg-white rounded-xl shadow-md p-5 relative`}>
+      <div
+        className={`absolute top-5 right-5 p-2 rounded-full ${badgeBg || 'bg-gray-100'} ${
+          color || 'text-gray-700'
+        }`}
+      >
+        <div className="[&>*]:w-5 [&>*]:h-5">{icon}</div>
       </div>
-      <p className="text-sm text-gray-500">{label}</p>
-      <p className="text-2xl font-bold text-black mt-2">{value}</p>
+      <h3 className="text-gray-900 text-sm font-semibold">{title}</h3>
+      <p className="text-3xl font-bold text-gray-800 mt-2">{value}</p>
+      <p className="text-gray-500 text-xs mt-1">{subtitle}</p>
     </div>
   );
 }
