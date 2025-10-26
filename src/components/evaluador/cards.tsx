@@ -23,20 +23,20 @@ export default function CardsSummary() {
 
   const [loading, setLoading] = useState(true);
 
-  // useEffect(() => {
-  //   const fetchStats = async () => {
-  //     try {
-  //       const { data } = await api.get('/admin/evaluaciones/stats');
-  //       setStats(data);
-  //     } catch (error) {
-  //       console.error("Error cargando estadísticas:", error);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
+  useEffect(() => {
+     const fetchStats = async () => {
+       try {
+         const { data } = await api.get('/admin/evaluaciones/resumen');
+         setStats(data);
+       } catch (error) {
+         console.error("Error cargando estadísticas:", error);
+       } finally {
+         setLoading(false);
+       }
+     };
 
-  //   fetchStats();
-  // }, []);
+     fetchStats();
+  }, []);
 
   if (loading) {
     return (
