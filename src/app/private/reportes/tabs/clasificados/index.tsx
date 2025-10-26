@@ -117,9 +117,7 @@ export default function ClasificadosTab() {
         if (!cancel) setLoadingCatalogs(false);
       }
     })();
-    return () => {
-      cancel = true;
-    };
+    return () => { cancel = true; };
   }, []);
 
   const fetchRows = async (f: ReportFilters) => {
@@ -136,10 +134,52 @@ export default function ClasificadosTab() {
 
   useEffect(() => {
     fetchRows(filters);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.id_area, filters.id_nivel, filters.estado]);
 
+  // ==== Helpers para el diálogo de confirmación ====
+  const safeAreas   = useMemo(() => (areas ?? []).filter((a): a is AreaDTO => !!a && typeof a.id === 'number' && !!a.nombre), [areas]);
+  const safeNiveles = useMemo(() => (niveles ?? []).filter((n): n is NivelDTO => !!n && typeof n.id === 'number' && !!n.nombre), [niveles]);
+
+  const getAreaLabel = () => {
+    if (filters.id_area == null) return '—';
+    if (filters.id_area === 0) return 'Todas las áreas';
+    return safeAreas.find(a => a.id === filters.id_area)?.nombre ?? String(filters.id_area);
+    };
+  const getNivelLabel = () => {
+    if (filters.id_nivel == null) return '—';
+    if (filters.id_nivel === 0) return 'Todos los niveles';
+    return safeNiveles.find(n => n.id === filters.id_nivel)?.nombre ?? String(filters.id_nivel);
+  };
+  const getEstadoLabel = () => {
+    if (filters.estado == null) return '—';
+    if (filters.estado === 'TODOS') return 'Todos los Estados';
+    if (filters.estado === 'CLASIFICADO') return 'Clasificado';
+    if (filters.estado === 'NO_CLASIFICADO') return 'No clasificado';
+    if (filters.estado === 'DESCALIFICADO') return 'Descalificado';
+    return String(filters.estado);
+  };
+
+  // ==== Exportar con confirmación ====
   const onExport = async () => {
+    // Evita exportar cuando no hay filas
+    if (rows.length === 0) {
+      alert('No hay registros para exportar con los filtros actuales.');
+      return;
+    }
+
+    const msg =
+`Vas a exportar la lista con los siguientes filtros:
+
+• Área: ${getAreaLabel()}
+• Nivel: ${getNivelLabel()}
+• Estado: ${getEstadoLabel()}
+
+¿Deseas continuar?`;
+
+    const ok = window.confirm(msg);
+    if (!ok) return;
+
     try {
       setLoadingExport(true);
       const blob = await exportClasificados(filters);
@@ -149,13 +189,13 @@ export default function ClasificadosTab() {
       a.download = 'clasificados.xlsx';
       a.click();
       window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error(e);
+      alert('No se pudo exportar la lista. Intenta nuevamente.');
     } finally {
       setLoadingExport(false);
     }
   };
-
-  const safeAreas   = useMemo(() => (areas ?? []).filter((a): a is AreaDTO => !!a && typeof a.id === 'number' && !!a.nombre), [areas]);
-  const safeNiveles = useMemo(() => (niveles ?? []).filter((n): n is NivelDTO => !!n && typeof n.id === 'number' && !!n.nombre), [niveles]);
 
   const areaPlaceholder   = filters.id_area == null;
   const nivelPlaceholder  = filters.id_nivel == null;
@@ -255,9 +295,14 @@ export default function ClasificadosTab() {
               <Eye className="mr-2 w-4 h-4" />
               Vista Previa
             </Button>
-            <Button onClick={onExport} disabled={loadingRows || loadingExport} className="bg-blue-600 hover:bg-blue-700">
+            <Button
+              onClick={onExport}
+              disabled={loadingRows || loadingExport || rows.length === 0}
+              className="bg-blue-600 hover:bg-blue-700"
+              title={rows.length === 0 ? 'No hay registros para exportar' : 'Exportar lista filtrada'}
+            >
               <Download className="mr-2 w-4 h-4" />
-              Exportar Lista
+              {loadingExport ? 'Exportando…' : 'Exportar Lista'}
             </Button>
           </div>
         </div>
