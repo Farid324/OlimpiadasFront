@@ -115,3 +115,29 @@ const ApprovedBanner = () => (
     </div>
   </div>
 );
+
+/* Página principal*/
+export default function ReportesResponsablePage() {
+  const { setTitle } = usePageHeader();
+  useEffect(() => {
+    setTitle('Reportes');
+  }, [setTitle]);
+
+  const [phase, setPhase] = useState<Phase>('CLASIF');
+
+  /* ——— Métricas (cards) ——— */
+  const [resumen, setResumen] = useState<Resumen | null>(null);
+  useEffect(() => {
+    getResumen()
+      .then(setResumen)
+      .catch(() =>
+        setResumen({
+          clasificados: 0,
+          oro: 0,
+          plata: 0,
+          bronce: 0,
+          menciones: 0,
+          totalPremiados: 0,
+        }),
+      );
+  }, []);
