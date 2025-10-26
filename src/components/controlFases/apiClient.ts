@@ -1,21 +1,15 @@
 // src/components/controlFases/apiClient.ts
-
-// ✅ Tu backend corre en el puerto 3001 y SIN prefijo /api/v1
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
+// Usa el axios api central que ya inyecta el Bearer desde localStorage
+import { api } from "@/libs/api";
 
 export async function getFromAPI<T>(path: string): Promise<T> {
-  // Asegura que el path empiece con "/"
-  const fullPath = path.startsWith('/') ? path : `/${path}`;
-
-  const res = await fetch(`${BASE_URL}${fullPath}`, {
-    headers: { Accept: 'application/json' },
-    cache: 'no-store',
-  });
-
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`GET ${fullPath} -> ${res.status} ${text}`);
-  }
-
-  return res.json() as Promise<T>;
+  const fullPath = path.startsWith("/") ? path : `/${path}`;
+  const { data } = await api.get<T>(fullPath); 
+  return data;
+}
+//o este generico
+export async function postToAPI<T>(path: string, body?: any): Promise<T> {
+  const fullPath = path.startsWith("/") ? path : `/${path}`;
+  const { data } = await api.post<T>(fullPath, body);
+  return data;
 }

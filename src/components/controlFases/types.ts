@@ -1,5 +1,8 @@
-export type FaseActual = 'Clasificación'|'Evaluación Final'|'Completado';
-export type EstadoFila = 'En progreso'|'Completado'|'Listo para aprobar';
+//src/components/controlFases/types.ts
+
+export type AccionColor = "primary" | "neutral" | "success";
+export type FaseActual = "Clasificación" | "Evaluación Final" | "Completado";
+export type EstadoFila = "En progreso" | "Completado" | "Listo para aprobar";
 
 export type ResumenClasificacion = {
   clasificados: number;
@@ -21,7 +24,7 @@ export type FilaFase = {
   fechaHora: string;
   estado: EstadoFila;
   accionLabel?: string;
-  accionColor?: 'primary'|'neutral'|'success';
+  accionColor?: AccionColor;
   accionDisabled?: boolean;
 };
 
