@@ -43,3 +43,57 @@ const Card = ({
     <p className="text-2xl font-bold text-black">{value}</p>
   </div>
 );
+/** Botonera de fases: Fase de Clasificación / Fase Final con candados. */
+const pillBase =
+  'px-3 py-1 text-sm rounded-full transition inline-flex items-center gap-2';
+
+const PhaseTabs = ({
+  active,
+  onChange,
+  finalLocked = true, // <- Si quieres habilitar Fase Final, pasa false desde el padre
+}: {
+  active: Phase;
+  onChange: (p: Phase) => void;
+  finalLocked?: boolean;
+}) => (
+  <div
+    role="tablist"
+    aria-label="Fases de reportes"
+    className="inline-flex items-center gap-1 rounded-full bg-gray-100 p-1"
+  >
+    {/* Botón: Fase de Clasificación (activa y desbloqueada) */}
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active === 'CLASIF'}
+      className={`${pillBase} ${
+        active === 'CLASIF'
+          ? 'bg-white text-black shadow'
+          : 'text-gray-600 hover:bg-white hover:text-black'
+      }`}
+      onClick={() => onChange('CLASIF')}
+    >
+      Fase de Clasificación <LockOpen className="w-4 h-4 text-green-600" />
+    </button>
+
+    {/* Botón: Fase Final (bloqueada por ahora) */}
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active === 'FINAL'}
+      aria-disabled={finalLocked}
+      disabled={finalLocked}
+      className={`${pillBase} ${
+        finalLocked
+          ? 'text-gray-600 cursor-not-allowed'
+          : active === 'FINAL'
+          ? 'bg-white text-black shadow'
+          : 'text-gray-600 hover:bg-white hover:text-black'
+      }`}
+      onClick={() => !finalLocked && onChange('FINAL')}
+      title={finalLocked ? 'Fase Final bloqueada' : 'Fase Final'}
+    >
+      Fase Final <Lock className="w-4 h-4 text-red-500" />
+    </button>
+  </div>
+);
