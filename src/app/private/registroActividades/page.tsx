@@ -19,15 +19,19 @@ type Log = {
 export default function LogsPage() {
   const [logs, setLogs] = useState<Log[]>([]);
   const [q, setQ] = useState('');
+  const [accion, setAccion] = useState<'REGISTRO' | 'MODIFICACION' | ''>('');
   const [loading, setLoading] = useState(false);
   const { setTitle } = usePageHeader();
 
   // 🔹 Función para cargar logs
-  const fetchLogs = async (query = '') => {
+  const fetchLogs = async () => {
     setLoading(true);
     try {
       const res = await api.get('/logs', {
-        params: query.trim() ? { q: query.trim() } : {},
+        params: {
+          ...(q.trim() ? { usuario: q.trim() } : {}),
+          ...(accion ? { accion } : {}),
+        },
       });
       setLogs(Array.isArray(res.data) ? res.data : []);
     } catch (error) {
@@ -38,11 +42,11 @@ export default function LogsPage() {
     }
   };
 
-  // 🔹 Cargar datos al montar el componente
+  // 🔹 Cargar datos al montar el componente y al cambiar filtros
   useEffect(() => {
     setTitle('Registro de Actividades');
-    fetchLogs(q);
-  }, [q, setTitle]);
+    fetchLogs();
+  }, [q, accion, setTitle]);
 
   // 🔹 Métricas
   const metrics = useMemo(() => {
@@ -91,19 +95,35 @@ export default function LogsPage() {
 
       {/* ---- Filtros ---- */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+        {/* Input Usuario */}
         <div className="relative w-full sm:w-1/2">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input
             className="w-full pl-9 rounded-lg border-gray-300 text-gray-900 placeholder:text-gray-400"
-            placeholder="Buscar por usuario, acción o descripción..."
+            placeholder="Buscar por usuario..."
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
         </div>
 
-        <button
-          className="mt-2 sm:mt-0 inline-flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-100 text-sm text-gray-700 px-4 py-2 rounded-lg shadow-sm transition"
-        >
+        {/* Dropdown Acción */}
+        <div className="relative w-full sm:w-1/4">
+          <select
+            className="w-full mt-2 sm:mt-0 border rounded-lg p-2 text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            value={accion}
+            onChange={(e) => setAccion(e.target.value as any)}
+          >
+            <option value="">Todas las acciones</option>
+            <option value="REGISTRO">Registro</option>
+            <option value="MODIFICACION">Modificación</option>
+          </select>
+        </div>
+
+
+
+
+        {/* Botón Exportar */}
+        <button className="mt-2 sm:mt-0 inline-flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-100 text-sm text-gray-700 px-4 py-2 rounded-lg shadow-sm transition">
           <FileText className="w-4 h-4" />
           Exportar
         </button>
@@ -198,3 +218,4 @@ function MetricCard({
     </div>
   );
 }
+
