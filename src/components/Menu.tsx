@@ -1,17 +1,23 @@
 // src/components/Menu.tsx
-'use client';
+"use client";
 
-import Link from 'next/link';
-import Image from 'next/image';
-import { usePathname, useRouter } from 'next/navigation';
+import Link from "next/link";
+import Image from "next/image";
+import { usePathname, useRouter } from "next/navigation";
 import {
-  LuHouse, LuUsers, LuSettings, LuShield,
-  LuFilePen, LuGitBranch, LuChartColumn, LuActivity
-} from 'react-icons/lu';
-import { FiUserCheck, FiSmartphone, FiUser, FiLogOut } from 'react-icons/fi';
-import { useAuth } from '@/hooks/useAuth';
+  LuHouse,
+  LuUsers,
+  LuSettings,
+  LuShield,
+  LuFilePen,
+  LuGitBranch,
+  LuChartColumn,
+  LuActivity,
+} from "react-icons/lu";
+import { FiUserCheck, FiSmartphone, FiUser, FiLogOut } from "react-icons/fi";
+import { useAuth } from "@/hooks/useAuth";
 
-export type RoleName = 'ADMINISTRADOR' | 'EVALUADOR' | 'RESPONSABLE_DE_AREA';
+export type RoleName = "ADMINISTRADOR" | "EVALUADOR" | "RESPONSABLE_DE_AREA";
 
 const ICONS = {
   LuHouse,
@@ -36,31 +42,62 @@ export type MenuItem = {
 
 export const MENU_BY_ROLE: Record<RoleName, MenuItem[]> = {
   ADMINISTRADOR: [
-    { icon: 'LuHouse', label: 'Panel Principal', href: '/private/panelPrincipal' },
-    { icon: 'LuUsers', label: 'Olimpistas', href: '/private/olimpistas' },
-    { icon: 'FiUserCheck', label: 'Evaluadores', href: '/private/evaluadores' },
-    { icon: 'LuShield', label: 'Responsables', href: '/private/responsables' },
-    { icon: 'LuFilePen', label: 'Evaluaciones', href: '/private/evaluaciones' },
-    { icon: 'LuGitBranch', label: 'Control de Fases', href: '/private/controlFases' },
-    { icon: 'LuChartColumn', label: 'Reportes', href: '/private/reportes' },
-    { icon: 'LuActivity', label: 'Registro de Actividades', href: '/private/registroActividades' },
-    { icon: 'LuSettings', label: 'Configuración', href: '/private/configuracion' },
+    {
+      icon: "LuHouse",
+      label: "Panel Principal",
+      href: "/private/panelPrincipal",
+    },
+    { icon: "LuUsers", label: "Olimpistas", href: "/private/olimpistas" },
+    { icon: "FiUserCheck", label: "Evaluadores", href: "/private/evaluadores" },
+    { icon: "LuShield", label: "Responsables", href: "/private/responsables" },
+    { icon: "LuFilePen", label: "Evaluaciones", href: "/private/evaluaciones" },
+    {
+      icon: "LuGitBranch",
+      label: "Control de Fases",
+      href: "/private/controlFases",
+    },
+    { icon: "LuChartColumn", label: "Reportes", href: "/private/reportes" },
+    {
+      icon: "LuActivity",
+      label: "Registro de Actividades",
+      href: "/private/registroActividades",
+    },
+    {
+      icon: "LuSettings",
+      label: "Configuración",
+      href: "/private/configuracion",
+    },
   ],
   EVALUADOR: [
-    { icon: 'LuHouse', label: 'Panel Principal', href: '/private/panelPrincipal' },
-    { icon: 'LuFilePen', label: 'Evaluaciones', href: '/private/evaluaciones/evaluadores' },
+    {
+      icon: "LuHouse",
+      label: "Panel Principal",
+      href: "/private/panelPrincipal",
+    },
+    {
+      icon: "LuFilePen",
+      label: "Evaluaciones",
+      href: "/private/evaluaciones/evaluadores",
+    },
   ],
   RESPONSABLE_DE_AREA: [
-    { icon: 'LuHouse', label: 'Panel Principal', href: '/private/panelPrincipal' },
-    { icon: 'LuGitBranch', label: 'Control de Fases', href: '/private/controlFases/responsables' },
-    { icon: 'LuChartColumn', label: 'Reportes', href: '/private/reportes/responsables' },
+    {
+      icon: "LuHouse",
+      label: "Panel Principal",
+      href: "/private/panelPrincipal",
+    },
+    {
+      icon: "LuGitBranch",
+      label: "Control de Fases",
+      href: "/private/controlFases/responsables",
+    },
   ],
 };
 
 const ROLE_LABEL: Record<RoleName, string> = {
-  ADMINISTRADOR: 'Administrador',
-  EVALUADOR: 'Evaluador',
-  RESPONSABLE_DE_AREA: 'Responsable de Área',
+  ADMINISTRADOR: "Administrador",
+  EVALUADOR: "Evaluador",
+  RESPONSABLE_DE_AREA: "Responsable de Área",
 };
 
 export default function SideMenu({
@@ -68,7 +105,7 @@ export default function SideMenu({
   onClose,
 }: {
   open: boolean;
-  onClose?: () => void; 
+  onClose?: () => void;
 }) {
   const { user, logout } = useAuth();
   const router = useRouter();
@@ -78,26 +115,26 @@ export default function SideMenu({
 
   const handleLogout = () => {
     logout();
-    router.replace('/auth');
+    router.replace("/auth");
   };
 
-  const displayName = user?.name || 'Usuario';
-  const displayRole = ROLE_LABEL[userRole] || 'Rol';
-  const displayEmail = user?.email || 'usuario@olimpiadas.edu';
+  const displayName = user?.name || "Usuario";
+  const displayRole = ROLE_LABEL[userRole] || "Rol";
+  const displayEmail = user?.email || "usuario@olimpiadas.edu";
 
   const isActive = (href: string) =>
-    pathname === href || pathname.startsWith(href + '/');
+    pathname === href || pathname.startsWith(href + "/");
 
   return (
     <aside
       className={[
-        'fixed left-0 top-0 h-screen w-[var(--sidebar-w)]',
-        'transition-transform duration-300 ease-out',
-        'bg-[var(--blanco)] border-r z-40',
-        'flex flex-col overflow-hidden', // contenedor columna sin scroll
-        open ? 'translate-x-0' : '-translate-x-full',
+        "fixed left-0 top-0 h-screen w-[var(--sidebar-w)]",
+        "transition-transform duration-300 ease-out",
+        "bg-[var(--blanco)] border-r z-40",
+        "flex flex-col overflow-hidden", // contenedor columna sin scroll
+        open ? "translate-x-0" : "-translate-x-full",
         // 'md:translate-x-0', // opcional: siempre visible en desktop
-      ].join(' ')}
+      ].join(" ")}
       aria-hidden={!open}
     >
       {/* Header/logo */}
@@ -112,22 +149,22 @@ export default function SideMenu({
           const active = isActive(it.href);
 
           const linkClass = [
-            'group relative flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors',
+            "group relative flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
             active
-              ? 'bg-[var(--azul)] text-[var(--blanco)] font-semibold ring-1 ring-blue-200 pl-2'
-              : 'text-gray-800 hover:bg-gray-100 hover:text-gray-900', // 👈 hover SOLO si NO está activo
-          ].join(' ');
+              ? "bg-[var(--azul)] text-[var(--blanco)] font-semibold ring-1 ring-blue-200 pl-2"
+              : "text-gray-800 hover:bg-gray-100 hover:text-gray-900", // 👈 hover SOLO si NO está activo
+          ].join(" ");
 
           const iconClass = active
-            ? 'shrink-0 text-[var(--blanco)]'
-            : 'shrink-0 text-gray-700 group-hover:text-gray-900';
+            ? "shrink-0 text-[var(--blanco)]"
+            : "shrink-0 text-gray-700 group-hover:text-gray-900";
 
           return (
             <Link
               key={it.href}
               href={it.href}
               onClick={() => onClose?.()}
-              aria-current={active ? 'page' : undefined}
+              aria-current={active ? "page" : undefined}
               className={linkClass}
             >
               {Icon && <Icon size={18} className={iconClass} aria-hidden />}
@@ -145,9 +182,15 @@ export default function SideMenu({
             <FiUser className="text-[var(--blanco)]" />
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-bold text-[var(--negro)] truncate">{displayName}</p>
-            <p className="text-xs font-semibold text-[var(--azul)] truncate">{displayRole}</p>
-            <p className="text-xs font-semibold text-gray-500 truncate">{displayEmail}</p>
+            <p className="text-sm font-bold text-[var(--negro)] truncate">
+              {displayName}
+            </p>
+            <p className="text-xs font-semibold text-[var(--azul)] truncate">
+              {displayRole}
+            </p>
+            <p className="text-xs font-semibold text-gray-500 truncate">
+              {displayEmail}
+            </p>
           </div>
         </div>
         <button

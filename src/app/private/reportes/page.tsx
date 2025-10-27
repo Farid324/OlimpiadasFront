@@ -1,11 +1,12 @@
 // src/app/private/reportes/page.tsx
-'use client';
+"use client";
 
-import { useEffect, useMemo, useState } from 'react';
-import dynamic from 'next/dynamic';
-import { api } from '@/libs/api';
-import { usePageHeader } from '@/contexts/pageHeader';
-import { Users, Trophy, Medal, Lock, Unlock } from 'lucide-react';
+import { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import { api } from "@/libs/api";
+import { usePageHeader } from "@/contexts/pageHeader";
+import { Users, Trophy, Medal, Lock, Unlock } from "lucide-react";
+import RoleGate from "@/components/features/RoleGate";
 
 /* =========================
    Tipos y helpers de datos
@@ -19,11 +20,18 @@ type ReportResumenDTO = {
   totalPremiados: number;
 };
 
-type PhaseType = 'CLASIFICACION' | 'FINAL';
-type TabKey = 'Clasificados' | 'Premiados' | 'Certificados' | 'Ceremonia' | 'Publicación';
+type PhaseType = "CLASIFICACION" | "FINAL";
+type TabKey =
+  | "Clasificados"
+  | "Premiados"
+  | "Certificados"
+  | "Ceremonia"
+  | "Publicación";
 
 async function getResumenClasificados(): Promise<ReportResumenDTO> {
-  const { data } = await api.get<ReportResumenDTO>('/reportes/clasificados/resumen');
+  const { data } = await api.get<ReportResumenDTO>(
+    "/reportes/clasificados/resumen"
+  );
   return data;
 }
 
@@ -31,7 +39,7 @@ async function checkAvailability(
   type: PhaseType
 ): Promise<{ unlocked: boolean; message: string | null }> {
   const { data } = await api.get<{ unlocked: boolean; message: string | null }>(
-    '/phases/availability',
+    "/phases/availability",
     { params: { type } }
   );
   return data;
@@ -100,8 +108,16 @@ function PhaseChips({
 
   return (
     <div className="flex items-center gap-2">
-      <Chip label="Fase de Clasificación" unlocked={clasifUnlocked} onClick={onClickClasif} />
-      <Chip label="Fase Final" unlocked={finalUnlocked} onClick={onClickFinal} />
+      <Chip
+        label="Fase de Clasificación"
+        unlocked={clasifUnlocked}
+        onClick={onClickClasif}
+      />
+      <Chip
+        label="Fase Final"
+        unlocked={finalUnlocked}
+        onClick={onClickFinal}
+      />
     </div>
   );
 }
@@ -116,7 +132,13 @@ function SegmentedTabs({
   active: TabKey;
   onChange?: (tab: TabKey) => void;
 }) {
-  const tabs: TabKey[] = ['Clasificados', 'Premiados', 'Certificados', 'Ceremonia', 'Publicación'];
+  const tabs: TabKey[] = [
+    "Clasificados",
+    "Premiados",
+    "Certificados",
+    "Ceremonia",
+    "Publicación",
+  ];
   return (
     <div
       role="tablist"
@@ -132,9 +154,11 @@ function SegmentedTabs({
             role="tab"
             aria-selected={isActive}
             className={[
-              'px-3 py-1 text-sm rounded-full transition',
-              isActive ? 'bg-white text-black shadow' : 'text-gray-600 hover:bg-white hover:text-black',
-            ].join(' ')}
+              "px-3 py-1 text-sm rounded-full transition",
+              isActive
+                ? "bg-white text-black shadow"
+                : "text-gray-600 hover:bg-white hover:text-black",
+            ].join(" ")}
             onClick={() => onChange?.(t)}
           >
             {t}
@@ -150,11 +174,21 @@ function SegmentedTabs({
    ========================================== */
 type TabProps = { disabled?: boolean };
 
-const ClasificadosTab = dynamic<TabProps>(() => import('./tabs/clasificados'), { ssr: false });
-const PremiadosTab    = dynamic<TabProps>(() => import('./tabs/premiados'),   { ssr: false });
-const CertificadosTab = dynamic<TabProps>(() => import('./tabs/certificados'), { ssr: false });
-const CeremoniaTab    = dynamic<TabProps>(() => import('./tabs/ceremonia'),   { ssr: false });
-const PublicacionTab  = dynamic<TabProps>(() => import('./tabs/publicacion'), { ssr: false });
+const ClasificadosTab = dynamic<TabProps>(() => import("./tabs/clasificados"), {
+  ssr: false,
+});
+const PremiadosTab = dynamic<TabProps>(() => import("./tabs/premiados"), {
+  ssr: false,
+});
+const CertificadosTab = dynamic<TabProps>(() => import("./tabs/certificados"), {
+  ssr: false,
+});
+const CeremoniaTab = dynamic<TabProps>(() => import("./tabs/ceremonia"), {
+  ssr: false,
+});
+const PublicacionTab = dynamic<TabProps>(() => import("./tabs/publicacion"), {
+  ssr: false,
+});
 
 /* =========================
    Página
@@ -162,17 +196,23 @@ const PublicacionTab  = dynamic<TabProps>(() => import('./tabs/publicacion'), { 
 export default function ReportesPage() {
   const { setTitle } = usePageHeader();
   useEffect(() => {
-    setTitle('Reportes');
+    setTitle("Reportes");
   }, [setTitle]);
 
-  const [active, setActive] = useState<TabKey>('Clasificados');
+  const [active, setActive] = useState<TabKey>("Clasificados");
 
   // Disponibilidad por fase
-  const [clasifAvail, setClasifAvail] = useState<{ unlocked: boolean; message: string | null }>({
+  const [clasifAvail, setClasifAvail] = useState<{
+    unlocked: boolean;
+    message: string | null;
+  }>({
     unlocked: false,
     message: null,
   });
-  const [finalAvail, setFinalAvail] = useState<{ unlocked: boolean; message: string | null }>({
+  const [finalAvail, setFinalAvail] = useState<{
+    unlocked: boolean;
+    message: string | null;
+  }>({
     unlocked: false,
     message: null,
   });
@@ -180,12 +220,21 @@ export default function ReportesPage() {
   useEffect(() => {
     (async () => {
       try {
-        const [a, b] = await Promise.all([checkAvailability('CLASIFICACION'), checkAvailability('FINAL')]);
+        const [a, b] = await Promise.all([
+          checkAvailability("CLASIFICACION"),
+          checkAvailability("FINAL"),
+        ]);
         setClasifAvail(a);
         setFinalAvail(b);
       } catch {
-        setClasifAvail({ unlocked: false, message: 'No fue posible verificar el estado de la fase.' });
-        setFinalAvail({ unlocked: false, message: 'No fue posible verificar el estado de la fase.' });
+        setClasifAvail({
+          unlocked: false,
+          message: "No fue posible verificar el estado de la fase.",
+        });
+        setFinalAvail({
+          unlocked: false,
+          message: "No fue posible verificar el estado de la fase.",
+        });
       }
     })();
   }, []);
@@ -209,65 +258,118 @@ export default function ReportesPage() {
 
   const cards = useMemo(
     () => [
-      { key: 'clasificados', label: 'Clasificados', value: resumen?.clasificados ?? 0, icon: <Users className="w-6 h-6" /> },
-      { key: 'oro',          label: 'Oro',          value: resumen?.oro ?? 0,          icon: <Trophy className="w-6 h-6" /> },
-      { key: 'plata',        label: 'Plata',        value: resumen?.plata ?? 0,        icon: <Medal className="w-6 h-6" /> },
-      { key: 'bronce',       label: 'Bronce',       value: resumen?.bronce ?? 0,       icon: <Medal className="w-6 h-6" /> },
-      { key: 'menciones',    label: 'Menciones',    value: resumen?.menciones ?? 0,    icon: <Medal className="w-6 h-6" /> },
-      { key: 'total',        label: 'Total Premiados', value: resumen?.totalPremiados ?? 0, icon: <Users className="w-6 h-6" /> },
+      {
+        key: "clasificados",
+        label: "Clasificados",
+        value: resumen?.clasificados ?? 0,
+        icon: <Users className="w-6 h-6" />,
+      },
+      {
+        key: "oro",
+        label: "Oro",
+        value: resumen?.oro ?? 0,
+        icon: <Trophy className="w-6 h-6" />,
+      },
+      {
+        key: "plata",
+        label: "Plata",
+        value: resumen?.plata ?? 0,
+        icon: <Medal className="w-6 h-6" />,
+      },
+      {
+        key: "bronce",
+        label: "Bronce",
+        value: resumen?.bronce ?? 0,
+        icon: <Medal className="w-6 h-6" />,
+      },
+      {
+        key: "menciones",
+        label: "Menciones",
+        value: resumen?.menciones ?? 0,
+        icon: <Medal className="w-6 h-6" />,
+      },
+      {
+        key: "total",
+        label: "Total Premiados",
+        value: resumen?.totalPremiados ?? 0,
+        icon: <Users className="w-6 h-6" />,
+      },
     ],
     [resumen]
   );
 
   // Fase que controla la pestaña activa y bloqueo
-  const phaseOfTab: PhaseType = active === 'Clasificados' ? 'CLASIFICACION' : 'FINAL';
-  const locked = phaseOfTab === 'CLASIFICACION' ? !clasifAvail.unlocked : !finalAvail.unlocked;
-  const lockMsg = phaseOfTab === 'CLASIFICACION' ? clasifAvail.message : finalAvail.message;
+  const phaseOfTab: PhaseType =
+    active === "Clasificados" ? "CLASIFICACION" : "FINAL";
+  const locked =
+    phaseOfTab === "CLASIFICACION"
+      ? !clasifAvail.unlocked
+      : !finalAvail.unlocked;
+  const lockMsg =
+    phaseOfTab === "CLASIFICACION" ? clasifAvail.message : finalAvail.message;
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Encabezado + Chips */}
-      <div className="flex items-start justify-between gap-3 flex-wrap">
+    <RoleGate allow={["ADMINISTRADOR"]}>
+      <div className="p-6 space-y-6">
+        {/* Encabezado + Chips */}
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h1 className="text-2xl font-bold text-black">
+              Sistema de Reportes
+            </h1>
+            <p className="text-gray-500 text-sm">
+              Generación de listas y documentos para clasificados y premiados
+            </p>
+          </div>
+          <PhaseChips
+            clasifUnlocked={clasifAvail.unlocked}
+            finalUnlocked={finalAvail.unlocked}
+          />
+        </div>
+
+        {/* Tabs */}
         <div>
-          <h1 className="text-2xl font-bold text-black">Sistema de Reportes</h1>
-          <p className="text-gray-500 text-sm">Generación de listas y documentos para clasificados y premiados</p>
+          <SegmentedTabs active={active} onChange={setActive} />
         </div>
-        <PhaseChips clasifUnlocked={clasifAvail.unlocked} finalUnlocked={finalAvail.unlocked} />
-      </div>
 
-      {/* Tabs */}
-      <div>
-        <SegmentedTabs active={active} onChange={setActive} />
-      </div>
+        {/* Banner de bloqueo (amarillo) */}
+        {locked && (
+          <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-amber-800 text-sm">
+            <strong>Fase Bloqueada.</strong>{" "}
+            {lockMsg ??
+              (phaseOfTab === "FINAL"
+                ? "La fase final aún no ha sido aprobada. Los reportes se habilitarán una vez que des el aval correspondiente."
+                : "La fase de clasificación aún no ha sido aprobada. Los reportes se habilitarán una vez que des el aval correspondiente.")}
+          </div>
+        )}
 
-      {/* Banner de bloqueo (amarillo) */}
-      {locked && (
-        <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-amber-800 text-sm">
-          <strong>Fase Bloqueada.</strong>{' '}
-          {lockMsg ??
-            (phaseOfTab === 'FINAL'
-              ? 'La fase final aún no ha sido aprobada. Los reportes se habilitarán una vez que des el aval correspondiente.'
-              : 'La fase de clasificación aún no ha sido aprobada. Los reportes se habilitarán una vez que des el aval correspondiente.')}
+        {/* Cards (visibles pero “congeladas” si está bloqueado) */}
+        <div
+          className={locked ? "opacity-50 pointer-events-none select-none" : ""}
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6">
+            {cards.map((c) => (
+              <CardMetric
+                key={c.key}
+                label={c.label}
+                value={c.value}
+                icon={c.icon}
+              />
+            ))}
+          </div>
         </div>
-      )}
 
-      {/* Cards (visibles pero “congeladas” si está bloqueado) */}
-      <div className={locked ? 'opacity-50 pointer-events-none select-none' : ''}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6">
-          {cards.map((c) => (
-            <CardMetric key={c.key} label={c.label} value={c.value} icon={c.icon} />
-          ))}
+        {/* Contenido del tab (congelado si bloqueado) */}
+        <div
+          className={locked ? "opacity-50 pointer-events-none select-none" : ""}
+        >
+          {active === "Clasificados" && <ClasificadosTab disabled={locked} />}
+          {active === "Premiados" && <PremiadosTab disabled={locked} />}
+          {active === "Certificados" && <CertificadosTab disabled={locked} />}
+          {active === "Ceremonia" && <CeremoniaTab disabled={locked} />}
+          {active === "Publicación" && <PublicacionTab disabled={locked} />}
         </div>
       </div>
-
-      {/* Contenido del tab (congelado si bloqueado) */}
-      <div className={locked ? 'opacity-50 pointer-events-none select-none' : ''}>
-        {active === 'Clasificados' && <ClasificadosTab disabled={locked} />}
-        {active === 'Premiados'   && <PremiadosTab    disabled={locked} />}
-        {active === 'Certificados'&& <CertificadosTab disabled={locked} />}
-        {active === 'Ceremonia'   && <CeremoniaTab    disabled={locked} />}
-        {active === 'Publicación' && <PublicacionTab  disabled={locked} />}
-      </div>
-    </div>
+    </RoleGate>
   );
 }
