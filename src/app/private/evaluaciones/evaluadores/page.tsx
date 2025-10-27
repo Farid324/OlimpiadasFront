@@ -8,7 +8,7 @@ import SearchBar from './buscador';
 import FilterTabs from './filtros';
 import CompetidorList from './listaOlimpistas';
 import ModalEvaluacion from './modalEvaluacion';
-import { Competidor, CompetidorInscripcion } from '@/types/notas';
+import {CompetidorInscripcion } from '@/types/notas';
 import { useAuth } from '@/hooks/useAuth';
 
 // ==========================================================
