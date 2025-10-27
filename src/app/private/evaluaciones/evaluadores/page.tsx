@@ -9,6 +9,7 @@ import FilterTabs from '@/components/evaluador/filtros';
 import CompetidorList from '@/components/evaluador/listaOlimpistas';
 import ModalEvaluacion from '@/components/evaluador/modalEvaluacion';
 import { Competidor, CompetidorInscripcion } from '@/types/notas';
+import { useAuth } from '@/hooks/useAuth';
 
 // ==========================================================
 // ✅ Utilidades para manejo de errores del backend
@@ -67,6 +68,8 @@ export default function EvaluacionesEvaluadoresPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<'Todos' | 'Pendientes' | 'Evaluados'>('Todos');
   const [modalCompetidor, setModalCompetidor] = useState<Competidor | null>(null);
+  const { user } = useAuth();
+  console.log("userID:", user?.id)
 
   useEffect(() => {
     setTitle('Evaluaciones');
@@ -75,7 +78,7 @@ export default function EvaluacionesEvaluadoresPage() {
   // ==========================================================
   // ✅ Fetch competidores asignados (useCallback evita warning de deps)
   // ==========================================================
-  const fetchCompetidores = useCallback(async () => {
+  const fetchCompetidores = useCallback(async (): Promise<CompetidorInscripcion[]> => {
     setLoading(true);
     try {
       const data = await evaluacionesService.listarCompetidores({
@@ -88,12 +91,15 @@ export default function EvaluacionesEvaluadoresPage() {
             : 'TODOS',
       });
       setCompetidores(data);
+      return data; // 🔹 retorna la data
     } catch (err) {
       console.error('Error al cargar competidores:', getBackendError(err));
+      return []; // 🔹 retornar array vacío si hay error
     } finally {
       setLoading(false);
     }
   }, [searchQuery, activeFilter]);
+
 
   useEffect(() => {
     fetchCompetidores();
@@ -103,28 +109,38 @@ export default function EvaluacionesEvaluadoresPage() {
   // ✅ Registrar / editar nota
   // ==========================================================
   const handleSubmitNota = async (formData: { nota: number }) => {
-    if (!modalCompetidor) return;
+  if (!modalCompetidor || !user?.id) return;
 
+  try {
     const evaluacionExistente = modalCompetidor.evaluaciones?.[0];
-    try {
-      if (evaluacionExistente) {
-        await evaluacionesService.editarNota({
-          idEvaluacion: evaluacionExistente.id_evaluacion,
-          nuevaNota: Number(formData.nota),
-        });
-      } else {
-        await evaluacionesService.registrarNota({
-          idInscripcion: modalCompetidor.id_inscripcion,
-          nota: Number(formData.nota),
-        });
-      }
 
-      await fetchCompetidores();
-      setModalCompetidor(null);
-    } catch (err) {
-      console.error('Error al registrar evaluación:', getBackendError(err));
+    if (evaluacionExistente) {
+      // ✏️ Editar nota existente
+      await evaluacionesService.editarNota({
+        idEvaluacion: evaluacionExistente.id_evaluacion,
+        idUsuario: Number(user.id),   // <-- convertir a número
+        nuevaNota: Number(formData.nota),
+      });
+    } else {
+      // 📝 Registrar nueva nota
+      await evaluacionesService.registrarNota({
+        idInscripcion: modalCompetidor.id_inscripcion,
+        idUsuario: Number(user.id),  // <-- convertir a número
+        nota: Number(formData.nota),
+      });
     }
-  };
+
+    // 🔄 Refrescar lista
+    const dataActualizada = await fetchCompetidores();
+    const competidorActualizado = dataActualizada.find(
+      c => c.id_inscripcion === modalCompetidor.id_inscripcion
+    );
+    setModalCompetidor(competidorActualizado || null);
+
+  } catch (err) {
+    console.error('Error al registrar o editar nota:', getBackendError(err));
+  }
+};
 
   // ==========================================================
   // ✅ Filtrado y búsqueda
@@ -133,7 +149,6 @@ export default function EvaluacionesEvaluadoresPage() {
     return (
       competidores
         ?.filter((c) => {
-          const evaluaciones = c.evaluaciones ?? [];
           const evaluacion = c.evaluaciones?.[0];
           const nota = evaluacion ? evaluacion.nota : null;
           if (activeFilter === 'Pendientes') return nota === null;
