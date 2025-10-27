@@ -1,4 +1,4 @@
-//src/app/private/controlFases/page.tsx
+// src/app/private/controlFases/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -8,6 +8,11 @@ import type { ControlFasesResponse } from "@/components/controlFases/types";
 import StatCard from "@/components/controlFases/StatCard";
 import PhaseTable from "@/components/controlFases/PhaseTable";
 
+// Tipo genérico para errores
+interface AppError {
+  message?: string;
+}
+
 export default function ControlFasesPage() {
   const { setTitle } = usePageHeader();
   const [data, setData] = useState<ControlFasesResponse | null>(null);
@@ -16,14 +21,15 @@ export default function ControlFasesPage() {
 
   useEffect(() => setTitle("Control de Fases"), [setTitle]);
 
-  const load = async () => {
+  const load = async (): Promise<void> => {
     try {
       setLoading(true);
       const d = await fetchControlFases();
       setData(d);
       setError(null);
-    } catch (e: any) {
-      setError(e?.message || "No se pudo cargar la información.");
+    } catch (e: unknown) {
+      const err = e as AppError;
+      setError(err?.message || "No se pudo cargar la información.");
       setData(null);
     } finally {
       setLoading(false);
@@ -31,7 +37,7 @@ export default function ControlFasesPage() {
   };
 
   useEffect(() => {
-    load();
+    void load();
   }, []);
 
   if (loading && !data) {
@@ -67,7 +73,7 @@ export default function ControlFasesPage() {
         </div>
       )}
 
-      {/*KPIs */}
+      {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Evaluaciones Completadas"
@@ -91,12 +97,12 @@ export default function ControlFasesPage() {
         />
       </div>
 
-      {/*tabla */}
+      {/* Tabla */}
       <PhaseTable
         title="Estado de fases por Área"
         subtitle="Control y Aprobación de Fases de Evaluación"
         filas={filas}
-        onRefresh={load}      
+        onRefresh={load}
       />
     </div>
   );

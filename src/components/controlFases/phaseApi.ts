@@ -1,9 +1,5 @@
 // src/components/controlFases/phaseApi.ts
-
-import { getFromAPI } from "./apiClient";
 import { api } from "@/libs/api";
-
-const BASE = "";
 
 export type ClosePhasePayload = {
   type: "CLASIFICACION" | "FINAL";

@@ -9,6 +9,11 @@ import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { RiErrorWarningLine } from "react-icons/ri";
 import { FiCheckCircle } from "react-icons/fi";
 
+// Interfaz para errores controlados
+interface AppError {
+  message?: string;
+}
+
 export default function ApprovePhaseModal({
   open,
   row,
@@ -18,13 +23,13 @@ export default function ApprovePhaseModal({
   open: boolean;
   row: FilaFase | null;
   onClose: () => void;
-  onSuccess: () => void; // para refrescar la tabla al terminar
+  onSuccess: () => void; // refresca la tabla tras aprobar
 }) {
   const [comentario, setComentario] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Resumen numérico mostrado en el mock/imagen
+  // Resumen mostrado en el modal
   const resumen = useMemo(() => {
     if (!row) return { c: 0, n: 0, d: 0 };
     return {
@@ -36,20 +41,20 @@ export default function ApprovePhaseModal({
 
   if (!open || !row) return null;
 
-  // Obtenemos id_area y id_nivel. Si el BE aún no los manda, los inferimos del id "a-b".
+  // Inferencia de IDs por fallback
   const idArea = row.idArea ?? Number(row.id.split("-")[0]);
   const idNivel = row.idNivel ?? Number(row.id.split("-")[1]);
 
-  const enviar = async () => {
+  const enviar = async (): Promise<void> => {
     setError(null);
     setSubmitting(true);
     try {
-      // En HU-16 cerramos la fase de CLASIFICACION
       await closePhase(idArea, idNivel, { type: "CLASIFICACION", comentario });
       onClose();
       onSuccess();
-    } catch (e: any) {
-      setError(e?.message || "Ocurrió un error al cerrar la fase.");
+    } catch (e: unknown) {
+      const err = e as AppError;
+      setError(err?.message || "Ocurrió un error al cerrar la fase.");
     } finally {
       setSubmitting(false);
     }
@@ -121,7 +126,7 @@ export default function ApprovePhaseModal({
 
             {/* Comentario */}
             <section>
-              <label className=" block text-sm font-medium text-black mb-1">
+              <label className="block text-sm font-medium text-black mb-1">
                 Comentarios de Aprobación
               </label>
               <textarea
