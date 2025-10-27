@@ -11,6 +11,7 @@ interface EvaluacionModalProps {
     etica: string;
     observaciones: string;
   }) => void;
+  onSaved?: () => void;
   title?: string;
   initialData?: {
     nota?: number;
@@ -54,14 +55,15 @@ export default function ModalEvaluacion({
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  const handleSubmit = () => {
-    onSubmit({
-      nota: Number(formData.nota),
-      descripcionConceptual: formData.descripcionConceptual,
-      etica: formData.etica,
-      observaciones: formData.observaciones,
-    });
-  };
+  const handleSubmit = async () => {
+  await onSubmit({
+    nota: Number(formData.nota),
+    descripcionConceptual: formData.descripcionConceptual,
+    etica: formData.etica,
+    observaciones: formData.observaciones,
+  });
+  onClose();
+};
 
   if (!isOpen) return null;
 

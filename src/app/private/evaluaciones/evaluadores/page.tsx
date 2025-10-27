@@ -115,22 +115,29 @@ export default function EvaluacionesEvaluadoresPage() {
     const evaluacionExistente = modalCompetidor.evaluaciones?.[0];
 
     if (evaluacionExistente) {
-      // ✏️ Editar nota existente
       await evaluacionesService.editarNota({
         idEvaluacion: evaluacionExistente.id_evaluacion,
-        idUsuario: Number(user.id),   // <-- convertir a número
+        idUsuario: Number(user.id),
         nuevaNota: Number(formData.nota),
       });
     } else {
-      // 📝 Registrar nueva nota
       await evaluacionesService.registrarNota({
         idInscripcion: modalCompetidor.id_inscripcion,
-        idUsuario: Number(user.id),  // <-- convertir a número
+        idUsuario: Number(user.id),
         nota: Number(formData.nota),
       });
     }
 
-    // 🔄 Refrescar lista
+    // 🔄 Refrescar lista y resumen
+    await Promise.all([
+      fetchCompetidores(),
+      evaluacionesService.getResumenEvaluador?.().then((res) => {
+        // Si CardsSummary usa contexto o estado global, actualízalo aquí.
+        console.log("Resumen actualizado:", res);
+      }),
+    ]);
+
+    // 🔄 Buscar el competidor actualizado para reflejarlo en el modal
     const dataActualizada = await fetchCompetidores();
     const competidorActualizado = dataActualizada.find(
       c => c.id_inscripcion === modalCompetidor.id_inscripcion
@@ -141,6 +148,7 @@ export default function EvaluacionesEvaluadoresPage() {
     console.error('Error al registrar o editar nota:', getBackendError(err));
   }
 };
+
 
   // ==========================================================
   // ✅ Filtrado y búsqueda
@@ -203,6 +211,9 @@ export default function EvaluacionesEvaluadoresPage() {
           isOpen={!!modalCompetidor}
           onClose={() => setModalCompetidor(null)}
           onSubmit={handleSubmitNota}
+          onSaved={() => {
+            fetchCompetidores(); // 🔄 actualiza lista
+          }}
           title={`${
             modalCompetidor.evaluaciones?.length > 0
               ? `Editar nota de ${modalCompetidor.competidor.nombres} ${modalCompetidor.competidor.apellidos}`

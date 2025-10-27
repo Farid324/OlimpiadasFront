@@ -6,6 +6,10 @@ export const evaluacionesService = {
     const { data } = await api.get('/admin/evaluaciones/mis-competidores');
     return data;
   },
+  async getResumenEvaluador() {
+    const { data } = await api.get('/admin/evaluaciones/resumen');
+    return data;
+  },
 
   // 🔹 Registrar una nueva nota
   async registrarNota(payload: {
