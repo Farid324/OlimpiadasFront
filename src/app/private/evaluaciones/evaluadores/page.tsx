@@ -67,7 +67,7 @@ export default function EvaluacionesEvaluadoresPage() {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<'Todos' | 'Pendientes' | 'Evaluados'>('Todos');
-  const [modalCompetidor, setModalCompetidor] = useState<Competidor | null>(null);
+  const [modalCompetidor, setModalCompetidor] = useState<CompetidorInscripcion | null>(null);
   const { user } = useAuth();
   console.log("userID:", user?.id)
 
@@ -108,46 +108,65 @@ export default function EvaluacionesEvaluadoresPage() {
   // ==========================================================
   // ✅ Registrar / editar nota
   // ==========================================================
-  const handleSubmitNota = async (formData: { nota: number }) => {
-  if (!modalCompetidor || !user?.id) return;
+  const handleSubmitNota = async (data: {
+  nota: number;
+  descripcionConceptual?: string;
+  etica?: string;
+  observaciones?: string;
+}) => {
+  if (!modalCompetidor) return;
 
   try {
-    const evaluacionExistente = modalCompetidor.evaluaciones?.[0];
+    const idUsuario = Number(user?.id); // 👈 asegura que sea number
+
+    // 🔎 Verifica si ya tiene evaluación existente
+    const evaluacionExistente = modalCompetidor.evaluaciones?.[0]; // 👈 tu modelo tiene evaluaciones[]
 
     if (evaluacionExistente) {
+      // 🟡 EDITAR nota existente
       await evaluacionesService.editarNota({
         idEvaluacion: evaluacionExistente.id_evaluacion,
-        idUsuario: Number(user.id),
-        nuevaNota: Number(formData.nota),
+        idUsuario,
+        nuevaNota: data.nota,
       });
+
+      // 🧠 actualiza el competidor localmente
+      setCompetidores(prev =>
+        prev.map(c =>
+          c.id_inscripcion === modalCompetidor.id_inscripcion
+            ? { ...c, evaluaciones: [{ ...(c.evaluaciones?.[0] ?? {}), nota: data.nota }], }
+            : c
+        )
+      );
     } else {
+      // 🟢 REGISTRAR nueva nota
       await evaluacionesService.registrarNota({
         idInscripcion: modalCompetidor.id_inscripcion,
-        idUsuario: Number(user.id),
-        nota: Number(formData.nota),
+        idUsuario,
+        nota: data.nota,
+        descripcionConceptual: data.descripcionConceptual,
+        etica: data.etica,
+        observaciones: data.observaciones,
       });
+
+      // 🔁 actualiza lista local
+      setCompetidores(prev =>
+        prev.map(c =>
+          c.id_inscripcion === modalCompetidor.id_inscripcion
+            ? { ...c, evaluaciones: [{ ...(c.evaluaciones?.[0] ?? {}), nota: data.nota }], }
+            : c
+        )
+      );
+
     }
 
-    // 🔄 Refrescar lista y resumen
-    await Promise.all([
-      fetchCompetidores(),
-      evaluacionesService.getResumenEvaluador?.().then((res) => {
-        // Si CardsSummary usa contexto o estado global, actualízalo aquí.
-        console.log("Resumen actualizado:", res);
-      }),
-    ]);
-
-    // 🔄 Buscar el competidor actualizado para reflejarlo en el modal
-    const dataActualizada = await fetchCompetidores();
-    const competidorActualizado = dataActualizada.find(
-      c => c.id_inscripcion === modalCompetidor.id_inscripcion
-    );
-    setModalCompetidor(competidorActualizado || null);
-
+    // ✅ cierra modal
+    setModalCompetidor(null);
   } catch (err) {
-    console.error('Error al registrar o editar nota:', getBackendError(err));
+    console.error("❌ Error al registrar/editar nota:", err);
   }
 };
+
 
 
   // ==========================================================
