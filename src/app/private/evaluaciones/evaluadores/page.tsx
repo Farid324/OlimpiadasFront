@@ -3,11 +3,11 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { usePageHeader } from '@/contexts/pageHeader';
 import { evaluacionesService } from './evaluaciones-service';
-import CardsSummary from '@/components/evaluador/cards';
-import SearchBar from '@/components/evaluador/buscador';
-import FilterTabs from '@/components/evaluador/filtros';
-import CompetidorList from '@/components/evaluador/listaOlimpistas';
-import ModalEvaluacion from '@/components/evaluador/modalEvaluacion';
+import CardsSummary from './cards';
+import SearchBar from './buscador';
+import FilterTabs from './filtros';
+import CompetidorList from './listaOlimpistas';
+import ModalEvaluacion from './modalEvaluacion';
 import { Competidor, CompetidorInscripcion } from '@/types/notas';
 import { useAuth } from '@/hooks/useAuth';
 

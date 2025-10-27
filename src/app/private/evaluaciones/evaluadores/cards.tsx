@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Users, ClipboardList, CheckCircle, Award } from "lucide-react";
-import Card from "../ui/card";
+import Card from "../../../../components/ui/card";
 import { api } from "@/libs/api";
 
 // 🔹 Tipo de datos que devuelve el backend
