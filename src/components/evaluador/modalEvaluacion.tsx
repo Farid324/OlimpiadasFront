@@ -1,6 +1,6 @@
-// src/components/evaluador/modalEvaluacion.tsx
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { X, CheckCircle2, XCircle } from "lucide-react";
 
 interface EvaluacionModalProps {
   isOpen: boolean;
@@ -18,142 +18,169 @@ interface EvaluacionModalProps {
     etica?: string;
     observaciones?: string;
   };
+  competidor?: {
+    nombres: string;
+    apellidos: string;
+  };
 }
 
 export default function ModalEvaluacion({
   isOpen,
   onClose,
   onSubmit,
-  title = "Registrar Evaluación",
+  title,
   initialData,
+  competidor,
 }: EvaluacionModalProps) {
   const [formData, setFormData] = useState({
     nota: initialData?.nota?.toString() ?? "",
     descripcionConceptual: initialData?.descripcionConceptual ?? "",
-    etica: initialData?.etica ?? "",
+    etica: initialData?.etica ?? "Sí cumple",
     observaciones: initialData?.observaciones ?? "",
   });
 
-  // Actualiza datos si cambian
   useEffect(() => {
     if (initialData) {
       setFormData({
         nota: initialData.nota?.toString() ?? "",
         descripcionConceptual: initialData.descripcionConceptual ?? "",
-        etica: initialData.etica ?? "",
+        etica: initialData.etica ?? "Sí cumple",
         observaciones: initialData.observaciones ?? "",
       });
     }
   }, [initialData]);
 
-  // Cierra el modal con tecla Esc
-  useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", handleEsc);
-    return () => document.removeEventListener("keydown", handleEsc);
-  }, [onClose]);
-
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleSubmit = () => {
-    const dataToSubmit = {
+    onSubmit({
       nota: Number(formData.nota),
       descripcionConceptual: formData.descripcionConceptual,
       etica: formData.etica,
       observaciones: formData.observaciones,
-    };
-    onSubmit(dataToSubmit);
+    });
   };
 
   if (!isOpen) return null;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm animate-fadeIn"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg bg-white rounded-2xl shadow-xl p-6 space-y-4 animate-scaleIn"
         onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 transition-all animate-scaleIn"
       >
         {/* Header */}
-        <div className="flex justify-between items-center border-b pb-2">
-          <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
+        <div className="flex justify-between items-start mb-6">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">
+              {title || `Evaluar a ${competidor?.nombres || ""} ${competidor?.apellidos || ""}`}
+            </h2>
+            <p className="text-sm text-gray-500">
+              Registra la nota y observaciones de la evaluación
+            </p>
+          </div>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 transition-colors"
-            aria-label="Cerrar modal"
+            className="text-gray-400 hover:text-gray-600 transition"
           >
-            ✕
+            <X size={20} />
           </button>
         </div>
 
-        {/* Form */}
-        <div className="space-y-3">
-          <label className="block text-sm font-medium text-gray-700">Nota</label>
-          <input
-            type="number"
-            name="nota"
-            value={formData.nota}
-            onChange={handleChange}
-            className="w-full mt-1 rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-            placeholder="Ej. 85"
-          />
+        {/* Inputs */}
+        <div className="space-y-6">
+          {/* Nota */}
+          <div>
+            <label className="block text-sm font-medium text-gray-800 mb-1">
+              Nota obtenida <span className="text-gray-400 text-xs">(0–100)</span>
+            </label>
+            <input
+              type="number"
+              name="nota"
+              value={formData.nota}
+              onChange={handleChange}
+              className="w-full rounded-lg border border-gray-300 focus:border-gray-400 focus:ring-0 focus:shadow-sm text-sm placeholder-gray-400 py-2 px-3 transition"
+              placeholder="Ej: 85.5"
+            />
+          </div>
 
-          <label className="block text-sm font-medium text-gray-700">
-            Descripción conceptual
-          </label>
-          <input
-            type="text"
-            name="descripcionConceptual"
-            value={formData.descripcionConceptual}
-            onChange={handleChange}
-            className="w-full mt-1 rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-            placeholder="Ej. Muy bueno"
-          />
+          {/* Descripción conceptual */}
+          <div>
+            <label className="block text-sm font-medium text-gray-800 mb-1">
+              Descripción conceptual del resultado *
+            </label>
+            <textarea
+              name="descripcionConceptual"
+              value={formData.descripcionConceptual}
+              onChange={handleChange}
+              className="w-full rounded-lg border border-gray-300 focus:border-gray-400 focus:ring-0 focus:shadow-sm text-sm placeholder-gray-400 py-2 px-3 transition"
+              rows={2}
+              placeholder="Describe el desempeño académico del olimpista..."
+            />
+          </div>
 
-          <label className="block text-sm font-medium text-gray-700">Ética</label>
-          <input
-            type="text"
-            name="etica"
-            value={formData.etica}
-            onChange={handleChange}
-            className="w-full mt-1 rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-            placeholder="Ej. Excelente conducta"
-          />
+          {/* Ética */}
+          <div>
+            <label className="block text-sm font-medium text-gray-800 mb-1">
+              Cumplimiento de normas de ética *
+            </label>
+            <div className="relative">
+              <select
+                name="etica"
+                value={formData.etica}
+                onChange={handleChange}
+                className="appearance-none w-full rounded-lg border border-gray-300 focus:border-gray-400 focus:ring-0 focus:shadow-sm text-sm py-2 px-3 pr-10 transition bg-white"
+              >
+                <option value="Sí cumple">Sí cumple</option>
+                <option value="No cumple">No cumple</option>
+              </select>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                {formData.etica === "Sí cumple" ? (
+                  <CheckCircle2 size={18} className="text-green-500" />
+                ) : (
+                  <XCircle size={18} className="text-red-500" />
+                )}
+              </div>
+            </div>
+          </div>
 
-          <label className="block text-sm font-medium text-gray-700">
-            Observaciones
-          </label>
-          <textarea
-            name="observaciones"
-            value={formData.observaciones}
-            onChange={handleChange}
-            className="w-full mt-1 rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-            rows={3}
-            placeholder="Escribe observaciones..."
-          />
+          {/* Observaciones */}
+          <div>
+            <label className="block text-sm font-medium text-gray-800 mb-1">
+              Observaciones
+            </label>
+            <textarea
+              name="observaciones"
+              value={formData.observaciones}
+              onChange={handleChange}
+              className="w-full rounded-lg border border-gray-300 focus:border-gray-400 focus:ring-0 focus:shadow-sm text-sm placeholder-gray-400 py-2 px-3 transition"
+              rows={3}
+              placeholder="Comentarios adicionales..."
+            />
+          </div>
         </div>
 
+        {/* Línea divisoria */}
+        <div className="my-6 border-t border-gray-200"></div>
+
         {/* Footer */}
-        <div className="flex justify-end pt-4 space-x-3 border-t">
+        <div className="flex justify-end gap-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-100 transition-colors"
+            className="px-4 py-2 text-sm rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition"
           >
             Cancelar
           </button>
           <button
             onClick={handleSubmit}
-            className="px-4 py-2 text-sm rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+            className="px-4 py-2 text-sm rounded-lg bg-[#6E42FF] text-white hover:bg-[#5b37d8] transition"
           >
-            Guardar evaluación
+            Guardar Evaluación
           </button>
         </div>
       </div>
