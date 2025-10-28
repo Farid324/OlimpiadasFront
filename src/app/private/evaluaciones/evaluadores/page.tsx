@@ -8,7 +8,7 @@ import SearchBar from './buscador';
 import FilterTabs from './filtros';
 import CompetidorList from './listaOlimpistas';
 import ModalEvaluacion from './modalEvaluacion';
-import { Competidor, CompetidorInscripcion } from '@/types/notas';
+import { CompetidorInscripcion } from '@/types/notas';
 import { useAuth } from '@/hooks/useAuth';
 
 // ==========================================================
@@ -118,26 +118,37 @@ export default function EvaluacionesEvaluadoresPage() {
 
   try {
     const idUsuario = Number(user?.id); // 👈 asegura que sea number
-
-    // 🔎 Verifica si ya tiene evaluación existente
     const evaluacionExistente = modalCompetidor.evaluaciones?.[0]; // 👈 tu modelo tiene evaluaciones[]
 
     if (evaluacionExistente) {
       // 🟡 EDITAR nota existente
+      const idEvaluacion = evaluacionExistente.id_evaluacion;
+      if (!idEvaluacion) {
+        console.warn('⚠️ La evaluación no tiene id_evaluacion, se omitió la edición.');
+        return;
+      }
+
       await evaluacionesService.editarNota({
-        idEvaluacion: evaluacionExistente.id_evaluacion,
+        idEvaluacion,
         idUsuario,
         nuevaNota: data.nota,
+        observaciones: data.observaciones,
       });
 
-      // 🧠 actualiza el competidor localmente
+      // 🧠 Actualiza el competidor localmente
       setCompetidores(prev =>
         prev.map(c =>
           c.id_inscripcion === modalCompetidor.id_inscripcion
-            ? { ...c, evaluaciones: [{ ...(c.evaluaciones?.[0] ?? {}), nota: data.nota }], }
+            ? { 
+                ...c, 
+                evaluaciones: [
+                  { ...(c.evaluaciones?.[0] ?? {}), nota: data.nota }
+                ],
+              }
             : c
         )
       );
+
     } else {
       // 🟢 REGISTRAR nueva nota
       await evaluacionesService.registrarNota({
@@ -149,23 +160,31 @@ export default function EvaluacionesEvaluadoresPage() {
         observaciones: data.observaciones,
       });
 
-      // 🔁 actualiza lista local
+      // 🔁 Refresca o actualiza lista local
       setCompetidores(prev =>
         prev.map(c =>
           c.id_inscripcion === modalCompetidor.id_inscripcion
-            ? { ...c, evaluaciones: [{ ...(c.evaluaciones?.[0] ?? {}), nota: data.nota }], }
+            ? { 
+                ...c, 
+                evaluaciones: [
+                  { ...(c.evaluaciones?.[0] ?? {}), nota: data.nota }
+                ],
+              }
             : c
         )
       );
-
     }
 
-    // ✅ cierra modal
+    // ✅ Cierra modal
     setModalCompetidor(null);
   } catch (err) {
     console.error("❌ Error al registrar/editar nota:", err);
+    if ((err as any)?.response?.data) {
+      console.error("Backend response:", (err as any).response.data);
+    }
   }
 };
+
 
 
 

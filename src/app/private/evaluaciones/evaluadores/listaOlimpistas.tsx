@@ -26,6 +26,7 @@ export default function CompetidorList({ data, onEvaluar, onEditar }: Props) {
       <tbody>
         {data.map((c) => {
           const nota = c.evaluaciones?.[0]?.nota ?? null;
+          //const idEvaluacion = c.evaluaciones?.[0]?.id_evaluacion ?? null;
           return (
             <tr
               key={c.competidor.id_competidor}
