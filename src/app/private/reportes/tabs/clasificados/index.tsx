@@ -1,4 +1,3 @@
-//src/app/private/reportes/tabs/clasificados/index.tsx
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -27,6 +26,7 @@ type ReportFilters = {
 
 type AreaDTO = { id: number; nombre: string };
 type NivelDTO = { id: number; nombre: string };
+
 type RawAreaDTO = {
   id_area?: number | string;
   id?: number | string;
@@ -36,7 +36,6 @@ type RawAreaDTO = {
   label?: string;
 };
 
-// 👇 TIPO PARA LA RESPUESTA CRUDA DE 'niveles' (en lugar de any)
 type RawNivelDTO = {
   id_nivel?: number | string;
   id?: number | string;
@@ -55,7 +54,6 @@ const toParams = (filters?: ReportFilters) => {
 };
 
 async function getAreas(): Promise<AreaDTO[]> {
-  // CORREGIDO: Usamos el tipo RawAreaDTO[] en lugar de any[]
   const { data } = await api.get<RawAreaDTO[]>('/areas');
   const arr = Array.isArray(data) ? data : [];
   return arr
@@ -67,7 +65,6 @@ async function getAreas(): Promise<AreaDTO[]> {
 }
 
 async function getNiveles(): Promise<NivelDTO[]> {
-  // CORREGIDO: Usamos el tipo RawNivelDTO[] en lugar de any[]
   const { data } = await api.get<RawNivelDTO[]>('/niveles');
   const arr = Array.isArray(data) ? data : [];
   return arr
@@ -137,7 +134,6 @@ export default function ClasificadosTab() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.id_area, filters.id_nivel, filters.estado]);
 
-  // ==== Helpers para el diálogo de confirmación ====
   const safeAreas   = useMemo(() => (areas ?? []).filter((a): a is AreaDTO => !!a && typeof a.id === 'number' && !!a.nombre), [areas]);
   const safeNiveles = useMemo(() => (niveles ?? []).filter((n): n is NivelDTO => !!n && typeof n.id === 'number' && !!n.nombre), [niveles]);
 
@@ -145,7 +141,7 @@ export default function ClasificadosTab() {
     if (filters.id_area == null) return '—';
     if (filters.id_area === 0) return 'Todas las áreas';
     return safeAreas.find(a => a.id === filters.id_area)?.nombre ?? String(filters.id_area);
-    };
+  };
   const getNivelLabel = () => {
     if (filters.id_nivel == null) return '—';
     if (filters.id_nivel === 0) return 'Todos los niveles';
@@ -160,9 +156,7 @@ export default function ClasificadosTab() {
     return String(filters.estado);
   };
 
-  // ==== Exportar con confirmación ====
   const onExport = async () => {
-    // Evita exportar cuando no hay filas
     if (rows.length === 0) {
       alert('No hay registros para exportar con los filtros actuales.');
       return;
@@ -202,7 +196,7 @@ export default function ClasificadosTab() {
   const estadoPlaceholder = filters.estado == null;
 
   return (
-    <>
+    <div className="space-y-6">{/* <- ESTA LÍNEA CREA EL ESPACIO ENTRE FILTROS Y TABLA */}
       {/* FILTROS */}
       <div className="bg-white rounded-lg shadow p-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -220,9 +214,7 @@ export default function ClasificadosTab() {
               aria-label="Filtrar por área"
               disabled={loadingCatalogs}
             >
-              {/* Placeholder (gris), oculto en el menú */}
               <option value="" disabled hidden style={{ color: '#6B7280' }}>Filtrar por área</option>
-              {/* Opciones reales: SIEMPRE negras */}
               <option value={0} style={{ color: '#111827' }}>Todas las áreas</option>
               {safeAreas.map((a) => (
                 <option key={`area-${a.id}`} value={a.id} style={{ color: '#111827' }}>
@@ -348,6 +340,6 @@ export default function ClasificadosTab() {
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 }
