@@ -330,7 +330,7 @@ export default function ClasificadosTab() {
                     <td className="py-3 px-4">
                       <span className="px-2 py-1 rounded-md bg-gray-200 text-black text-xs font-bold">{r.nivel}</span>
                     </td>
-                    <td className="py-3 px-4 text-black tabular-nums">{r.puntaje}</td>
+                    <td  className="py-3 px-4 text-black tabular-nums text-center w-24">{r.puntaje}</td>
                     <td className="py-3 px-4 text-black">{r.unidadEducativa}</td>
                     <td className="py-3 px-4 text-black">{r.departamento}</td>
                   </tr>
