@@ -27,11 +27,11 @@ export default function LoginForm() {
       setLoading(false);
       return;
     }
-    if (!email.endsWith('@gmail.com')) {
+    /*if (!email.endsWith('@gmail.com')) {
       setError('El correo debe pertenecer al dominio "@gmail.com".');
       setLoading(false);
       return;
-    }
+    }*/
     if (password.length < 8 || password.length > 30) {
       setError('La contraseña debe tener entre 8 y 30 caracteres.');
       setLoading(false);
