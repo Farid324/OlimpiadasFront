@@ -1,3 +1,4 @@
+// src/app/private/reportes/tabs/clasificados/index.tsx
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -45,13 +46,31 @@ type RawNivelDTO = {
   label?: string;
 };
 
-const toParams = (filters?: ReportFilters) => {
+/* ===================== PERSISTENCIA LOCAL ===================== */
+const STORAGE_KEY = 'reportes:clasificados:filters:v1';
+const DEFAULT_FILTERS: ReportFilters = { id_area: null, id_nivel: null, estado: null };
+
+function readFiltersFromUrl(): ReportFilters {
+  if (typeof window === 'undefined') return DEFAULT_FILTERS;
+  const sp = new URLSearchParams(window.location.search);
+  const id_area = sp.get('id_area');
+  const id_nivel = sp.get('id_nivel');
+  const estado = sp.get('estado') as EstadoClasificado | null;
+
+  return {
+    id_area: id_area !== null ? Number(id_area) : null,
+    id_nivel: id_nivel !== null ? Number(id_nivel) : null,
+    estado: estado || null,
+  };
+}
+
+function toParams(filters?: ReportFilters) {
   const p = new URLSearchParams();
   if (filters?.id_area && Number(filters.id_area) !== 0) p.set('id_area', String(filters.id_area));
   if (filters?.id_nivel && Number(filters.id_nivel) !== 0) p.set('id_nivel', String(filters.id_nivel));
   if (filters?.estado && filters.estado !== 'TODOS') p.set('estado', String(filters.estado));
   return Object.fromEntries(p);
-};
+}
 
 async function getAreas(): Promise<AreaDTO[]> {
   const { data } = await api.get<RawAreaDTO[]>('/areas');
@@ -86,12 +105,38 @@ async function exportClasificados(filters?: ReportFilters): Promise<Blob> {
 }
 
 export default function ClasificadosTab() {
-  const [filters, setFilters] = useState<ReportFilters>({
-    id_area: null,
-    id_nivel: null,
-    estado: null,
+  /* ====== Filtros: leer de sessionStorage/URL y persistirlos ====== */
+  const [filters, setFilters] = useState<ReportFilters>(() => {
+    if (typeof window === 'undefined') return DEFAULT_FILTERS;
+    try {
+      const raw = sessionStorage.getItem(STORAGE_KEY);
+      if (raw) return JSON.parse(raw) as ReportFilters;
+    } catch {}
+    // Si no hay en storage, intenta hidratar desde la URL
+    return readFiltersFromUrl();
   });
 
+  // Persistir cada cambio + reflejar en la URL (sin recargar)
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(filters));
+      const sp = new URLSearchParams(window.location.search);
+      if (filters.id_area == null || Number(filters.id_area) === 0) sp.delete('id_area');
+      else sp.set('id_area', String(filters.id_area));
+
+      if (filters.id_nivel == null || Number(filters.id_nivel) === 0) sp.delete('id_nivel');
+      else sp.set('id_nivel', String(filters.id_nivel));
+
+      if (!filters.estado || filters.estado === 'TODOS') sp.delete('estado');
+      else sp.set('estado', String(filters.estado));
+
+      const q = sp.toString();
+      const newUrl = q ? `${window.location.pathname}?${q}` : window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    } catch {}
+  }, [filters]);
+
+  /* ====== Estado de catálogos/filas ====== */
   const [areas, setAreas] = useState<AreaDTO[]>([]);
   const [niveles, setNiveles] = useState<NivelDTO[]>([]);
   const [rows, setRows] = useState<ClasificadoItemDTO[]>([]);
@@ -114,7 +159,9 @@ export default function ClasificadosTab() {
         if (!cancel) setLoadingCatalogs(false);
       }
     })();
-    return () => { cancel = true; };
+    return () => {
+      cancel = true;
+    };
   }, []);
 
   const fetchRows = async (f: ReportFilters) => {
@@ -196,7 +243,7 @@ export default function ClasificadosTab() {
   const estadoPlaceholder = filters.estado == null;
 
   return (
-    <div className="space-y-6">{/* <- ESTA LÍNEA CREA EL ESPACIO ENTRE FILTROS Y TABLA */}
+    <div className="space-y-6">
       {/* FILTROS */}
       <div className="bg-white rounded-lg shadow p-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -330,7 +377,7 @@ export default function ClasificadosTab() {
                     <td className="py-3 px-4">
                       <span className="px-2 py-1 rounded-md bg-gray-200 text-black text-xs font-bold">{r.nivel}</span>
                     </td>
-                    <td  className="py-3 px-4 text-black tabular-nums text-center w-24">{r.puntaje}</td>
+                    <td className="py-3 px-4 text-black tabular-nums text-center w-24">{r.puntaje}</td>
                     <td className="py-3 px-4 text-black">{r.unidadEducativa}</td>
                     <td className="py-3 px-4 text-black">{r.departamento}</td>
                   </tr>
