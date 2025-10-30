@@ -1,11 +1,18 @@
-export default function ProgressBar({ done, total }:{done:number; total:number}) {
-  const pct = Math.max(0, Math.min(100, Math.round((done/total)*100)));
+// src/components/controlFases/ProgressBar.tsx
+import React from "react";
+
+export default function ProgressBar({ value }: { value: number }) {
+  const safe = Math.max(0, Math.min(100, value));
   return (
-    <div className="w-40">
-      <div className="h-2 bg-gray-200 rounded-full">
-        <div className="h-2 bg-blue-600 rounded-full" style={{ width: `${pct}%` }} />
-      </div>
-      <div className="mt-1 text-xs text-gray-600">{done}/{total}</div>
+    <div className="h-2 w-full rounded-full bg-slate-100">
+      <div
+        className="h-2 rounded-full bg-indigo-600"
+        style={{ width: `${safe}%` }}
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={safe}
+      />
     </div>
   );
 }
