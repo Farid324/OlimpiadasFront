@@ -35,8 +35,8 @@ const DEFAULT_FILTERS: ReportFilters = { id_area: null, id_nivel: null, estado: 
 
 const NIVEL_ORDER: Record<string, number> = { Secundaria: 0, Primaria: 1 };
 
-const pick = (o: any, keys: string[]) =>
-  keys.map(k => o?.[k]).find(v => v !== undefined && v !== null);
+const pick = (o: Record<string, unknown> | null | undefined, keys: string[]) =>
+   keys.map(k => o?.[k]).find(v => v !== undefined && v !== null);
 
 function mapCatalog<T extends { id: number; nombre: string }>(
   data: unknown,
@@ -45,7 +45,7 @@ function mapCatalog<T extends { id: number; nombre: string }>(
 ): T[] {
   const arr = Array.isArray(data) ? data : [];
   return arr
-    .map((r: any) =>
+    .map((r: Record<string, unknown> | null | undefined) =>
       ({
         id: Number(pick(r, idKeys)),
         nombre: String(pick(r, nameKeys) ?? '').trim(),
@@ -161,7 +161,7 @@ export default function ClasificadosTab() {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(filters));
 
       const sp = new URLSearchParams(window.location.search);
-      const setOrDel = (k: string, v: any, delIf: boolean) =>
+      const setOrDel = (k: string, v: unknown, delIf: boolean) =>
         delIf ? sp.delete(k) : sp.set(k, String(v));
 
       setOrDel('id_area',  filters.id_area,  filters.id_area == null || Number(filters.id_area) === 0);

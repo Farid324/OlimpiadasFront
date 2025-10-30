@@ -179,14 +179,12 @@ export default function EvaluacionesEvaluadoresPage() {
     setModalCompetidor(null);
   } catch (err) {
     console.error("❌ Error al registrar/editar nota:", err);
-    if ((err as any)?.response?.data) {
-      console.error("Backend response:", (err as any).response.data);
+    if (hasResponseData(err) && err.response.data) {
+      // Dentro de este 'if', TypeScript ya sabe que 'err.response.data' existe.
+      console.error("Backend response:", err.response.data);
     }
   }
 };
-
-
-
 
   // ==========================================================
   // ✅ Filtrado y búsqueda
