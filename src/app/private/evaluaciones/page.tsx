@@ -1,14 +1,11 @@
-// src/app/private/olimpistas/page.tsx
 'use client';
-import { useEffect, useState} from 'react';
+import { useEffect, useState } from 'react';
 import { usePageHeader } from '@/contexts/pageHeader';
-import Filters from './filters';
-import CardsSummary from './cardsSummary';
-import ProgressBar from './ProgressBar';
-import CompetidorTable from './CompetidorTable';
-import ModalViewEvaluation from './ModalViewEvaluation';
 import { evaluacionesService } from './adminEvaluaciones-service';
 import { CompetidorInscripcionAdmin } from '@/types/notas';
+import TabsView from './tabsView';
+import ClasificarView from './clasificarView';
+import PremiacionView from './PremiacionView';
 
 interface Area {
   id_area: number;
@@ -19,7 +16,6 @@ interface Nivel {
   id_nivel: number;
   nombre_nivel: string;
 }
-
 
 interface Stats {
   total: number;
@@ -42,6 +38,7 @@ export default function EvaluacionesPage() {
   const [selectedArea, setSelectedArea] = useState<number | undefined>();
   const [selectedNivel, setSelectedNivel] = useState<number | undefined>();
   const [modalCompetidor, setModalCompetidor] = useState<CompetidorInscripcionAdmin | null>(null);
+  const [activeTab, setActiveTab] = useState<"clasificar" | "premiacion">("clasificar");
 
   const loadAll = async (filters?: FiltersInput) => {
     const [list, s] = await Promise.all([
@@ -75,35 +72,30 @@ export default function EvaluacionesPage() {
   };
 
   return (
-    // <div className="bg-white border rounded-xl p-6 shadow-sm">
-    //   <h2 className="text-xl font-semibold mb-2">Listado de Evaluaciones</h2>
-    //   <p className="text-gray-700">Aquí va el contenido de la sección.</p>
-    // </div>
-    <div className="p-6">
-      <h1 className="text-xl font-semibold mb-4">Evaluaciones - Vista del Admin</h1>
+    <div>
+      <h1 className="text-lg font-semibold mb-1">Sistema de Evaluaciones</h1>
+      <p className="text-sm text-gray-500 mb-4">
+        Registro y seguimiento de evaluaciones por área y nivel
+      </p>
 
-      <Filters
-        areas={areas}
-        niveles={niveles}
-        selectedArea={selectedArea}
-        selectedNivel={selectedNivel}
-        onChange={handleFilters}
-      />
+      <TabsView onChange={setActiveTab} />
 
-      {stats && (
-        <>
-          <CardsSummary stats={stats} />
-          <ProgressBar completadas={stats.completadas} total={stats.total} />
-        </>
+      {activeTab === "clasificar" && (
+        <ClasificarView
+          areas={areas}
+          niveles={niveles}
+          selectedArea={selectedArea}
+          selectedNivel={selectedNivel}
+          stats={stats}
+          competidores={competidores}
+          modalCompetidor={modalCompetidor}
+          onChangeFilters={handleFilters}
+          onViewCompetidor={setModalCompetidor}
+          onCloseModal={() => setModalCompetidor(null)}
+        />
       )}
 
-      <CompetidorTable data={competidores} onView={(c) => setModalCompetidor(c)} />
-
-      <ModalViewEvaluation
-        isOpen={!!modalCompetidor}
-        onClose={() => setModalCompetidor(null)}
-        competidor={modalCompetidor}
-      />
+      {activeTab === "premiacion" && <PremiacionView />}
     </div>
   );
 }
