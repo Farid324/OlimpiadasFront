@@ -72,13 +72,16 @@ export default function EvaluacionesPage() {
   };
 
   return (
-    <div>
+    <div className= "flex flex-col h-auto bg-gray-50 p-6 space-y-4">
       <h1 className="text-lg font-semibold mb-1">Sistema de Evaluaciones</h1>
       <p className="text-sm text-gray-500 mb-4">
         Registro y seguimiento de evaluaciones por área y nivel
       </p>
 
-      <TabsView onChange={setActiveTab} />
+      <div className="mt-2 mb-4">
+        <TabsView onChange={setActiveTab} />
+      </div>
+
 
       {activeTab === "clasificar" && (
         <ClasificarView
