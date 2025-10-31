@@ -11,6 +11,9 @@ export type Competidor = {
   evaluaciones: Evaluacion[];
 };
 export interface Evaluacion {
+  observaciones: string;
+  etica: string;
+  descripcionConceptual: string;
   comentario: string;
   id_evaluacion: number;
   nota: number | null;
@@ -24,6 +27,8 @@ export interface CompetidorInscripcion {
   area: { nombre_area: string };
   nivel: { nombre_nivel: string };
   competidor: {
+    nivel: string | undefined;
+    colegio: string | undefined;
     id_competidor: number;
     nombres: string;
     apellidos: string;

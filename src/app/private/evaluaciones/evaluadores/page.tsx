@@ -312,31 +312,41 @@ export default function EvaluacionesEvaluadoresPage() {
 
       {/* Modal de evaluación */}
       {modalCompetidor && (
-        <ModalEvaluacion
-          isOpen={!!modalCompetidor}
-          onClose={() => setModalCompetidor(null)}
-          onSubmit={handleSubmitNota}
-          onSaved={() => {
-            fetchCompetidores(); // 🔄 actualiza lista
-          }}
-          title={`${
-            modalCompetidor.evaluaciones?.length > 0
-              ? `Editar nota de ${modalCompetidor.competidor.nombres} ${modalCompetidor.competidor.apellidos}`
-              : `Evaluar a ${modalCompetidor.competidor.nombres} ${modalCompetidor.competidor.apellidos}`
-          }`}
-          // 🔧 Asegura que nota sea numérica o undefined
-          initialData={
-            modalCompetidor.evaluaciones?.[0]
-              ? {
-                  nota:
-                    typeof modalCompetidor.evaluaciones[0].nota === 'number'
-                      ? modalCompetidor.evaluaciones[0].nota
-                      : undefined,
-                }
-              : undefined
-          }
-        />
-      )}
+      <ModalEvaluacion
+        isOpen={!!modalCompetidor}
+        onClose={() => setModalCompetidor(null)}
+        onSubmit={handleSubmitNota}
+        onSaved={() => {
+          fetchCompetidores(); // 🔄 actualiza lista
+        }}
+        title={`${
+          modalCompetidor.evaluaciones?.length > 0
+            ? `Editar nota de ${modalCompetidor.competidor.nombres} ${modalCompetidor.competidor.apellidos}`
+            : `Evaluar a ${modalCompetidor.competidor.nombres} ${modalCompetidor.competidor.apellidos}`
+        }`}
+        initialData={
+          modalCompetidor.evaluaciones?.[0]
+            ? {
+                nota:
+                  typeof modalCompetidor.evaluaciones[0].nota === "number"
+                    ? modalCompetidor.evaluaciones[0].nota
+                    : undefined,
+                descripcionConceptual:
+                  modalCompetidor.evaluaciones[0].descripcionConceptual ?? "",
+                etica: modalCompetidor.evaluaciones[0].etica ?? "Sí cumple",
+                observaciones: modalCompetidor.evaluaciones[0].observaciones ?? "",
+              }
+            : undefined
+        }
+        competidor={{
+          nombres: modalCompetidor.competidor.nombres,
+          apellidos: modalCompetidor.competidor.apellidos,
+          ci: modalCompetidor.competidor.ci,
+          colegio: modalCompetidor.competidor.colegio,
+          nivel: modalCompetidor.competidor.nivel,
+        }}
+      />
+    )}
     </div>
   );
 }

@@ -22,6 +22,9 @@ interface EvaluacionModalProps {
   competidor?: {
     nombres: string;
     apellidos: string;
+    ci?: string;
+    colegio?: string;
+    nivel?: string;
   };
 }
 
@@ -40,36 +43,86 @@ export default function ModalEvaluacion({
     observaciones: initialData?.observaciones ?? "",
   });
 
+  const [errors, setErrors] = useState({
+    nota: "",
+    descripcionConceptual: "",
+    etica: "",
+  });
+
+  const [eticaDisabled, setEticaDisabled] = useState(false);
+
   useEffect(() => {
-    if (initialData) {
-      setFormData({
-        nota: initialData.nota?.toString() ?? "",
-        descripcionConceptual: initialData.descripcionConceptual ?? "",
-        etica: initialData.etica ?? "Sí cumple",
-        observaciones: initialData.observaciones ?? "",
-      });
-    }
-  }, [initialData]);
+  if (initialData && isOpen) {
+    setFormData({
+      nota: initialData.nota?.toString() ?? "",
+      descripcionConceptual: initialData.descripcionConceptual ?? "",
+      etica: initialData.etica ?? "Sí cumple",
+      observaciones: initialData.observaciones ?? "",
+    });
+  }
+}, [initialData, isOpen]);
+
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => setFormData({ ...formData, [e.target.name]: e.target.value });
+  ) => {
+    const { name, value } = e.target;
+    const updated = { ...formData, [name]: value };
+
+    // Sincroniza automáticamente ética con nota
+    if (name === "nota") {
+      const notaNum = Number(value);
+      if (notaNum === -1) {
+        updated.etica = "No cumple";
+        setEticaDisabled(true);
+      } else {
+        setEticaDisabled(false);
+        if (formData.etica === "No cumple") {
+          updated.etica = "Sí cumple";
+        }
+      }
+    }
+
+    setFormData(updated);
+    setErrors({ ...errors, [name]: "" });
+  };
 
   const handleSubmit = async () => {
-  await onSubmit({
-    nota: Number(formData.nota),
-    descripcionConceptual: formData.descripcionConceptual,
-    etica: formData.etica,
-    observaciones: formData.observaciones,
-  });
-  onClose();
-};
+    const newErrors = { nota: "", descripcionConceptual: "", etica: "" };
+    const notaNum = Number(formData.nota);
+
+    if (!formData.nota.trim()) {
+      newErrors.nota = "La nota es obligatoria.";
+    } else if (isNaN(notaNum) || notaNum < -1 || notaNum > 100) {
+      newErrors.nota = "Debe ser un número entre -1 y 100.";
+    }
+
+    if (!formData.descripcionConceptual.trim()) {
+      newErrors.descripcionConceptual = "La descripción conceptual es obligatoria.";
+    }
+
+    if (!["Sí cumple", "No cumple"].includes(formData.etica)) {
+      newErrors.etica = "Debe seleccionar una opción válida.";
+    }
+
+    setErrors(newErrors);
+
+    if (Object.values(newErrors).some((e) => e)) return;
+
+    await onSubmit({
+      nota: notaNum,
+      descripcionConceptual: formData.descripcionConceptual,
+      etica: formData.etica,
+      observaciones: formData.observaciones,
+    });
+    onClose();
+  };
 
   if (!isOpen) return null;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 animate-fadeIn"
       onClick={onClose}
     >
       <div
@@ -94,21 +147,32 @@ export default function ModalEvaluacion({
           </button>
         </div>
 
+        {/* <div className="mt-2 text-sm text-gray-700 space-y-1">
+          {competidor?.ci && <p><span className="font-medium">CI:</span> {competidor.ci}</p>}
+          {competidor?.colegio && <p><span className="font-medium">Colegio:</span> {competidor.colegio}</p>}
+          {competidor?.nivel && <p><span className="font-medium">Nivel:</span> {competidor.nivel}</p>}
+        </div> */}
+
         {/* Inputs */}
         <div className="space-y-6">
           {/* Nota */}
           <div>
             <label className="block text-sm font-medium text-gray-800 mb-1">
-              Nota obtenida <span className="text-gray-400 text-xs">(0–100)</span>
+              Nota obtenida <span className="text-gray-400 text-xs">(-1–100)</span>
             </label>
             <input
               type="number"
               name="nota"
               value={formData.nota}
               onChange={handleChange}
-              className="w-full rounded-lg border border-gray-300 focus:border-gray-400 focus:ring-0 focus:shadow-sm text-sm placeholder-gray-400 py-2 px-3 transition"
-              placeholder="Ej: 85.5"
+              className={`w-full rounded-lg border ${
+                errors.nota ? "border-red-400" : "border-gray-300"
+              } focus:border-gray-400 focus:ring-0 focus:shadow-sm text-sm placeholder-gray-400 py-2 px-3 transition`}
+              placeholder="Ej: 85.5 o -1 si fue descalificado"
             />
+            {errors.nota && (
+              <p className="text-red-500 text-xs mt-0">{errors.nota}</p>
+            )}
           </div>
 
           {/* Descripción conceptual */}
@@ -120,10 +184,17 @@ export default function ModalEvaluacion({
               name="descripcionConceptual"
               value={formData.descripcionConceptual}
               onChange={handleChange}
-              className="w-full rounded-lg border border-gray-300 focus:border-gray-400 focus:ring-0 focus:shadow-sm text-sm placeholder-gray-400 py-2 px-3 transition"
+              className={`w-full rounded-lg border ${
+                errors.descripcionConceptual ? "border-red-400" : "border-gray-300"
+              } focus:border-gray-400 focus:ring-0 focus:shadow-sm text-sm placeholder-gray-400 py-2 px-3 transition`}
               rows={2}
               placeholder="Describe el desempeño académico del olimpista..."
             />
+            {errors.descripcionConceptual && (
+              <p className="text-red-500 text-xs mt-0">
+                {errors.descripcionConceptual}
+              </p>
+            )}
           </div>
 
           {/* Ética */}
@@ -136,7 +207,12 @@ export default function ModalEvaluacion({
                 name="etica"
                 value={formData.etica}
                 onChange={handleChange}
-                className="appearance-none w-full rounded-lg border border-gray-300 focus:border-gray-400 focus:ring-0 focus:shadow-sm text-sm py-2 px-3 pr-10 transition bg-white"
+                disabled={eticaDisabled}
+                className={`appearance-none w-full rounded-lg border ${
+                  errors.etica ? "border-red-400" : "border-gray-300"
+                } focus:border-gray-400 focus:ring-0 focus:shadow-sm text-sm py-2 px-3 pr-10 transition bg-white ${
+                  eticaDisabled ? "bg-gray-100 cursor-not-allowed" : ""
+                }`}
               >
                 <option value="Sí cumple">Sí cumple</option>
                 <option value="No cumple">No cumple</option>
@@ -149,6 +225,9 @@ export default function ModalEvaluacion({
                 )}
               </div>
             </div>
+            {errors.etica && (
+              <p className="text-red-500 text-xs mt-0">{errors.etica}</p>
+            )}
           </div>
 
           {/* Observaciones */}
