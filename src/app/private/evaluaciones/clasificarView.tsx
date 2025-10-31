@@ -53,6 +53,13 @@ export default function ClasificarView({
   onViewCompetidor,
   onCloseModal,
 }: ClasificarViewProps) {
+  const handleFiltersChange = (filters: FiltersInput) => {
+    const merged: FiltersInput = {
+      areaId: filters.areaId !== undefined ? filters.areaId : selectedArea,
+      nivelId: filters.nivelId !== undefined ? filters.nivelId : selectedNivel,
+    };
+    onChangeFilters(merged);
+  };
   return (
     <div className="mt-4 space-y-4">
       <Filters
@@ -60,7 +67,7 @@ export default function ClasificarView({
         niveles={niveles}
         selectedArea={selectedArea}
         selectedNivel={selectedNivel}
-        onChange={onChangeFilters}
+        onChange={handleFiltersChange} 
       />
 
       {stats && (
