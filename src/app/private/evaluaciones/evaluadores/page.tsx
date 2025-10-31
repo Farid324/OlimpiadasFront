@@ -90,6 +90,8 @@ export default function EvaluacionesEvaluadoresPage() {
             ? 'EVALUADO'
             : 'TODOS',
       });
+      console.log('📦 Datos de competidores:', data);
+      setCompetidores(data);
       setCompetidores(data);
       return data; // 🔹 retorna la data
     } catch (err) {
@@ -248,6 +250,8 @@ export default function EvaluacionesEvaluadoresPage() {
           data={filteredCompetidores}
           onEvaluar={(ci) => setModalCompetidor(ci)}
           onEditar={(ci) => setModalCompetidor(ci)}
+          mostrarNivel
+          mostrarEstado
         />
       )}
 
