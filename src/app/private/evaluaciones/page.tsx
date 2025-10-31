@@ -97,7 +97,6 @@ export default function EvaluacionesPage() {
           onCloseModal={() => setModalCompetidor(null)}
         />
       )}
-
       {activeTab === "premiacion" && <PremiacionView />}
     </div>
   );

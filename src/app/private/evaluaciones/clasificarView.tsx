@@ -83,7 +83,6 @@ export default function ClasificarView({
         nombreNivel={niveles.find((n) => n.id_nivel === selectedNivel)?.nombre_nivel}
         />
 
-
       <ModalViewEvaluation
         isOpen={!!modalCompetidor}
         onClose={onCloseModal}

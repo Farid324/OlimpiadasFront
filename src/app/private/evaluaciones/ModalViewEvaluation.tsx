@@ -17,49 +17,50 @@ export default function ModalViewEvaluation({
   const ev = competidor.evaluaciones?.[0];
 
   return (
-    <Dialog open={isOpen} onClose={onClose} className="fixed inset-0 z-50">
-      <div className="bg-black/50 fixed inset-0" aria-hidden="true" />
-      <div className="flex items-center justify-center min-h-screen">
-        <Dialog.Panel className="bg-white rounded-xl p-6 w-full max-w-lg mx-auto shadow-xl">
-          <Dialog.Title className="text-lg font-semibold mb-4">
-            Detalle de Evaluación
-          </Dialog.Title>
+    <Dialog 
+    open={isOpen} 
+    onClose={onClose}
+     className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="fixed inset-0 bg-black/50 " aria-hidden="true" />
+          <Dialog.Panel className="relative bg-white rounded-xl p-6 w-full max-w-lg mx-auto shadow-xl z-50">
+            <Dialog.Title className="text-lg font-semibold text-gray-900 mb-2">
+              Ver Evaluación
+            </Dialog.Title>
+            <p className="text-sm text-gray-500 mb-4">
+              {competidor.competidor.nombres} {competidor.competidor.apellidos} - {competidor.area?.nombre_area} ({competidor.nivel?.nombre_nivel})
+            </p>
 
-          <div className="space-y-3 text-sm">
-            <p>
-              <strong>Olimpista:</strong> {competidor.competidor.nombres}{' '}
-              {competidor.competidor.apellidos}
-            </p>
-            <p>
-              <strong>Área:</strong> {competidor.area?.nombre_area}
-            </p>
-            <p>
-              <strong>Nivel:</strong> {competidor.nivel?.nombre_nivel}
-            </p>
-            <p>
-              <strong>Evaluador:</strong> {ev?.evaluador?.nombre ?? '—'}
-            </p>
-            <p>
-              <strong>Nota:</strong> {ev?.nota ?? 'No evaluado'}
-            </p>
-            <p>
-              <strong>Estado:</strong> {ev?.estado_registro ?? 'PENDIENTE'}
-            </p>
-            <p>
-              <strong>Comentario:</strong> {ev?.comentario ?? '—'}
-            </p>
-          </div>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <label className="block text-gray-600 text-sm mb-1">Olimpista</label>
+                <input disabled value={`${competidor.competidor.nombres} ${competidor.competidor.apellidos}`} className="w-full bg-gray-100 rounded-lg px-3 py-2 text-gray-700" />
+              </div>
+              <div>
+                <label className="block text-gray-600 text-sm mb-1">Evaluador</label>
+                <input disabled value={ev?.evaluador?.nombre ?? '—'} className="w-full bg-gray-100 rounded-lg px-3 py-2 text-gray-700" />
+              </div>
 
-          <div className="text-right mt-6">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 text-sm font-medium"
-            >
-              Cerrar
-            </button>
-          </div>
-        </Dialog.Panel>
-      </div>
+              <div>
+                <label className="block text-gray-600 text-sm mb-1">Puntuación</label>
+                <input disabled value={ev?.nota ?? '—'} className="w-full bg-gray-100 rounded-lg px-3 py-2 text-gray-700" />
+              </div>
+              <div>
+                <label className="block text-gray-600 text-sm mb-1">Puntuación Máxima</label>
+                <input disabled value="100" className="w-full bg-gray-100 rounded-lg px-3 py-2 text-gray-700" />
+              </div>
+
+              <div className="col-span-2">
+                <label className="block text-gray-600 text-sm mb-1">Observaciones</label>
+                <textarea disabled placeholder="Comentarios sobre la evaluación..." className="w-full bg-gray-100 rounded-lg px-3 py-2 text-gray-700 h-20" value={ev?.comentario ?? ""} />
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button onClick={onClose} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium">
+                Cerrar
+              </button>
+            </div>
+          </Dialog.Panel>
     </Dialog>
   );
 }
