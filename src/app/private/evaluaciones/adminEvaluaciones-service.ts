@@ -1,4 +1,3 @@
-// src/services/evaluaciones-service.ts
 import { api } from '@/libs/api';
 import { CompetidorInscripcionAdmin } from '@/types/notas';
 
