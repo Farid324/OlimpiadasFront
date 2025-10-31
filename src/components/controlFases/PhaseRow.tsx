@@ -147,18 +147,18 @@ export default function PhaseRow({
         <EstadoChip estado={estado} />
       </td>
 
-      {/* Acciones */}
-      <td className="px-4 py-4 align-middle text-right">
-        {accionLabel && (
-          <button
-            className={`inline-flex items-center rounded-lg px-3.5 py-2 text-xs font-medium shadow-sm focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${btnMap[accionColor]}`}
-            disabled={accionDisabled}
-            onClick={() => onRefresh()}
-          >
-            {accionLabel}
-          </button>
-        )}
-      </td>
+    {/* Acciones */}
+    <td className="px-3 py-2 align-middle text-right">
+      {accionLabel && (
+        <button
+          className={`inline-flex items-center rounded-lg px-3.5 py-2 text-xs font-medium shadow-sm focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${btnMap[accionColor]}`}
+          disabled={!!accionDisabled}
+          onClick={() => onRefresh()}
+        >
+          {"Aprobar Fase"}
+        </button>
+      )}
+    </td>
     </tr>
   );
 }
