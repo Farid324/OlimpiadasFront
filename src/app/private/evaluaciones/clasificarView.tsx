@@ -66,7 +66,13 @@ export default function ClasificarView({
       {stats && (
         <>
           <CardsSummary stats={stats} />
-          <ProgressBar completadas={stats.completadas} total={stats.total} />
+          <ProgressBar 
+          completadas={stats.completadas} 
+          enProceso={stats.enProceso} 
+          total={stats.total} 
+          nombreArea={areas.find((a) => a.id_area === selectedArea)?.nombre_area}
+          nombreNivel={niveles.find((n) => n.id_nivel === selectedNivel)?.nombre_nivel}
+          />
         </>
       )}
 
