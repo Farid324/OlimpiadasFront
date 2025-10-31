@@ -256,14 +256,18 @@ export default function EvaluacionesEvaluadoresPage() {
       <CardsSummary key={reloadStats ? 'reload' : 'static'}/>
 
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        {/* Buscador + SelectBox */}
-        <div className="flex w-full sm:w-auto items-center gap-2">
+      <div className="flex flex-col gap-3">
+        {/* 🔍 Buscador + SelectBox */}
+        <div className="flex flex-col sm:flex-row w-full items-center gap-3">
           <SearchBar onSearch={setSearchQuery} />
+
           <select
             value={activeFilter}
-            onChange={(e) => setActiveFilter(e.target.value as 'Todos' | 'Pendientes' | 'Evaluados')}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 bg-white shadow-sm hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            onChange={(e) =>
+              setActiveFilter(e.target.value as 'Todos' | 'Pendientes' | 'Evaluados')
+            }
+            className="h-11 rounded-md border border-gray-300 bg-white px-3 text-gray-700 text-sm
+            focus:outline-none focus:ring-0 focus:border-gray-400 hover:border-gray-400 transition-colors cursor-pointer"
           >
             <option value="Todos">Todos</option>
             <option value="Pendientes">Pendientes</option>
@@ -271,12 +275,17 @@ export default function EvaluacionesEvaluadoresPage() {
           </select>
         </div>
 
-        {/* Filtros sincronizados con SelectBox */}
-        <FilterTabs
-          active={activeFilter}  // ✅ mismo estado
-          onChange={(filter) => setActiveFilter(filter as 'Todos' | 'Pendientes' | 'Evaluados')}
-        />
+        {/* 🧭 Filtros (debajo del buscador) */}
+        <div className="w-full flex justify-center sm:justify-start mt-2">
+          <FilterTabs
+            active={activeFilter}
+            onChange={(filter) =>
+              setActiveFilter(filter as 'Todos' | 'Pendientes' | 'Evaluados')
+            }
+          />
+        </div>
       </div>
+
 
       {/* Lista de competidores */}
       {loading ? (
