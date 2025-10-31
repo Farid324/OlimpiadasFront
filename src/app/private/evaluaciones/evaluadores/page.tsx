@@ -109,82 +109,84 @@ export default function EvaluacionesEvaluadoresPage() {
   // ✅ Registrar / editar nota
   // ==========================================================
   const handleSubmitNota = async (data: {
-  nota: number;
-  descripcionConceptual?: string;
-  etica?: string;
-  observaciones?: string;
-}) => {
-  if (!modalCompetidor) return;
+    nota: number;
+    descripcionConceptual?: string;
+    etica?: string;
+    observaciones?: string;
+  }) => {
+    if (!modalCompetidor) return;
 
-  try {
-    const idUsuario = Number(user?.id); // 👈 asegura que sea number
-    const evaluacionExistente = modalCompetidor.evaluaciones?.[0]; // 👈 tu modelo tiene evaluaciones[]
+    try {
+      const idUsuario = Number(user?.id); // 👈 asegura que sea number
+      const evaluacionExistente = modalCompetidor.evaluaciones?.[0]; // 👈 tu modelo tiene evaluaciones[]
 
-    if (evaluacionExistente) {
-      // 🟡 EDITAR nota existente
-      const idEvaluacion = evaluacionExistente.id_evaluacion;
-      if (!idEvaluacion) {
-        console.warn('⚠️ La evaluación no tiene id_evaluacion, se omitió la edición.');
-        return;
+      if (evaluacionExistente) {
+        // 🟡 EDITAR nota existente
+        const idEvaluacion = evaluacionExistente.id_evaluacion;
+        if (!idEvaluacion) {
+          console.warn('⚠️ La evaluación no tiene id_evaluacion, se omitió la edición.');
+          return;
+        }
+
+        await evaluacionesService.editarNota({
+          idEvaluacion,
+          idUsuario,
+          nuevaNota: data.nota,
+          observaciones: data.observaciones,
+        });
+
+        // 🧠 Actualiza el competidor localmente
+        setCompetidores(prev =>
+          prev.map(c =>
+            c.id_inscripcion === modalCompetidor.id_inscripcion
+              ? { 
+                  ...c, 
+                  evaluaciones: [
+                    { ...(c.evaluaciones?.[0] ?? {}), nota: data.nota }
+                  ],
+                }
+              : c
+          )
+        );
+
+      } else {
+        // 🟢 REGISTRAR nueva nota
+        await evaluacionesService.registrarNota({
+          idInscripcion: modalCompetidor.id_inscripcion,
+          idUsuario,
+          nota: data.nota,
+          descripcionConceptual: data.descripcionConceptual,
+          etica: data.etica,
+          observaciones: data.observaciones,
+        });
+
+        // 🔁 Refresca o actualiza lista local
+        setCompetidores(prev =>
+          prev.map(c =>
+            c.id_inscripcion === modalCompetidor.id_inscripcion
+              ? { 
+                  ...c, 
+                  evaluaciones: [
+                    { ...(c.evaluaciones?.[0] ?? {}), nota: data.nota }
+                  ],
+                }
+              : c
+          )
+        );
+
       }
 
-      await evaluacionesService.editarNota({
-        idEvaluacion,
-        idUsuario,
-        nuevaNota: data.nota,
-        observaciones: data.observaciones,
-      });
-
-      // 🧠 Actualiza el competidor localmente
-      setCompetidores(prev =>
-        prev.map(c =>
-          c.id_inscripcion === modalCompetidor.id_inscripcion
-            ? { 
-                ...c, 
-                evaluaciones: [
-                  { ...(c.evaluaciones?.[0] ?? {}), nota: data.nota }
-                ],
-              }
-            : c
-        )
-      );
-
-    } else {
-      // 🟢 REGISTRAR nueva nota
-      await evaluacionesService.registrarNota({
-        idInscripcion: modalCompetidor.id_inscripcion,
-        idUsuario,
-        nota: data.nota,
-        descripcionConceptual: data.descripcionConceptual,
-        etica: data.etica,
-        observaciones: data.observaciones,
-      });
-
-      // 🔁 Refresca o actualiza lista local
-      setCompetidores(prev =>
-        prev.map(c =>
-          c.id_inscripcion === modalCompetidor.id_inscripcion
-            ? { 
-                ...c, 
-                evaluaciones: [
-                  { ...(c.evaluaciones?.[0] ?? {}), nota: data.nota }
-                ],
-              }
-            : c
-        )
-      );
+      // ✅ Cierra modal
+      setModalCompetidor(null);
+      setReloadStats(prev => !prev);
+    } catch (err) {
+      console.error("❌ Error al registrar/editar nota:", err);
+      if (hasResponseData(err) && err.response.data) {
+        // Dentro de este 'if', TypeScript ya sabe que 'err.response.data' existe.
+        console.error("Backend response:", err.response.data);
+      }
     }
-
-    // ✅ Cierra modal
-    setModalCompetidor(null);
-  } catch (err) {
-    console.error("❌ Error al registrar/editar nota:", err);
-    if (hasResponseData(err) && err.response.data) {
-      // Dentro de este 'if', TypeScript ya sabe que 'err.response.data' existe.
-      console.error("Backend response:", err.response.data);
-    }
-  }
-};
+  };
 
   // ==========================================================
   // ✅ Filtrado y búsqueda
@@ -211,15 +213,23 @@ export default function EvaluacionesEvaluadoresPage() {
         }) ?? []
     );
   }, [competidores, searchQuery, activeFilter]);
+  const [reloadStats, setReloadStats] = useState(false);
+
 
   // ==========================================================
   // ✅ Render
   // ==========================================================
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Panel de Evaluador</h1>
+    <div className="p-6 space-y-6 bg-transparent">
+      <h1 className="text-2xl font-bold">Sistema de evaluaciones</h1>
+      <p className="text-sm text-gray-500">
+        Evaluador: 
+      </p>
+      <p className="text-sm text-gray-500 -mt-4">
+        Área: 
+      </p>
 
-      <CardsSummary />
+      <CardsSummary key={reloadStats ? 'reload' : 'static'}/>
 
       {/* Buscador + filtros */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
