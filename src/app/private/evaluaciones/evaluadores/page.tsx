@@ -246,59 +246,69 @@ export default function EvaluacionesEvaluadoresPage() {
   return (
     <div className="p-6 space-y-6 bg-transparent">
       <h1 className="text-2xl font-bold">Sistema de evaluaciones</h1>
-      <p className="text-sm text-gray-500">
+      {/* <p className="text-sm text-gray-500">
         Evaluador: 
       </p>
       <p className="text-sm text-gray-500 -mt-4">
         Área: 
-      </p>
+      </p> */}
 
       <CardsSummary key={reloadStats ? 'reload' : 'static'}/>
 
 
       <div className="flex flex-col gap-3">
         {/* 🔍 Buscador + SelectBox */}
-        <div className="flex flex-col sm:flex-row w-full items-center gap-3">
-          <SearchBar onSearch={setSearchQuery} />
-
-          <select
-            value={activeFilter}
-            onChange={(e) =>
-              setActiveFilter(e.target.value as 'Todos' | 'Pendientes' | 'Evaluados')
-            }
-            className="h-11 rounded-md border border-gray-300 bg-white px-3 text-gray-700 text-sm
-            focus:outline-none focus:ring-0 focus:border-gray-400 hover:border-gray-400 transition-colors cursor-pointer"
-          >
-            <option value="Todos">Todos</option>
-            <option value="Pendientes">Pendientes</option>
-            <option value="Evaluados">Evaluados</option>
-          </select>
+        <div className="bg-white rounded-lg shadow p-4 flex flex-col sm:flex-row w-full items-center gap-3">
+          <div className="flex-1 w-full">
+            <SearchBar onSearch={setSearchQuery} />
+          </div>
+          <div className="w-full sm:w-40">
+            <select
+              value={activeFilter}
+              onChange={(e) =>
+                setActiveFilter(e.target.value as 'Todos' | 'Pendientes' | 'Evaluados')
+              }
+              className="h-9 w-full rounded-lg border border-gray-300 bg-white px-3 text-gray-700 text-sm
+              focus:outline-none focus:ring-0 focus:border-gray-400 hover:border-gray-400 transition-colors cursor-pointer"
+            >
+              <option value="Todos">Todos</option>
+              <option value="Pendientes">Pendientes</option>
+              <option value="Evaluados">Evaluados</option>
+            </select>
+          </div>
         </div>
 
-        {/* 🧭 Filtros (debajo del buscador) */}
-        <div className="w-full flex justify-center sm:justify-start mt-2">
-          <FilterTabs
-            active={activeFilter}
-            onChange={(filter) =>
-              setActiveFilter(filter as 'Todos' | 'Pendientes' | 'Evaluados')
-            }
-          />
+
+        <div className="bg-white rounded-lg shadow p-4 w-full">
+          {/* 🔹 Filtros de estado (Tabs) */}
+          <div className="flex mb-4">
+            <FilterTabs
+              active={activeFilter}
+              onChange={(filter) =>
+                setActiveFilter(filter as 'Todos' | 'Pendientes' | 'Evaluados')
+              }
+            />
+          </div>
+
+          {/* 🔹 Lista de competidores */}
+          <div className="w-full overflow-x-auto">
+            {loading ? (
+              <p className="text-center text-gray-500 py-6">Cargando competidores...</p>
+            ) : (
+              <CompetidorList
+                data={filteredCompetidores}
+                onEvaluar={(ci) => setModalCompetidor(ci)}
+                onEditar={(ci) => setModalCompetidor(ci)}
+                mostrarNivel
+                mostrarEstado
+              />
+            )}
+          </div>
         </div>
       </div>
 
 
-      {/* Lista de competidores */}
-      {loading ? (
-        <p>Cargando competidores...</p>
-      ) : (
-        <CompetidorList
-          data={filteredCompetidores}
-          onEvaluar={(ci) => setModalCompetidor(ci)}
-          onEditar={(ci) => setModalCompetidor(ci)}
-          mostrarNivel
-          mostrarEstado
-        />
-      )}
+      
 
       {/* Modal de evaluación */}
       {modalCompetidor && (
