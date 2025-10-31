@@ -21,17 +21,17 @@ export default function CompetidorList({
     return <p className="text-gray-400 text-center mt-6">No hay registros.</p>;
 
   return (
-    <table className="w-full mt-4 border-collapse text-sm">
-      <thead>
-        <tr className="bg-gray-100 text-xs uppercase tracking-wide">
-          <th className="p-3 text-left">#</th>
-          <th className="p-3 text-left">Olimpista</th>
-          <th className="p-3 text-center">CI</th>
-          <th className="p-3 text-center">Colegio</th>
-          {mostrarNivel && <th className="p-3 text-center">Nivel</th>}
-          <th className="p-3 text-center">Nota</th>
-          {mostrarEstado && <th className="p-3 text-center">Clasificación</th>}
-          <th className="p-3 text-center">Acciones</th>
+    <table className="w-full mt-2 border-collapse text-sm">
+      <thead className="sticky top-0 bg-white z-10 border-b border-gray-300">
+        <tr className="text-gray-700">
+          <th className="p-2 text-left">#</th>
+          <th className="p-2 text-left">Olimpista</th>
+          <th className="p-2 text-center">CI</th>
+          <th className="p-2 text-center">Colegio</th>
+          {mostrarNivel && <th className="p-2 text-center">Nivel</th>}
+          <th className="p-2 text-center">Nota</th>
+          {mostrarEstado && <th className="p-2 text-center">Clasificación</th>}
+          <th className="p-2 text-center">Acciones</th>
         </tr>
       </thead>
 
@@ -51,45 +51,43 @@ export default function CompetidorList({
           return (
             <tr
               key={c.competidor.id_competidor}
-              className="border-b hover:bg-gray-50 transition-colors"
+              className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
             >
-              <td className="p-3 text-center">{i + 1}</td>
-              <td className="p-3">
-                <span className="font-medium">
-                  {c.competidor.nombres} {c.competidor.apellidos}
-                </span>
+              <td className="p-2 text-center">{i + 1}</td>
+              <td className="p-2 font-medium">
+                {c.competidor.nombres} {c.competidor.apellidos}
               </td>
-              <td className="p-3 text-center">{c.competidor.ci}</td>
-              <td className="p-3 text-center">{c.competidor.escuela}</td>
+              <td className="p-2 text-center">{c.competidor.ci}</td>
+              <td className="p-2 text-center">{c.competidor.escuela}</td>
 
               {mostrarNivel && (
-                <td className="p-3 text-center text-xs">
-                  <span className="inline-block px-2 py-1 text-xs rounded-2xl bg-blue-100 text-blue-700 border border-blue-300">
+                <td className="p-2 text-center">
+                  <span className="inline-block text-xs bg-blue-100 text-blue-700 border border-blue-300 px-2 py-0.5 rounded-md font-medium">
                     {nivel}
                   </span>
                 </td>
               )}
 
-              <td className="p-3 text-center font-medium">
+              <td className="p-2 text-center font-medium">
                 {nota !== null ? nota : '—'}
               </td>
 
               {mostrarEstado && (
-                <td className="p-3 text-center text-xs">
+                <td className="p-2 text-center">
                   <span
-                    className={`inline-block px-2 py-1 text-xs rounded-full border font-medium ${chipClasificacionStyle}`}
+                    className={`inline-block text-xs border px-2 py-0.5 rounded-md font-medium ${chipClasificacionStyle}`}
                   >
                     {clasificacion}
                   </span>
                 </td>
               )}
 
-              <td className="p-3 flex justify-center gap-2">
+              <td className="p-2 flex justify-center gap-2">
                 {!nota ? (
                   <Button
                     onClick={() => onEvaluar(c)}
                     size="sm"
-                    className=" bg-blue-600 hover:bg-indigo-700 text-white transition-colors rounded-md shadow-sm"
+                    className="bg-blue-600 hover:bg-indigo-700 text-white rounded-md shadow-sm transition-colors"
                   >
                     Evaluar
                   </Button>
