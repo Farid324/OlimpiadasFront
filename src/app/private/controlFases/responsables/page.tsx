@@ -52,7 +52,7 @@ export default function ControlFasesResponsablesPage() {
 
   if (!data) {
     return (
-      <RoleGate allow={["RESPONSABLE_DE_AREA"]}>
+      <RoleGate allow={["ADMINISTRADOR", "RESPONSABLE_DE_AREA"]}>
         <div className="space-y-4">
           {error && (
             <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-amber-700 text-sm">
