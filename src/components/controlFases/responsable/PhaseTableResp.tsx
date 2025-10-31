@@ -1,8 +1,8 @@
 import React from "react";
-import PhaseRow from "./PhaseRow";
-import type { FilaFase } from "./types";
+import PhaseRowResp from "./PhaseRowResp";
+import type { FilaFaseResp } from "./types";
 
-export default function PhaseTable({
+export default function PhaseTableResp({
   title,
   subtitle,
   filas,
@@ -10,10 +10,9 @@ export default function PhaseTable({
 }: {
   title: string;
   subtitle?: string;
-  filas: FilaFase[];
+  filas: FilaFaseResp[];
   onRefresh: () => void | Promise<void>;
 }) {
-  // Anchos de columnas (en el mismo orden del thead)
   const COLS = [
     "w-[100px]", // Área / Nivel
     "w-[140px]", // Fase Actual
@@ -33,7 +32,7 @@ export default function PhaseTable({
 
       <div className="overflow-x-auto">
         <table className="w-full min-w-[980px] table-fixed text-sm">
-          {/* IMPORTANTÍSIMO: no dejes espacios sueltos dentro del colgroup */}
+          {/* Sin espacios dentro del colgroup */}
           <colgroup>{COLS.map((c, i) => (<col key={i} className={c} />))}</colgroup>
 
           <thead className="bg-slate-50 text-slate-600">
@@ -50,7 +49,7 @@ export default function PhaseTable({
 
           <tbody className="divide-y divide-slate-100">
             {filas.map((f) => (
-              <PhaseRow key={f.id} fila={f} onRefresh={onRefresh} />
+              <PhaseRowResp key={f.id} fila={f} onRefresh={onRefresh} />
             ))}
           </tbody>
         </table>
