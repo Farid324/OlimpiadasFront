@@ -69,6 +69,7 @@ export default function EvaluacionesEvaluadoresPage() {
   const [activeFilter, setActiveFilter] = useState<'Todos' | 'Pendientes' | 'Evaluados'>('Todos');
   const [modalCompetidor, setModalCompetidor] = useState<CompetidorInscripcion | null>(null);
   const { user } = useAuth();
+  const [reloadStats, setReloadStats] = useState(false);
   console.log("userID:", user?.id)
 
   useEffect(() => {
@@ -78,7 +79,35 @@ export default function EvaluacionesEvaluadoresPage() {
   // ==========================================================
   // ✅ Fetch competidores asignados (useCallback evita warning de deps)
   // ==========================================================
-  const fetchCompetidores = useCallback(async (): Promise<CompetidorInscripcion[]> => {
+  // const fetchCompetidores = useCallback(async (): Promise<CompetidorInscripcion[]> => {
+  //   setLoading(true);
+  //   try {
+  //     const data = await evaluacionesService.listarCompetidores({
+  //       search: searchQuery || undefined,
+  //       filtro:
+  //         activeFilter === 'Pendientes'
+  //           ? 'PENDIENTE'
+  //           : activeFilter === 'Evaluados'
+  //           ? 'EVALUADO'
+  //           : 'TODOS',
+  //     });
+  //     console.log('📦 Datos de competidores:', data);
+  //     setCompetidores(data);
+  //     setCompetidores(data);
+  //     return data; // 🔹 retorna la data
+  //   } catch (err) {
+  //     console.error('Error al cargar competidores:', getBackendError(err));
+  //     return []; // 🔹 retornar array vacío si hay error
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }, [searchQuery, activeFilter]);
+
+
+  // useEffect(() => {
+  //   fetchCompetidores();
+  // }, [fetchCompetidores]);
+  const fetchCompetidores = useCallback(async () => {
     setLoading(true);
     try {
       const data = await evaluacionesService.listarCompetidores({
@@ -90,17 +119,38 @@ export default function EvaluacionesEvaluadoresPage() {
             ? 'EVALUADO'
             : 'TODOS',
       });
-      console.log('📦 Datos de competidores:', data);
       setCompetidores(data);
-      setCompetidores(data);
-      return data; // 🔹 retorna la data
     } catch (err) {
-      console.error('Error al cargar competidores:', getBackendError(err));
-      return []; // 🔹 retornar array vacío si hay error
+      console.error('Error al cargar competidores:', err);
     } finally {
       setLoading(false);
     }
   }, [searchQuery, activeFilter]);
+  
+  const filteredCompetidores = useMemo(() => {
+  const term = searchQuery.trim().toLowerCase();
+
+  return competidores
+    .filter((c) => {
+      const nota = c.evaluaciones?.[0]?.nota ?? null;
+
+      if (activeFilter === 'Pendientes') return nota === null;
+      if (activeFilter === 'Evaluados') return nota !== null;
+      return true; // 'Todos'
+    })
+    .filter((c) => {
+      if (!term) return true; 
+
+      const comp = c.competidor;
+
+      return (
+        comp.nombres?.toLowerCase().includes(term) ||
+        comp.apellidos?.toLowerCase().includes(term) ||
+        comp.ci?.toLowerCase().includes(term) ||
+        comp.escuela?.toLowerCase().includes(term)
+      );
+    });
+}, [competidores, searchQuery, activeFilter]);
 
 
   useEffect(() => {
@@ -191,34 +241,6 @@ export default function EvaluacionesEvaluadoresPage() {
   };
 
   // ==========================================================
-  // ✅ Filtrado y búsqueda
-  // ==========================================================
-  const filteredCompetidores = useMemo(() => {
-    return (
-      competidores
-        ?.filter((c) => {
-          const evaluacion = c.evaluaciones?.[0];
-          const nota = evaluacion ? evaluacion.nota : null;
-          if (activeFilter === 'Pendientes') return nota === null;
-          if (activeFilter === 'Evaluados') return nota !== null;
-          return true;
-        })
-        ?.filter((c) => {
-          const term = searchQuery.toLowerCase();
-          const comp = c.competidor;
-          return (
-            comp.nombres.toLowerCase().includes(term) ||
-            comp.apellidos.toLowerCase().includes(term) ||
-            comp.ci.toLowerCase().includes(term) ||
-            comp.escuela.toLowerCase().includes(term)
-          );
-        }) ?? []
-    );
-  }, [competidores, searchQuery, activeFilter]);
-  const [reloadStats, setReloadStats] = useState(false);
-
-
-  // ==========================================================
   // ✅ Render
   // ==========================================================
   return (
@@ -233,11 +255,25 @@ export default function EvaluacionesEvaluadoresPage() {
 
       <CardsSummary key={reloadStats ? 'reload' : 'static'}/>
 
-      {/* Buscador + filtros */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <SearchBar onSearch={setSearchQuery} />
+
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        {/* Buscador + SelectBox */}
+        <div className="flex w-full sm:w-auto items-center gap-2">
+          <SearchBar onSearch={setSearchQuery} />
+          <select
+            value={activeFilter}
+            onChange={(e) => setActiveFilter(e.target.value as 'Todos' | 'Pendientes' | 'Evaluados')}
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 bg-white shadow-sm hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          >
+            <option value="Todos">Todos</option>
+            <option value="Pendientes">Pendientes</option>
+            <option value="Evaluados">Evaluados</option>
+          </select>
+        </div>
+
+        {/* Filtros sincronizados con SelectBox */}
         <FilterTabs
-          active={activeFilter}
+          active={activeFilter}  // ✅ mismo estado
           onChange={(filter) => setActiveFilter(filter as 'Todos' | 'Pendientes' | 'Evaluados')}
         />
       </div>
