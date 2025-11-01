@@ -1,9 +1,9 @@
-// src/components/controlFases/PhaseTable.tsx
+// src/components/controlFases/responsable/PhaseTableResp.tsx
 import React from "react";
-import PhaseRow from "./PhaseRow";
-import type { FilaFase } from "./types";
+import PhaseRowResp from "./PhaseRowResp";
+import type { FilaFaseResp } from "./types";
 
-export default function PhaseTable({
+export default function PhaseTableResp({
   title,
   subtitle,
   filas,
@@ -11,12 +11,11 @@ export default function PhaseTable({
 }: {
   title: string;
   subtitle?: string;
-  filas: FilaFase[];
+  filas: FilaFaseResp[];
   onRefresh: () => void | Promise<void>;
 }) {
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-      {/* Encabezado del bloque (igual al de Responsables) */}
       <div className="px-6 pt-6 pb-3">
         <h2 className="text-2xl font-semibold text-slate-800">{title}</h2>
         {subtitle && (
@@ -36,7 +35,6 @@ export default function PhaseTable({
             <col className="w-[120px]" />
           </colgroup>
 
-        {/* Cabecera plana con línea inferior */}
           <thead className="border-b border-slate-200 bg-slate-50/40">
             <tr className="text-slate-600">
               <th className="px-4 py-3 text-black font-bold text-left">Área / Nivel</th>
@@ -49,10 +47,9 @@ export default function PhaseTable({
             </tr>
           </thead>
 
-          {/* Filas planas con divisores, sin “cards” */}
           <tbody className="divide-y divide-slate-200">
             {filas.map((f) => (
-              <PhaseRow key={f.id} fila={f} onRefresh={onRefresh} />
+              <PhaseRowResp key={f.id} fila={f} onRefresh={onRefresh} />
             ))}
           </tbody>
         </table>
