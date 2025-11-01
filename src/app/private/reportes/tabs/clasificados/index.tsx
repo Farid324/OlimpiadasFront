@@ -44,16 +44,18 @@ function mapCatalog<T extends { id: number; nombre: string }>(
   idKeys: string[],
   nameKeys: string[],
 ): T[] {
-  const arr = Array.isArray(data) ? data : [];
+  const arr = (Array.isArray(data) ? data : []) as ReadonlyArray<Record<string, unknown>>;
+
   return arr
-    .map((r: any) =>
-    ({
-      id: Number(pick(r, idKeys)),
-      nombre: String(pick(r, nameKeys) ?? '').trim(),
-    } as T),
+    .map((r) =>
+      ({
+        id: Number(pick(r, idKeys)),
+        nombre: String(pick(r, nameKeys) ?? '').trim(),
+      } as T),
     )
     .filter((x): x is T => !Number.isNaN(x.id) && x.nombre.length > 0);
 }
+
 
 function readFiltersFromUrl(): ReportFilters {
   if (typeof window === 'undefined') return DEFAULT_FILTERS;
