@@ -5,11 +5,17 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  LuHouse, LuUsers, LuSettings, LuShield,
-  LuFilePen, LuGitBranch, LuChartColumn, LuActivity
-} from 'react-icons/lu';
-import { FiUserCheck, FiSmartphone, FiUser, FiLogOut } from 'react-icons/fi';
-import { useAuth } from '@/hooks/useAuth';
+  LuHouse,
+  LuUsers,
+  LuSettings,
+  LuShield,
+  LuFilePen,
+  LuGitBranch,
+  LuChartColumn,
+  LuActivity,
+} from "react-icons/lu";
+import { FiUserCheck, FiSmartphone, FiUser, FiLogOut } from "react-icons/fi";
+import { useAuth } from "@/hooks/useAuth";
 
 export type RoleName = 'ADMINISTRADOR' | 'EVALUADOR' | 'RESPONSABLE_DE_AREA';
 
@@ -68,7 +74,7 @@ export default function SideMenu({
   onClose,
 }: {
   open: boolean;
-  onClose?: () => void; 
+  onClose?: () => void;
 }) {
   const { user, logout } = useAuth();
   const router = useRouter();

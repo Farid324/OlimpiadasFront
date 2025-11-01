@@ -1,4 +1,5 @@
 'use client';
+
 interface Props {
   active: string;
   onChange: (filter: string) => void;
@@ -7,16 +8,19 @@ interface Props {
 const tabs = ['Todos', 'Pendientes', 'Evaluados'];
 
 export default function FilterTabs({ active, onChange }: Props) {
+  const base =
+    'px-4 py-2 text-sm font-medium rounded-full transition-all duration-200';
+  const activeStyle = 'bg-white text-black shadow';
+  const inactiveStyle = 'text-gray-700 hover:bg-gray-200';
+
   return (
-    <div className="flex gap-3 border-b border-gray-200">
-      {tabs.map(tab => (
+    <div className="inline-flex items-center gap-1 rounded-full bg-gray-100 p-1">
+      {tabs.map((tab) => (
         <button
           key={tab}
           onClick={() => onChange(tab)}
-          className={`px-4 py-2 ${
-            active === tab
-              ? 'border-b-2 border-blue-500 text-blue-600 font-semibold'
-              : 'text-gray-500 hover:text-blue-500'
+          className={`${base} ${
+            active === tab ? activeStyle : inactiveStyle
           }`}
         >
           {tab}

@@ -1,10 +1,10 @@
-// src/components/controlFases/types.ts
+// src/components/controlFases/responsable/types.ts
 
 export type AccionColor = 'primary' | 'neutral' | 'success';
 export type EstadoUI = 'En progreso' | 'Listo para aprobar' | 'Completado';
 export type FaseActual = 'Clasificación' | 'Evaluación Final' | 'Completado';
 
-export interface FilaFase {
+export interface FilaFaseResp {
   id: number | string;
 
   // Opcionales para el modal / navegación
@@ -33,14 +33,14 @@ export interface FilaFase {
   accionDisabled?: boolean;
 }
 
-export interface KPIs {
+export interface KPIsResp {
   evaluacionesCompletadas: { valor: number; total: number };
   fasesCompletadas: { valor: number; total: number };
   aprobacionesPendientes: { valor: number; nota?: string };
   progresoGeneral: { porcentaje: number; nota?: string };
 }
 
-export interface ControlFasesResponse {
-  kpis: KPIs;
-  filas: FilaFase[];
+export interface ControlFasesRespPayload {
+  kpis: KPIsResp;
+  filas: FilaFaseResp[];
 }

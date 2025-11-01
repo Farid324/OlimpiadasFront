@@ -11,9 +11,20 @@ export default function StatCard({
 }) {
   return (
     <div className="rounded-xl border bg-white p-5 shadow-sm">
-      <div className="text-[11px] uppercase tracking-wide text-slate-500">{title}</div>
+      {/* Título: primera letra de cada palabra en mayúscula */}
+      <div className="text-[11px] capitalize tracking-wide text-slate-500">
+        {title}
+      </div>
+
+      {/* Valor principal */}
       <div className="mt-1 text-3xl font-semibold text-slate-900">{value}</div>
-      {subtitle && <div className="mt-1 text-xs text-slate-500">{subtitle}</div>}
+
+      {/* Subtítulo: también primera letra de cada palabra en mayúscula */}
+      {subtitle && (
+        <div className="mt-1 text-xs text-slate-500 capitalize">
+          {subtitle}
+        </div>
+      )}
     </div>
   );
 }
