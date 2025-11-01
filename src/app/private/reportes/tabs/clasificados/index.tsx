@@ -1,4 +1,3 @@
-//src/app/private/reportes/tabs/clasificados/index.tsx
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -12,6 +11,8 @@ type EstadoClasificado = 'CLASIFICADO' | 'NO_CLASIFICADO' | 'DESCALIFICADO' | 'T
 type ClasificadoItemDTO = {
   id_inscripcion: number;
   posicion: number | null;
+  // si el BE expone CI, esto ya queda listo; si no, no rompe
+  ci?: string | null;
   nombreCompleto: string;
   area: string;
   nivel: string;
@@ -26,7 +27,7 @@ type ReportFilters = {
   estado?: EstadoClasificado | null;
 };
 
-type AreaDTO  = { id: number; nombre: string };
+type AreaDTO = { id: number; nombre: string };
 type NivelDTO = { id: number; nombre: string };
 
 /* ===================== Helpers reutilizables ===================== */
@@ -45,11 +46,11 @@ function mapCatalog<T extends { id: number; nombre: string }>(
 ): T[] {
   const arr = Array.isArray(data) ? data : [];
   return arr
-    .map((r: Record<string, unknown> | null | undefined) =>
-      ({
-        id: Number(pick(r, idKeys)),
-        nombre: String(pick(r, nameKeys) ?? '').trim(),
-      } as T),
+    .map((r: any) =>
+    ({
+      id: Number(pick(r, idKeys)),
+      nombre: String(pick(r, nameKeys) ?? '').trim(),
+    } as T),
     )
     .filter((x): x is T => !Number.isNaN(x.id) && x.nombre.length > 0);
 }
@@ -69,9 +70,9 @@ function readFiltersFromUrl(): ReportFilters {
 
 const toParams = (filters?: ReportFilters) => {
   const p = new URLSearchParams();
-  if (filters?.id_area  && Number(filters.id_area)  !== 0) p.set('id_area',  String(filters.id_area));
+  if (filters?.id_area && Number(filters.id_area) !== 0) p.set('id_area', String(filters.id_area));
   if (filters?.id_nivel && Number(filters.id_nivel) !== 0) p.set('id_nivel', String(filters.id_nivel));
-  if (filters?.estado  && filters.estado !== 'TODOS')   p.set('estado',   String(filters.estado));
+  if (filters?.estado && filters.estado !== 'TODOS') p.set('estado', String(filters.estado));
   return Object.fromEntries(p);
 };
 
@@ -116,7 +117,7 @@ async function exportClasificados(filters?: ReportFilters): Promise<Blob> {
   return res.data as Blob;
 }
 
-/* ====== Icono de orden: dos flechas; activa arriba o abajo (stroke 2.5) ====== */
+/* ====== Icono de orden: dos flechas; activa arriba o abajo ====== */
 function SortPosIconDual({
   asc,
   className,
@@ -126,7 +127,7 @@ function SortPosIconDual({
 }) {
   const active = '#1a73e8';
   const inactive = '#cbd5e1';
-  const strokeW = 2; //grosor
+  const strokeW = 2;
   return (
     <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
       {/* Abajo (izquierda) */}
@@ -151,7 +152,7 @@ export default function ClasificadosTab() {
     try {
       const raw = sessionStorage.getItem(STORAGE_KEY);
       if (raw) return JSON.parse(raw) as ReportFilters;
-    } catch {}
+    } catch { }
     return readFiltersFromUrl();
   });
 
@@ -164,14 +165,14 @@ export default function ClasificadosTab() {
       const setOrDel = (k: string, v: unknown, delIf: boolean) =>
         delIf ? sp.delete(k) : sp.set(k, String(v));
 
-      setOrDel('id_area',  filters.id_area,  filters.id_area == null || Number(filters.id_area) === 0);
+      setOrDel('id_area', filters.id_area, filters.id_area == null || Number(filters.id_area) === 0);
       setOrDel('id_nivel', filters.id_nivel, filters.id_nivel == null || Number(filters.id_nivel) === 0);
-      setOrDel('estado',   filters.estado,  !filters.estado || filters.estado === 'TODOS');
+      setOrDel('estado', filters.estado, !filters.estado || filters.estado === 'TODOS');
 
       const q = sp.toString();
       const newUrl = q ? `${window.location.pathname}?${q}` : window.location.pathname;
       window.history.replaceState({}, '', newUrl);
-    } catch {}
+    } catch { }
   }, [filters]);
 
   // Datos
@@ -182,6 +183,9 @@ export default function ClasificadosTab() {
   const [loadingRows, setLoadingRows] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
   const [orderAsc, setOrderAsc] = useState<boolean>(true);
+
+  // Modal
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
     let cancel = false;
@@ -211,39 +215,28 @@ export default function ClasificadosTab() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.id_area, filters.id_nivel, filters.estado]);
 
-  const safeAreas   = useMemo(() => (areas ?? []).filter((a): a is AreaDTO => !!a && typeof a.id === 'number' && !!a.nombre), [areas]);
+  const safeAreas = useMemo(() => (areas ?? []).filter((a): a is AreaDTO => !!a && typeof a.id === 'number' && !!a.nombre), [areas]);
   const safeNiveles = useMemo(() => (niveles ?? []).filter((n): n is NivelDTO => !!n && typeof n.id === 'number' && !!n.nombre), [niveles]);
 
   const sortedRows = useMemo(() => sortRows(rows, orderAsc), [rows, orderAsc]);
 
-  // Labels export
+  // Labels
   const getAreaLabel = () =>
     filters.id_area == null ? '—' : filters.id_area === 0 ? 'Todas las áreas' :
-    (safeAreas.find(a => a.id === filters.id_area)?.nombre ?? String(filters.id_area));
+      (safeAreas.find(a => a.id === filters.id_area)?.nombre ?? String(filters.id_area));
   const getNivelLabel = () =>
     filters.id_nivel == null ? '—' : filters.id_nivel === 0 ? 'Todos los niveles' :
-    (safeNiveles.find(n => n.id === filters.id_nivel)?.nombre ?? String(filters.id_nivel));
+      (safeNiveles.find(n => n.id === filters.id_nivel)?.nombre ?? String(filters.id_nivel));
   const getEstadoLabel = () =>
     filters.estado == null ? '—'
       : filters.estado === 'TODOS' ? 'Todos los Estados'
-      : filters.estado === 'CLASIFICADO' ? 'Clasificado'
-      : filters.estado === 'NO_CLASIFICADO' ? 'No clasificado'
-      : filters.estado === 'DESCALIFICADO' ? 'Descalificado'
-      : String(filters.estado);
+        : filters.estado === 'CLASIFICADO' ? 'Clasificados'
+          : filters.estado === 'NO_CLASIFICADO' ? 'No clasificados'
+            : filters.estado === 'DESCALIFICADO' ? 'Descalificados'
+              : String(filters.estado);
 
-  // Export
-  const onExport = async () => {
-    if (sortedRows.length === 0) { alert('No hay registros para exportar con los filtros actuales.'); return; }
-    const ok = window.confirm(
-`Vas a exportar la lista con los siguientes filtros:
-
-• Área: ${getAreaLabel()}
-• Nivel: ${getNivelLabel()}
-• Estado: ${getEstadoLabel()}
-
-¿Deseas continuar?`);
-    if (!ok) return;
-
+  // Export (confirm modal flow)
+  const doExport = async () => {
     try {
       setLoadingExport(true);
       const blob = await exportClasificados(filters);
@@ -254,12 +247,18 @@ export default function ClasificadosTab() {
     } catch (e) {
       console.error(e);
       alert('No se pudo exportar la lista. Intenta nuevamente.');
-    } finally { setLoadingExport(false); }
+    } finally {
+      setLoadingExport(false);
+      setConfirmOpen(false);
+    }
   };
 
-  const areaPlaceholder   = filters.id_area  == null;
-  const nivelPlaceholder  = filters.id_nivel == null;
-  const estadoPlaceholder = filters.estado   == null;
+  const areaPlaceholder = filters.id_area == null;
+  const nivelPlaceholder = filters.id_nivel == null;
+  const estadoPlaceholder = filters.estado == null;
+
+  const total = sortedRows.length;
+  const orderLabel = orderAsc ? 'Posición (ascendente)' : 'Posición (descendente)';
 
   /* ===================== UI ===================== */
   return (
@@ -314,9 +313,9 @@ export default function ClasificadosTab() {
             >
               <option value="" disabled hidden style={{ color: '#6B7280' }}>Filtrar por Estado</option>
               <option value="TODOS" style={{ color: '#111827' }}>Todos los Estados</option>
-              <option value="CLASIFICADO" style={{ color: '#111827' }}>Clasificado</option>
-              <option value="NO_CLASIFICADO" style={{ color: '#111827' }}>No clasificado</option>
-              <option value="DESCALIFICADO" style={{ color: '#111827' }}>Descalificado</option>
+              <option value="CLASIFICADO" style={{ color: '#111827' }}>Clasificados</option>
+              <option value="NO_CLASIFICADO" style={{ color: '#111827' }}>No clasificados</option>
+              <option value="DESCALIFICADO" style={{ color: '#111827' }}>Descalificados</option>
             </select>
             <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
           </div>
@@ -327,7 +326,7 @@ export default function ClasificadosTab() {
       <div className="bg-white rounded-lg shadow p-4">
         <div className="mb-2 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="font-semibold text-gray-700">Lista de Clasificados ({sortedRows.length})</h2>
+            <h2 className="font-semibold text-gray-700">Lista de Clasificados ({total})</h2>
             <p className="text-sm text-gray-500">Olimpistas que pasaron a la ronda final</p>
           </div>
 
@@ -340,16 +339,15 @@ export default function ClasificadosTab() {
               aria-label={orderAsc ? 'Ordenar posición descendente' : 'Ordenar posición ascendente'}
               title={orderAsc ? 'Posición ↓' : 'Posición ↑'}
               className="inline-flex items-center justify-center rounded-md p-2 cursor-pointer select-none focus:outline-none focus-visible:outline-none"
-              // sin hover:bg, sin ring
             >
               <SortPosIconDual asc={orderAsc} className="w-7 h-7" />
             </button>
 
             <Button
-              onClick={onExport}
-              disabled={loadingRows || loadingExport || sortedRows.length === 0}
+              onClick={() => setConfirmOpen(true)}
+              disabled={loadingRows || loadingExport || total === 0}
               className="bg-blue-600 hover:bg-blue-700"
-              title={sortedRows.length === 0 ? 'No hay registros para exportar' : 'Exportar lista filtrada'}
+              title={total === 0 ? 'No hay registros para exportar' : 'Exportar lista filtrada'}
             >
               <Download className="mr-2 w-4 h-4" />
               {loadingExport ? 'Exportando…' : 'Exportar Lista'}
@@ -359,7 +357,7 @@ export default function ClasificadosTab() {
 
         {loadingRows ? (
           <p className="text-center text-gray-500">Cargando...</p>
-        ) : sortedRows.length === 0 ? (
+        ) : total === 0 ? (
           <div className="border rounded-md p-6 text-gray-500 text-center">No hay clasificados</div>
         ) : (
           <div className="max-h-[500px] overflow-y-auto overflow-x-auto" tabIndex={0}>
@@ -367,6 +365,9 @@ export default function ClasificadosTab() {
               <thead className="sticky top-0 bg-white z-10 border-b border-black">
                 <tr className="text-gray-700">
                   <th className="py-3 px-4 text-left font-semibold w-24">Posición</th>
+                  {/* Si quieres mostrar CI también en la UI, descomenta esta columna
+                  <th className="py-3 px-4 text-left font-semibold w-28">CI</th>
+                  */}
                   <th className="py-3 px-4 text-left font-semibold">Nombre</th>
                   <th className="py-3 px-4 text-left font-semibold">Área</th>
                   <th className="py-3 px-4 text-left font-semibold">Nivel</th>
@@ -381,6 +382,7 @@ export default function ClasificadosTab() {
                     <td className="py-3 px-4 text-black tabular-nums">
                       <span className="text-gray-500 mr-1">#</span>{r.posicion ?? '-'}
                     </td>
+                    {/* <td className="py-3 px-4 text-black tabular-nums">{r.ci ?? '-'}</td> */}
                     <td className="py-3 px-4 text-black">{r.nombreCompleto}</td>
                     <td className="py-3 px-4">
                       <span className="px-2 py-1 rounded-md bg-gray-200 text-black text-xs font-bold">{r.area}</span>
@@ -398,6 +400,57 @@ export default function ClasificadosTab() {
           </div>
         )}
       </div>
+
+      {/* =============== MODAL DE CONFIRMACIÓN =============== */}
+      {confirmOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/40" onClick={() => setConfirmOpen(false)} />
+
+          {/* Card */}
+          <div className="relative z-10 w-full max-w-lg rounded-xl overflow-hidden shadow-xl bg-white">
+            <div className="bg-white text-slate-800 px-4 py-3 shadow-md border-b border-slate-100">
+              <h3 className="font-semibold">Exportar lista de olimpistas</h3>
+            </div>
+
+
+            <div className="p-4 space-y-2 text-sm text-slate-700">
+              <p className="text-slate-600">
+                Se generará un archivo <strong>.xlsx</strong> con cabecera institucional y las columnas requeridas
+                (incluyendo <strong>CI</strong> luego de <em>Posición</em>).
+              </p>
+              <ul className="mt-2 space-y-1">
+                <li>• <strong>Área:</strong> {getAreaLabel()}</li>
+                <li>• <strong>Nivel:</strong> {getNivelLabel()}</li>
+                <li>• <strong>Estado:</strong> {getEstadoLabel()}</li>
+                <li>• <strong>Orden:</strong> {orderLabel}</li>
+                <li>• <strong>Registros:</strong> {total}</li>
+              </ul>
+
+            </div>
+
+            <div className="px-4 py-3 bg-slate-50 flex items-center justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setConfirmOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                className="bg-blue-600 hover:bg-blue-700 disabled:opacity-60"
+                disabled={loadingExport || total === 0}
+                onClick={doExport}
+              >
+                {loadingExport ? 'Exportando…' : 'Exportar .xlsx'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
