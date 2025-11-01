@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { api } from '@/libs/api';
-import { Search, FileText, Edit, CheckCircle, Mail, Clock, User } from 'lucide-react';
+import { Search, Edit, Clock, User } from 'lucide-react';
 import { usePageHeader } from '@/contexts/pageHeader';
 import { Input } from '@/components/ui/Input';
 
@@ -70,7 +70,6 @@ export default function LogsPage() {
         <CardMetric label="Modificaciones" value={metrics.modificaciones} icon={<Edit />} />
       </div>
 
-
       {/* Filtros */}
       <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
         {/* Buscar */}
@@ -98,87 +97,92 @@ export default function LogsPage() {
         </div>
       </div>
 
-        {/* Tabla */}
-        <div className="bg-white rounded-lg shadow p-4">
-          <h2 className="font-semibold text-gray-700 mb-2">
-            Actividades Registradas ({logs.length})
-          </h2>
-          <p className="text-sm text-gray-500 mb-4">
-            Historial detallado de todas las acciones realizadas
-          </p>
+      {/* Tabla */}
+      <div className="bg-white rounded-lg shadow p-4">
+        <h2 className="font-semibold text-gray-700 mb-2">
+          Actividades Registradas ({logs.length})
+        </h2>
+        <p className="text-sm text-gray-500 mb-4">
+          Historial detallado de todas las acciones realizadas
+        </p>
 
-          {loading ? (
-            <p className="text-center text-gray-500">Cargando...</p>
-          ) : logs.length === 0 ? (
-            <div className="border rounded-md p-6 text-gray-500 text-center bg-gray-50">
-          No hay registros {q ? 'para la búsqueda actual' : 'disponibles'}
+        {loading ? (
+          <p className="text-center text-gray-500">Cargando...</p>
+        ) : logs.length === 0 ? (
+          <div className="border rounded-md p-6 text-gray-500 text-center bg-gray-50">
+            No hay registros {q ? 'para la búsqueda actual' : 'disponibles'}
+          </div>
+        ) : (
+          <div className="max-h-[500px] overflow-y-auto">
+            <div
+              className="w-full overflow-x-auto"
+              tabIndex={0}
+              role="region"
+              aria-label="Lista de actividades con desplazamiento horizontal"
+            >
+              <table className="min-w-[1000px] border-collapse text-sm">
+                <thead className="sticky top-0 bg-white z-10 border-b border-black">
+                  <tr className="text-gray-700">
+                    <th className="py-3 px-4 text-left font-semibold">Fecha/Hora</th>
+                    <th className="py-3 px-4 text-left font-semibold">Usuario</th>
+                    <th className="py-3 px-4 text-left font-semibold">Acción</th>
+                    <th className="py-3 px-4 text-left font-semibold">Objetivo</th>
+                    <th className="py-3 px-4 text-left font-semibold">Descripción</th>
+                    <th className="py-3 px-4 text-left font-semibold">Cambios</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {logs.map((l) => {
+                    const initials = l.usuario
+                      ? l.usuario
+                          .split(' ')
+                          .map((n) => n[0])
+                          .join('')
+                          .toUpperCase()
+                          .slice(0, 2)
+                      : '??';
+
+                    return (
+                      <tr key={l.id} className="border-b border-gray-200 hover:bg-gray-50">
+                        {/* Fecha */}
+                        <td className="py-4 px-4 text-gray-700">{l.fecha}</td>
+
+                        {/* Usuario */}
+                        <td className="py-3 px-4 flex items-center gap-3">
+                          <div className="w-10 h-10 shrink-0 flex items-center justify-center rounded-full bg-gray-200 text-gray-700 font-bold">
+                            {initials}
+                          </div>
+                          <span className="font-bold text-black break-normal">{l.usuario}</span>
+                        </td>
+
+                        {/* Acción */}
+                        <td className="py-4 px-4 text-left">
+                          {l.accion === 'REGISTRO' ? (
+                            <span className="inline-flex items-center px-2 py-1 rounded-md bg-purple-100 text-purple-700 text-xs font-bold">
+                              <User className="w-4 h-4 mr-2" /> Registro
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-1 rounded-md bg-blue-100 text-blue-700 text-xs font-bold">
+                              <Edit className="w-4 h-4 mr-2" /> Modificación
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Objetivo */}
+                        <td className="py-4 px-4 text-gray-800">{l.objetivo}</td>
+
+                        {/* Descripción */}
+                        <td className="py-4 px-4 text-gray-600">{l.descripcion || '—'}</td>
+
+                        {/* Cambios */}
+                        <td className="py-4 px-4 text-gray-600">{l.cambios || '—'}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-          ) : (
-            <div className="max-h-[500px] overflow-y-auto overflow-x-auto" tabIndex={0}>
-          <table className="min-w-[1000px] border-collapse text-sm">
-            <thead className="sticky top-0 bg-white z-10 border-b border-black">
-              <tr className="text-gray-700">
-            <th className="py-3 px-4 text-left font-semibold">Fecha/Hora</th>
-            <th className="py-3 px-4 text-left font-semibold">Usuario</th>
-            <th className="py-3 px-4 text-left font-semibold">Acción</th>
-            <th className="py-3 px-4 text-left font-semibold">Objetivo</th>
-            <th className="py-3 px-4 text-left font-semibold">Descripción</th>
-            <th className="py-3 px-4 text-left font-semibold">Cambios</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {logs.map((l) => {
-            const initials = l.usuario
-              ? l.usuario
-              .split(' ')
-              .map((n) => n[0])
-              .join('')
-              .toUpperCase()
-              .slice(0, 2)
-              : '??';
-
-            return (
-              <tr key={l.id} className="border-b border-gray-200 hover:bg-gray-50">
-                {/* Fecha */}
-                <td className="py-4 px-4 text-gray-700">{l.fecha}</td>
-
-                {/* Usuario */}
-                <td className="py-3 px-4 flex items-center gap-3">
-              <div className="w-10 h-10 shrink-0 flex items-center justify-center rounded-full bg-gray-200 text-gray-700 font-bold">
-                {initials}
-              </div>
-              <span className="font-bold text-black break-normal">{l.usuario}</span>
-                </td>
-
-                {/* Acción */}
-                <td className="py-4 px-4 text-left">
-              {l.accion === 'REGISTRO' ? (
-                <span className="inline-flex items-center px-2 py-1 rounded-md bg-purple-100 text-purple-700 text-xs font-bold">
-                  <User className="w-4 h-4 mr-2" />
-                  Registro
-                </span>
-              ) : (
-                <span className="inline-flex items-center px-2 py-1 rounded-md bg-blue-100 text-blue-700 text-xs font-bold">
-                  <Edit className="w-4 h-4 mr-2" />
-                  Modificación
-                </span>
-              )}
-                </td>
-
-                {/* Objetivo */}
-                <td className="py-4 px-4 text-gray-800">{l.objetivo}</td>
-
-                {/* Descripción */}
-                <td className="py-4 px-4 text-gray-600">{l.descripcion || '—'}</td>
-
-                {/* Cambios */}
-                <td className="py-4 px-4 text-gray-600">{l.cambios || '—'}</td>
-              </tr>
-                  );
-                })}
-              </tbody>
-            </table>
           </div>
         )}
       </div>
