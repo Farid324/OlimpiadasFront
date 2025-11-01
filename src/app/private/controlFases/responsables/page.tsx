@@ -1,11 +1,11 @@
 // src/app/private/controlFases/responsables/page.tsx
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { fetchControlFasesResp } from '@/components/controlFases/responsable/service';
-import type { ControlFasesRespPayload } from '@/components/controlFases/responsable/types';
-import StatCardResp from '@/components/controlFases/responsable/StatCardResp';
-import PhaseTableResp from '@/components/controlFases/responsable/PhaseTableResp';
+import { useEffect, useState } from "react";
+import { fetchControlFasesResp } from "@/components/controlFases/responsable/service";
+import type { ControlFasesRespPayload } from "@/components/controlFases/responsable/types";
+import StatCardResp from "@/components/controlFases/responsable/StatCardResp";
+import PhaseTableResp from "@/components/controlFases/responsable/PhaseTableResp";
 
 type AppError = { message?: string };
 
@@ -22,17 +22,23 @@ export default function ControlFasesResponsablePage() {
       setError(null);
     } catch (e) {
       const err = e as AppError;
-      setError(err?.message || 'No se pudo cargar la información.');
+      setError(err?.message || "No se pudo cargar la información.");
       setData(null);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => {
+    void load();
+  }, []);
 
   if (loading && !data) {
-    return <div className="rounded-xl border bg-white p-6 text-slate-600">Cargando…</div>;
+    return (
+      <div className="rounded-xl border bg-white p-6 text-slate-600">
+        Cargando…
+      </div>
+    );
   }
 
   if (!data) {
@@ -43,7 +49,9 @@ export default function ControlFasesResponsablePage() {
             {error}
           </div>
         )}
-        <div className="rounded-xl border bg-white p-6 text-slate-600">No hay datos para mostrar.</div>
+        <div className="rounded-xl border bg-white p-6 text-slate-600">
+          No hay datos para mostrar.
+        </div>
       </div>
     );
   }
@@ -58,6 +66,17 @@ export default function ControlFasesResponsablePage() {
         </div>
       )}
 
+      {/* Header de página (igual al mockup) */}
+      <section className="mb-2">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+          Control de Fases
+        </h1>
+        <p className="mt-1 text-slate-500">
+          Gestión y aprobación de fases de evaluación por área
+        </p>
+      </section>
+
+      {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCardResp
           title="Evaluaciones Completadas"
@@ -81,12 +100,12 @@ export default function ControlFasesResponsablePage() {
         />
       </div>
 
-    <PhaseTableResp
-      title="Mis áreas"
-      subtitle="Fases de evaluación de las áreas a tu cargo"
-      filas={filas}
-      onRefresh={load}
-    />
+      <PhaseTableResp
+        title="Mis áreas"
+        subtitle="Fases de evaluación de las áreas a tu cargo"
+        filas={filas}
+        onRefresh={load}
+      />
     </div>
   );
 }
