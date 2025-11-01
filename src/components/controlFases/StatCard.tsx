@@ -1,3 +1,4 @@
+//src/components/controlFases/StatCard.tsx
 import React from 'react';
 
 export default function StatCard({

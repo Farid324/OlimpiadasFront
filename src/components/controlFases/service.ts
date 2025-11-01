@@ -1,3 +1,4 @@
+//src/components/controlFases/service.ts
 import { getFromAPI } from "./apiClient";
 import type { ControlFasesResponse, FilaFase } from "./types";
 import { fetchResponsablesMap } from "@/components/controlFases/responsablesApi";

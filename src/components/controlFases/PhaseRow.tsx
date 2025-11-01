@@ -1,7 +1,9 @@
 // src/components/controlFases/PhaseRow.tsx
-import React from "react";
+import React, { useState } from "react";
 import ProgressBar from "./ProgressBar";
 import type { FilaFase, AccionColor, FaseActual, EstadoUI } from "./types";
+import ApprovePhaseModal from "./ApprovePhaseModal";
+import { closePhase } from "./phaseApi";
 
 function PillFilled({
   children,
@@ -10,7 +12,7 @@ function PillFilled({
   children: React.ReactNode;
   color: "blue" | "amber" | "emerald";
 }) {
-  const map = {
+  const map: Record<"blue" | "amber" | "emerald", string> = {
     blue: "bg-blue-100 text-blue-700 ring-blue-200",
     amber: "bg-amber-100 text-amber-700 ring-amber-200",
     emerald: "bg-emerald-100 text-emerald-700 ring-emerald-200",
@@ -24,28 +26,47 @@ function PillFilled({
   );
 }
 
-// Fase actual -> color
 function faseColor(f: FaseActual): "blue" | "amber" | "emerald" {
   if (f === "Clasificación") return "blue";
   if (f === "Evaluación Final") return "amber";
-  return "emerald"; // Completado
+  return "emerald";
 }
 
-// Estado: SIEMPRE fondo gris; el color va en el texto
 function EstadoChip({ estado }: { estado: EstadoUI }) {
-  const text =
+  const textClass =
     estado === "Completado"
       ? "text-emerald-600"
       : estado === "Listo para aprobar"
       ? "text-amber-600"
-      : "text-slate-600"; // En progreso
+      : "text-slate-600";
+
   return (
     <span
-      className={`inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold ${text}`}
+      className={`inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold ${textClass}`}
     >
       {estado}
     </span>
   );
+}
+
+const btnMap: Record<AccionColor, string> = {
+  primary: "bg-indigo-600 hover:bg-indigo-700 text-white",
+  neutral: "bg-slate-200 hover:bg-slate-300 text-slate-800",
+  success: "bg-emerald-600 hover:bg-emerald-700 text-white",
+};
+
+// 👇 ayudante para extraer el mensaje de error sin usar `any`
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "object" && error !== null && "message" in error) {
+    const maybeMsg = (error as { message?: unknown }).message;
+    if (typeof maybeMsg === "string") {
+      return maybeMsg;
+    }
+  }
+  return "No se pudo aprobar la fase.";
 }
 
 export default function PhaseRow({
@@ -68,6 +89,8 @@ export default function PhaseRow({
     accionLabel,
     accionColor = "primary",
     accionDisabled,
+    idArea,
+    idNivel,
   } = fila;
 
   const porcentaje =
@@ -75,90 +98,130 @@ export default function PhaseRow({
       ? Math.round((progresoHecho / progresoTotal) * 100)
       : 0;
 
-  const btnMap: Record<AccionColor, string> = {
-    primary: "bg-indigo-600 hover:bg-indigo-700 text-white",
-    neutral: "bg-slate-200 hover:bg-slate-300 text-slate-800",
-    success: "bg-emerald-600 hover:bg-emerald-700 text-white",
-  };
+  const [open, setOpen] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  async function handleConfirm(): Promise<void> {
+    if (!idArea || !idNivel) {
+      setErrorMsg("No se pudo identificar el área y nivel de la fila.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setErrorMsg(null);
+
+      await closePhase(Number(idArea), Number(idNivel), {
+        type: "CLASIFICACION",
+      });
+
+      setOpen(false);
+      await onRefresh();
+    } catch (error: unknown) {
+      // el back ya manda "aún existen evaluaciones pendientes"
+      setErrorMsg(getErrorMessage(error));
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
-    <tr className="hover:bg-slate-50/60">
-      {/* Área / Nivel */}
-      <td className="px-4 py-4 align-middle">
-        <div className="text-slate-900 font-semibold">{area}</div>
-        <span className="mt-1 inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-          {nivel}
-        </span>
-      </td>
+    <>
+      <tr className="hover:bg-slate-50/60">
+        {/* Área / Nivel */}
+        <td className="px-4 py-4 align-middle">
+          <div className="text-slate-900 font-semibold">{area}</div>
+          <span className="mt-1 inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+            {nivel}
+          </span>
+        </td>
 
-      {/* Fase Actual */}
-      <td className="px-4 py-4 align-middle">
-        <PillFilled color={faseColor(faseActual)}>{faseActual}</PillFilled>
-      </td>
+        {/* Fase Actual */}
+        <td className="px-4 py-4 align-middle">
+          <PillFilled color={faseColor(faseActual)}>{faseActual}</PillFilled>
+        </td>
 
-      {/* Progreso (texto + barra corta) */}
-      <td className="px-3 py-4 align-middle text-left"> {/* 👈 forzar izquierda */}
-        <div className="flex flex-col items-start">    {/* 👈 nada de items-center */}
-          <div className="mb-1 text-xs text-slate-600">
-            {progresoHecho}/{progresoTotal}
+        {/* Progreso */}
+        <td className="px-3 py-4 align-middle text-left">
+          <div className="flex flex-col items-start">
+            <div className="mb-1 text-xs text-slate-600">
+              {progresoHecho}/{progresoTotal}
+            </div>
+            <div className="w-[84px]">
+              <ProgressBar value={porcentaje} widthPx={84} />
+            </div>
           </div>
-          {/* Barra corta y NO centrada */}
-          <div className="w-[84px]">                    {/* 👈 sin mx-auto */}
-            <ProgressBar value={porcentaje} widthPx={84} />
+        </td>
+
+        {/* Clasificación */}
+        <td className="px-4 py-4 align-middle">
+          <div className="space-y-1 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              <span className="text-slate-700">
+                Clasificados: <b>{resumen?.clasificados ?? 0}</b>
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-amber-500" />
+              <span className="text-slate-700">
+                No clasificados: <b>{resumen?.noClasificados ?? 0}</b>
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-rose-500" />
+              <span className="text-slate-700">
+                Descalificados: <b>{resumen?.descalificados ?? 0}</b>
+              </span>
+            </div>
           </div>
-        </div>
-      </td>
+        </td>
 
-
-      {/* Clasificación */}
-      <td className="px-4 py-4 align-middle">
-        <div className="space-y-1 text-xs">
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-emerald-500" />
-            <span className="text-slate-700">
-              Clasificados: <b>{resumen?.clasificados ?? 0}</b>
-            </span>
+        {/* Responsable */}
+        <td className="px-4 py-4 align-middle">
+          <div className="text-slate-900 font-semibold">
+            {responsable || "—"}
           </div>
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-amber-500" />
-            <span className="text-slate-700">
-              No clasificados: <b>{resumen?.noClasificados ?? 0}</b>
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-rose-500" />
-            <span className="text-slate-700">
-              Descalificados: <b>{resumen?.descalificados ?? 0}</b>
-            </span>
-          </div>
-        </div>
-      </td>
+          {fechaHora && (
+            <div className="text-[11px] text-slate-400">{fechaHora}</div>
+          )}
+        </td>
 
-      {/* Responsable */}
-      <td className="px-4 py-4 align-middle">
-        <div className="text-slate-900 font-semibold">{responsable || "—"}</div>
-        {fechaHora && (
-          <div className="text-[11px] text-slate-400">{fechaHora}</div>
-        )}
-      </td>
+        {/* Estado */}
+        <td className="px-4 py-4 align-middle">
+          <EstadoChip estado={estado} />
+        </td>
 
-      {/* Estado (fondo gris + texto color) */}
-      <td className="px-4 py-4 align-middle">
-        <EstadoChip estado={estado} />
-      </td>
+        {/* Acciones */}
+        <td className="px-3 py-2 align-middle text-right">
+          {accionLabel && (
+            <button
+              className={`inline-flex items-center rounded-lg px-3.5 py-2 text-xs font-medium shadow-sm focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${btnMap[accionColor]}`}
+              disabled={!!accionDisabled}
+              onClick={() => setOpen(true)}
+            >
+              {accionLabel}
+            </button>
+          )}
+        </td>
+      </tr>
 
-    {/* Acciones */}
-    <td className="px-3 py-2 align-middle text-right">
-      {accionLabel && (
-        <button
-          className={`inline-flex items-center rounded-lg px-3.5 py-2 text-xs font-medium shadow-sm focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${btnMap[accionColor]}`}
-          disabled={!!accionDisabled}
-          onClick={() => onRefresh()}
-        >
-          {"Aprobar Fase"}
-        </button>
+      <ApprovePhaseModal
+        open={open}
+        row={fila}
+        onClose={() => setOpen(false)}
+        onConfirm={handleConfirm}
+        loading={loading}
+      />
+
+      {errorMsg && (
+        <tr>
+          <td colSpan={7} className="px-4 pb-3 text-xs text-red-500">
+            {errorMsg}
+          </td>
+        </tr>
       )}
-    </td>
-    </tr>
+    </>
   );
 }
