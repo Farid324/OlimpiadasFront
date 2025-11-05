@@ -336,10 +336,9 @@ export default function ReportesPage() {
         {locked && (
           <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-amber-800 text-sm">
             <strong>Fase Bloqueada.</strong>{" "}
-            {lockMsg ??
-              (phaseOfTab === "FINAL"
-                ? "La fase final aún no ha sido aprobada. Los reportes se habilitarán una vez que des el aval correspondiente."
-                : "La fase de clasificación aún no ha sido aprobada. Los reportes se habilitarán una vez que des el aval correspondiente.")}
+            {phaseOfTab === "FINAL"
+              ? "La fase final aún no ha sido aprobada. Los reportes se habilitarán una vez que des el aval correspondiente."
+              : "La fase de clasificación aún no ha sido aprobada. Los reportes se habilitarán una vez que des el aval correspondiente."}
           </div>
         )}
 
