@@ -17,19 +17,34 @@ import {
 import { composeNivelCodigo } from "@/libs/nivel";
 import RegisterTutorModal from "@/components/olimpistas/RegisterTutorModal";
 import { VM } from "@/config/validation-messages";
-import axios from "axios"
+import axios from "axios";
+import { CheckCircle2, Info } from "lucide-react";
 
 type Area = { id_area: number; nombre_area: string };
 
+// ====== Validaciones Zod (en español) ======
 const schema = z.object({
   nombreCompleto: z
     .string()
-    .min(1, "Requerido")
-    .regex(/^[\p{L}\s.'-]+$/u, "Solo letras"),
-  ci: z.string().min(6).max(12).regex(/^\d+$/, "Solo números"),
-  tutorContacto: z.string().min(7).max(12).regex(/^\d+$/, "Solo números"),
+    .trim()
+    .min(1, "El nombre completo es obligatorio")
+    .refine((val) => val.trim().split(/\s+/).length >= 2, {
+      message: "Ingrese nombre y apellido",
+    })
+    .regex(/^[\p{L}\s.'-]+$/u, "Solo se permiten letras y espacios"),
+  ci: z
+    .string()
+    .trim()
+    .min(6, "El CI debe tener entre 6 y 12 dígitos")
+    .max(12, "El CI debe tener entre 6 y 12 dígitos")
+    .regex(/^\d+$/, "El CI solo debe contener números"),
+  tutorContacto: z
+    .string()
+    .trim()
+    .min(7, "El contacto del tutor debe tener entre 7 y 12 dígitos")
+    .max(12, "El contacto del tutor debe tener entre 7 y 12 dígitos")
+    .regex(/^\d+$/, "El contacto del tutor solo debe contener números"),
   departamento: z.enum(DEPARTAMENTOS, { message: VM.deptRequired }),
-
   unidadEducativa: z
     .string()
     .trim()
@@ -42,6 +57,7 @@ const schema = z.object({
 });
 
 type FormData = z.infer<typeof schema>;
+type Feedback = { type: "success" | "error"; text: string } | null;
 
 interface Props {
   onClose: () => void;
@@ -51,9 +67,7 @@ interface Props {
 export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
   const [areas, setAreas] = useState<Area[]>([]);
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState<string | null>(null);
-  //const UE_REGEX = /^[\p{L}\s.'-]+$/u;
-  //const [ueError, setUeError] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<Feedback>(null);
 
   const {
     register,
@@ -83,6 +97,7 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
         setAreas(data);
         if (data.length) setValue("areaNombre", data[0].nombre_area);
       } catch {
+        // Silencioso, solo consola
         console.error("Error cargando áreas");
       }
     })();
@@ -90,23 +105,26 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
 
   const onSubmit = async (f: FormData) => {
     setLoading(true);
-    setSuccess(null);
+    setFeedback(null);
     try {
       const gradoEscolar = composeNivelCodigo(f.nivelCompetencia, f.grado);
       await api.post("/olimpistas/register", {
-        nombreCompleto: f.nombreCompleto,
-        ci: f.ci,
-        tutorContacto: f.tutorContacto,
-        unidadEducativa: f.unidadEducativa,
+        nombreCompleto: f.nombreCompleto.trim().replace(/\s+/g, " "),
+        ci: f.ci.trim(),
+        tutorContacto: f.tutorContacto.trim(),
+        unidadEducativa: f.unidadEducativa.trim().replace(/\s+/g, " "),
         departamento: f.departamento,
         area: f.areaNombre,
         nivel: f.nivelCompetencia,
         grado: f.grado,
         gradoEscolar,
       });
-      setSuccess("Olimpista registrado correctamente");
+
+      setFeedback({ type: "success", text: "Olimpista registrado correctamente." });
       onSuccess();
-      setTimeout(onClose, 900);
+
+      // Cerrar tras un breve tiempo para alcanzar a leer el banner
+      setTimeout(onClose, 1200);
     } catch (err: unknown) {
       let msg = "Ocurrió un error al registrar.";
       if (axios.isAxiosError(err)) {
@@ -120,10 +138,11 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
       } else if (typeof err === "string") {
         msg = err;
       }
-      alert(msg);
+      // Tema blanco/azul también para errores
+      setFeedback({ type: "error", text: msg });
     } finally {
       setLoading(false);
-    } 
+    }
   };
 
   const Pill = ({
@@ -165,56 +184,98 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
     }
   };
 
+  // ====== Banner blanco/azul reutilizable ======
+  const Banner = ({ fb, onCloseBanner }: { fb: Exclude<Feedback, null>; onCloseBanner: () => void }) => {
+    const isSuccess = fb.type === "success";
+    return (
+      <div
+        role="alert"
+        className="mb-3 rounded-xl border bg-white px-4 py-3 flex items-start gap-3 shadow-sm border-blue-200"
+      >
+        <div className="mt-0.5">
+          {isSuccess ? (
+            <CheckCircle2 className="h-5 w-5 text-blue-600" aria-hidden="true" />
+          ) : (
+            <Info className="h-5 w-5 text-blue-600" aria-hidden="true" />
+          )}
+        </div>
+        <div className="text-sm">
+          <p className="font-semibold text-blue-900">
+            {isSuccess ? "Registro exitoso" : "No se pudo completar el registro"}
+          </p>
+          <p className="text-blue-700 whitespace-pre-line">{fb.text}</p>
+        </div>
+        <button
+          type="button"
+          onClick={onCloseBanner}
+          aria-label="Cerrar mensaje"
+          className="ml-auto inline-flex h-7 w-7 items-center justify-center rounded-full text-blue-700 hover:bg-blue-50"
+        >
+          ✕
+        </button>
+      </div>
+    );
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="bg-white p-6 rounded-xl w-[640px] relative">
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
+          aria-label="Cerrar"
         >
           ✕
         </button>
 
-        <h2 className="text-xl font-bold text-black">
-          Registrar Nuevo Olimpista
-        </h2>
-        <p className="text-gray-500 mb-4">
-          Complete la información del Olimpista
-        </p>
+        <h2 className="text-xl font-bold text-black">Registrar Nuevo Olimpista</h2>
+        <p className="text-gray-500 mb-4">Complete la información del Olimpista</p>
 
-        {success && <p className="text-green-600 text-sm mb-3">{success}</p>}
+        {/* Banner blanco/azul (éxito / error) */}
+        {feedback && <Banner fb={feedback} onCloseBanner={() => setFeedback(null)} />}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
+            {/* Nombre completo */}
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">
                 Nombre Completo
               </label>
               <Input
-                placeholder="Nombre completo"
-                className="placeholder: text-gray-700"
+                placeholder="Ej: Juan Pérez"
+                className="placeholder:text-gray-400 text-gray-700"
                 {...register("nombreCompleto")}
+                onInput={(e) => {
+                  const t = e.currentTarget;
+                  t.value = t.value
+                    .replace(/[^ \p{L}.'-]/gu, "")
+                    .replace(/\s+/g, " ")
+                    .trimStart();
+                }}
               />
               {errors.nombreCompleto && (
-                <p className="text-red-500 text-sm">
-                  {errors.nombreCompleto.message}
-                </p>
+                <p className="text-red-500 text-sm">{errors.nombreCompleto.message}</p>
               )}
             </div>
+
+            {/* CI */}
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">
                 Cédula de identidad
               </label>
               <Input
                 placeholder="0000000"
-                className="placeholder: text-gray-700"
+                className="placeholder:text-gray-400 text-gray-700"
                 {...register("ci")}
+                onInput={(e) => {
+                  const t = e.currentTarget;
+                  t.value = t.value.replace(/\D/g, "").slice(0, 12);
+                }}
               />
-              {errors.ci && (
-                <p className="text-red-500 text-sm">{errors.ci.message}</p>
-              )}
+              {errors.ci && <p className="text-red-500 text-sm">{errors.ci.message}</p>}
             </div>
 
+            {/* Contacto tutor */}
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">
                 Contacto del tutor legal
@@ -223,12 +284,12 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
                 <Input
                   className="flex-1 text-gray-700"
                   placeholder="+591 70123456"
-                  {...register("tutorContacto", {
-                    required: VM.tutorRequired,
-                    pattern: { value: /^\d{7,12}$/, message: VM.phoneDigits },
-                  })}
+                  {...register("tutorContacto")}
+                  onInput={(e) => {
+                    const t = e.currentTarget;
+                    t.value = t.value.replace(/\D/g, "").slice(0, 12);
+                  }}
                 />
-
                 <button
                   type="button"
                   onClick={() => setShowTutor(true)}
@@ -238,13 +299,9 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
                 </button>
               </div>
               {errors.tutorContacto && (
-                <p className="text-red-500 text-sm">
-                  {errors.tutorContacto.message}
-                </p>
+                <p className="text-red-500 text-sm">{errors.tutorContacto.message}</p>
               )}
-              {tutorMsg && (
-                <p className="text-green-700 text-sm mt-1">{tutorMsg}</p>
-              )}
+              {tutorMsg && <p className="text-green-700 text-sm mt-1">{tutorMsg}</p>}
 
               {showTutor && (
                 <RegisterTutorModal
@@ -260,13 +317,13 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
                     );
 
                     setShowTutor(false);
-
                     setTimeout(() => setTutorMsg(null), 3500);
                   }}
                 />
               )}
             </div>
 
+            {/* Departamento */}
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">
                 Departamento de procedencia
@@ -282,12 +339,11 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
                 ))}
               </select>
               {errors.departamento && (
-                <p className="text-red-500 text-sm">
-                  {errors.departamento.message}
-                </p>
+                <p className="text-red-500 text-sm">{errors.departamento.message}</p>
               )}
             </div>
 
+            {/* Unidad Educativa */}
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">
                 Unidad Educativa
@@ -308,12 +364,11 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
                 {...register("unidadEducativa")}
               />
               {errors.unidadEducativa && (
-                <p className="text-red-500 text-sm">
-                  {errors.unidadEducativa.message}
-                </p>
+                <p className="text-red-500 text-sm">{errors.unidadEducativa.message}</p>
               )}
             </div>
 
+            {/* Grado */}
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">
                 Grado de escolaridad
@@ -335,7 +390,7 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
             </div>
           </div>
 
-          {}
+          {/* Nivel de competencia */}
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-1">
               Nivel de competencia
@@ -345,20 +400,18 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
                 <Pill
                   key={n}
                   active={nivelCompetencia === n}
-                  onClick={() => setValue("nivelCompetencia", n)}
+                  onClick={() => setValue("nivelCompetencia", n, { shouldValidate: true })}
                 >
                   {n}
                 </Pill>
               ))}
             </div>
             {errors.nivelCompetencia && (
-              <p className="text-red-500 text-sm">
-                {errors.nivelCompetencia.message}
-              </p>
+              <p className="text-red-500 text-sm">{errors.nivelCompetencia.message}</p>
             )}
           </div>
 
-          {}
+          {/* Áreas */}
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-1">
               Áreas de competencia
@@ -368,20 +421,18 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
                 <Pill
                   key={a.id_area}
                   active={watch("areaNombre") === a.nombre_area}
-                  onClick={() => setValue("areaNombre", a.nombre_area)}
+                  onClick={() => setValue("areaNombre", a.nombre_area, { shouldValidate: true })}
                 >
                   {a.nombre_area}
                 </Pill>
               ))}
             </div>
             {errors.areaNombre && (
-              <p className="text-red-500 text-sm">
-                {errors.areaNombre.message}
-              </p>
+              <p className="text-red-500 text-sm">{errors.areaNombre.message}</p>
             )}
           </div>
 
-          {}
+          {/* Acciones */}
           <div className="flex justify-end gap-2 pt-2">
             <Button onClick={onClose} type="button" variant="outline">
               Cancelar
