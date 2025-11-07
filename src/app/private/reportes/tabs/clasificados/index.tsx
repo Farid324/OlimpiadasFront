@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { api } from '@/libs/api';
-import { Download, ChevronDown } from 'lucide-react';
+import { ChevronDown} from 'lucide-react';
 
 /* ===================== Tipos ===================== */
 type EstadoClasificado = 'CLASIFICADO' | 'NO_CLASIFICADO' | 'DESCALIFICADO' | 'TODOS';
@@ -11,7 +11,6 @@ type EstadoClasificado = 'CLASIFICADO' | 'NO_CLASIFICADO' | 'DESCALIFICADO' | 'T
 type ClasificadoItemDTO = {
   id_inscripcion: number;
   posicion: number | null;
-  // si el BE expone CI, esto ya queda listo; si no, no rompe
   ci?: string | null;
   nombreCompleto: string;
   area: string;
@@ -27,7 +26,7 @@ type ReportFilters = {
   estado?: EstadoClasificado | null;
 };
 
-type AreaDTO = { id: number; nombre: string };
+type AreaDTO  = { id: number; nombre: string };
 type NivelDTO = { id: number; nombre: string };
 
 /* ===================== Helpers reutilizables ===================== */
@@ -37,7 +36,7 @@ const DEFAULT_FILTERS: ReportFilters = { id_area: null, id_nivel: null, estado: 
 const NIVEL_ORDER: Record<string, number> = { Secundaria: 0, Primaria: 1 };
 
 const pick = (o: Record<string, unknown> | null | undefined, keys: string[]) =>
-   keys.map(k => o?.[k]).find(v => v !== undefined && v !== null);
+  keys.map(k => o?.[k]).find(v => v !== undefined && v !== null);
 
 function mapCatalog<T extends { id: number; nombre: string }>(
   data: unknown,
@@ -45,17 +44,10 @@ function mapCatalog<T extends { id: number; nombre: string }>(
   nameKeys: string[],
 ): T[] {
   const arr = (Array.isArray(data) ? data : []) as ReadonlyArray<Record<string, unknown>>;
-
   return arr
-    .map((r) =>
-      ({
-        id: Number(pick(r, idKeys)),
-        nombre: String(pick(r, nameKeys) ?? '').trim(),
-      } as T),
-    )
+    .map((r) => ({ id: Number(pick(r, idKeys)), nombre: String(pick(r, nameKeys) ?? '').trim() } as T))
     .filter((x): x is T => !Number.isNaN(x.id) && x.nombre.length > 0);
 }
-
 
 function readFiltersFromUrl(): ReportFilters {
   if (typeof window === 'undefined') return DEFAULT_FILTERS;
@@ -72,25 +64,22 @@ function readFiltersFromUrl(): ReportFilters {
 
 const toParams = (filters?: ReportFilters) => {
   const p = new URLSearchParams();
-  if (filters?.id_area && Number(filters.id_area) !== 0) p.set('id_area', String(filters.id_area));
+  if (filters?.id_area  && Number(filters.id_area)  !== 0) p.set('id_area',  String(filters.id_area));
   if (filters?.id_nivel && Number(filters.id_nivel) !== 0) p.set('id_nivel', String(filters.id_nivel));
-  if (filters?.estado && filters.estado !== 'TODOS') p.set('estado', String(filters.estado));
+  if (filters?.estado  && filters.estado !== 'TODOS')     p.set('estado',   String(filters.estado));
   return Object.fromEntries(p);
 };
 
 const cmpStr = (a: string, b: string) => a.localeCompare(b, 'es', { sensitivity: 'base' });
 
-/** Ordena por Área -> Nivel (Secundaria, Primaria) -> Posición (asc/desc) */
 function sortRows(rows: ClasificadoItemDTO[], asc: boolean): ClasificadoItemDTO[] {
   const copy = [...rows];
   copy.sort((a, b) => {
     const areaCmp = cmpStr(a.area ?? '', b.area ?? '');
     if (areaCmp !== 0) return areaCmp;
-
     const na = NIVEL_ORDER[a.nivel] ?? 99;
     const nb = NIVEL_ORDER[b.nivel] ?? 99;
     if (na !== nb) return na - nb;
-
     const pa = a.posicion ?? Number.POSITIVE_INFINITY;
     const pb = b.posicion ?? Number.POSITIVE_INFINITY;
     return asc ? pa - pb : pb - pa;
@@ -103,41 +92,30 @@ async function getAreas(): Promise<AreaDTO[]> {
   const { data } = await api.get('/areas');
   return mapCatalog<AreaDTO>(data, ['id_area', 'id', 'value'], ['nombre_area', 'nombre', 'label']);
 }
-
 async function getNiveles(): Promise<NivelDTO[]> {
   const { data } = await api.get('/niveles');
   return mapCatalog<NivelDTO>(data, ['id_nivel', 'id', 'value'], ['nombre_nivel', 'nombre', 'label']);
 }
-
 async function getListaClasificados(filters?: ReportFilters): Promise<ClasificadoItemDTO[]> {
   const { data } = await api.get<ClasificadoItemDTO[]>('/reportes/clasificados', { params: toParams(filters) });
   return data;
 }
-
 async function exportClasificados(filters?: ReportFilters): Promise<Blob> {
   const res = await api.get('/reportes/clasificados/export', { params: toParams(filters), responseType: 'blob' });
   return res.data as Blob;
 }
 
-/* ====== Icono de orden: dos flechas; activa arriba o abajo ====== */
-function SortPosIconDual({
-  asc,
-  className,
-}: {
-  asc: boolean;
-  className?: string;
-}) {
+/* ====== Icono de orden (tabla) ====== */
+function SortPosIconDual({ asc, className }: { asc: boolean; className?: string }) {
   const active = '#1a73e8';
   const inactive = '#cbd5e1';
   const strokeW = 2;
   return (
     <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
-      {/* Abajo (izquierda) */}
       <g stroke={asc ? inactive : active} strokeWidth={strokeW} strokeLinecap="round" strokeLinejoin="round">
         <path d="M7 3v14" />
         <path d="M4 16l3 3 3-3" />
       </g>
-      {/* Arriba (derecha) */}
       <g stroke={asc ? active : inactive} strokeWidth={strokeW} strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 21V7" />
         <path d="M14 10l3-3 3 3" />
@@ -154,7 +132,7 @@ export default function ClasificadosTab() {
     try {
       const raw = sessionStorage.getItem(STORAGE_KEY);
       if (raw) return JSON.parse(raw) as ReportFilters;
-    } catch { }
+    } catch {}
     return readFiltersFromUrl();
   });
 
@@ -162,19 +140,15 @@ export default function ClasificadosTab() {
   useEffect(() => {
     try {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(filters));
-
       const sp = new URLSearchParams(window.location.search);
-      const setOrDel = (k: string, v: unknown, delIf: boolean) =>
-        delIf ? sp.delete(k) : sp.set(k, String(v));
-
-      setOrDel('id_area', filters.id_area, filters.id_area == null || Number(filters.id_area) === 0);
+      const setOrDel = (k: string, v: unknown, delIf: boolean) => (delIf ? sp.delete(k) : sp.set(k, String(v)));
+      setOrDel('id_area',  filters.id_area,  filters.id_area == null || Number(filters.id_area) === 0);
       setOrDel('id_nivel', filters.id_nivel, filters.id_nivel == null || Number(filters.id_nivel) === 0);
-      setOrDel('estado', filters.estado, !filters.estado || filters.estado === 'TODOS');
-
+      setOrDel('estado',   filters.estado,  !filters.estado || filters.estado === 'TODOS');
       const q = sp.toString();
       const newUrl = q ? `${window.location.pathname}?${q}` : window.location.pathname;
       window.history.replaceState({}, '', newUrl);
-    } catch { }
+    } catch {}
   }, [filters]);
 
   // Datos
@@ -217,7 +191,7 @@ export default function ClasificadosTab() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.id_area, filters.id_nivel, filters.estado]);
 
-  const safeAreas = useMemo(() => (areas ?? []).filter((a): a is AreaDTO => !!a && typeof a.id === 'number' && !!a.nombre), [areas]);
+  const safeAreas   = useMemo(() => (areas ?? []).filter((a): a is AreaDTO => !!a && typeof a.id === 'number' && !!a.nombre), [areas]);
   const safeNiveles = useMemo(() => (niveles ?? []).filter((n): n is NivelDTO => !!n && typeof n.id === 'number' && !!n.nombre), [niveles]);
 
   const sortedRows = useMemo(() => sortRows(rows, orderAsc), [rows, orderAsc]);
@@ -225,19 +199,21 @@ export default function ClasificadosTab() {
   // Labels
   const getAreaLabel = () =>
     filters.id_area == null ? '—' : filters.id_area === 0 ? 'Todas las áreas' :
-      (safeAreas.find(a => a.id === filters.id_area)?.nombre ?? String(filters.id_area));
+    (safeAreas.find(a => a.id === filters.id_area)?.nombre ?? String(filters.id_area));
   const getNivelLabel = () =>
     filters.id_nivel == null ? '—' : filters.id_nivel === 0 ? 'Todos los niveles' :
-      (safeNiveles.find(n => n.id === filters.id_nivel)?.nombre ?? String(filters.id_nivel));
+    (safeNiveles.find(n => n.id === filters.id_nivel)?.nombre ?? String(filters.id_nivel));
   const getEstadoLabel = () =>
     filters.estado == null ? '—'
       : filters.estado === 'TODOS' ? 'Todos los Estados'
-        : filters.estado === 'CLASIFICADO' ? 'Clasificados'
-          : filters.estado === 'NO_CLASIFICADO' ? 'No clasificados'
-            : filters.estado === 'DESCALIFICADO' ? 'Descalificados'
-              : String(filters.estado);
+      : filters.estado === 'CLASIFICADO' ? 'Clasificados'
+      : filters.estado === 'NO_CLASIFICADO' ? 'No clasificados'
+      : filters.estado === 'DESCALIFICADO' ? 'Descalificados'
+      : String(filters.estado);
 
-  // Export (confirm modal flow)
+  const orderText = orderAsc ? 'Ascendente' : 'Descendente';
+
+  // Export
   const doExport = async () => {
     try {
       setLoadingExport(true);
@@ -255,12 +231,11 @@ export default function ClasificadosTab() {
     }
   };
 
-  const areaPlaceholder = filters.id_area == null;
-  const nivelPlaceholder = filters.id_nivel == null;
-  const estadoPlaceholder = filters.estado == null;
+  const areaPlaceholder   = filters.id_area  == null;
+  const nivelPlaceholder  = filters.id_nivel == null;
+  const estadoPlaceholder = filters.estado   == null;
 
   const total = sortedRows.length;
-  const orderLabel = orderAsc ? 'Posición (ascendente)' : 'Posición (descendente)';
 
   /* ===================== UI ===================== */
   return (
@@ -333,7 +308,6 @@ export default function ClasificadosTab() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Ícono solo, sin hover/focus highlight */}
             <button
               type="button"
               onClick={() => setOrderAsc(v => !v)}
@@ -351,8 +325,7 @@ export default function ClasificadosTab() {
               className="bg-blue-600 hover:bg-blue-700"
               title={total === 0 ? 'No hay registros para exportar' : 'Exportar lista filtrada'}
             >
-              <Download className="mr-2 w-4 h-4" />
-              {loadingExport ? 'Exportando…' : 'Exportar Lista'}
+              Exportar Lista
             </Button>
           </div>
         </div>
@@ -367,9 +340,6 @@ export default function ClasificadosTab() {
               <thead className="sticky top-0 bg-white z-10 border-b border-black">
                 <tr className="text-gray-700">
                   <th className="py-3 px-4 text-left font-semibold w-24">Posición</th>
-                  {/* Si quieres mostrar CI también en la UI, descomenta esta columna
-                  <th className="py-3 px-4 text-left font-semibold w-28">CI</th>
-                  */}
                   <th className="py-3 px-4 text-left font-semibold">Nombre</th>
                   <th className="py-3 px-4 text-left font-semibold">Área</th>
                   <th className="py-3 px-4 text-left font-semibold">Nivel</th>
@@ -384,7 +354,6 @@ export default function ClasificadosTab() {
                     <td className="py-3 px-4 text-black tabular-nums">
                       <span className="text-gray-500 mr-1">#</span>{r.posicion ?? '-'}
                     </td>
-                    {/* <td className="py-3 px-4 text-black tabular-nums">{r.ci ?? '-'}</td> */}
                     <td className="py-3 px-4 text-black">{r.nombreCompleto}</td>
                     <td className="py-3 px-4">
                       <span className="px-2 py-1 rounded-md bg-gray-200 text-black text-xs font-bold">{r.area}</span>
@@ -403,51 +372,71 @@ export default function ClasificadosTab() {
         )}
       </div>
 
-      {/* =============== MODAL DE CONFIRMACIÓN =============== */}
+      {/* =============== MODAL DE CONFIRMACIÓN (igual al diseño) =============== */}
       {confirmOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          role="dialog"
-          aria-modal="true"
-        >
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3" role="dialog" aria-modal="true">
           {/* Backdrop */}
           <div className="absolute inset-0 bg-black/40" onClick={() => setConfirmOpen(false)} />
 
           {/* Card */}
-          <div className="relative z-10 w-full max-w-lg rounded-xl overflow-hidden shadow-xl bg-white">
-            <div className="bg-white text-slate-800 px-4 py-3 shadow-md border-b border-slate-100">
-              <h3 className="font-semibold">Exportar lista de olimpistas</h3>
+          <div className="relative z-10 w-full max-w-sm rounded-2xl bg-white shadow-2xl">
+            {/* Close button (X) estilo texto, como en tu otro modal */}
+            <button
+              onClick={() => setConfirmOpen(false)}
+              aria-label="Cerrar"
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl leading-none"
+            >
+              ✕
+            </button>
+
+            {/* Header */}
+            <div className="px-5 pt-5 pb-2">
+              <h3 className="text-base font-semibold text-slate-900">Exportar lista de Olimpistas</h3>
+              <p className="text-sm text-slate-500 mt-1">Lista filtrada de olimpistas Fase clasificatoria</p>
             </div>
 
-
-            <div className="p-4 space-y-2 text-sm text-slate-700">
-              <p className="text-slate-600">
-                Se generará un archivo <strong>.xlsx</strong> con cabecera institucional y las columnas requeridas
-                (incluyendo <strong>CI</strong> luego de <em>Posición</em>).
-              </p>
-              <ul className="mt-2 space-y-1">
-                <li>• <strong>Área:</strong> {getAreaLabel()}</li>
-                <li>• <strong>Nivel:</strong> {getNivelLabel()}</li>
-                <li>• <strong>Estado:</strong> {getEstadoLabel()}</li>
-                <li>• <strong>Orden:</strong> {orderLabel}</li>
-                <li>• <strong>Registros:</strong> {total}</li>
-              </ul>
-
+            {/* Panel resumen */}
+            <div className="px-5 mt-3">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50">
+                <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
+                  <div>
+                    <div className="text-xs text-gray-400">Area</div>
+                    <div className="mt-1 text-base font-semibold text-slate-900">{getAreaLabel()}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-400">Nivel</div>
+                    <div className="mt-1 text-base font-semibold text-slate-900">{getNivelLabel()}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-400">Estado</div>
+                    <div className="mt-1 text-base font-semibold text-slate-900">{getEstadoLabel()}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-400">Orden</div>
+                    <div className="mt-1 text-base font-semibold text-slate-900">{orderText}</div>
+                  </div>
+                  <div className="justify-self-start flex flex-col items-center w-16">
+                    <div className="text-xs text-gray-400">Registros</div>
+                    <span className="mt-1 block text-base font-semibold text-slate-900 text-center">
+                      {total}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="px-4 py-3 bg-slate-50 flex items-center justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setConfirmOpen(false)}
-              >
+            {/* Footer */}
+            <div className="px-5 py-4 flex items-center justify-end gap-3">
+              <Button variant="outline" onClick={() => setConfirmOpen(false)}>
                 Cancelar
               </Button>
               <Button
                 className="bg-blue-600 hover:bg-blue-700 disabled:opacity-60"
                 disabled={loadingExport || total === 0}
                 onClick={doExport}
+                title={total === 0 ? 'No hay registros para exportar' : 'Exportar lista filtrada'}
               >
-                {loadingExport ? 'Exportando…' : 'Exportar .xlsx'}
+                Exportar .xlsx
               </Button>
             </div>
           </div>

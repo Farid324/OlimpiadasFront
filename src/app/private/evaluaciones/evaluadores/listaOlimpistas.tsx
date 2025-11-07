@@ -53,29 +53,29 @@ export default function CompetidorList({
               key={c.competidor.id_competidor}
               className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
             >
-              <td className="p-2 text-center">{i + 1}</td>
-              <td className="p-2 font-medium">
+              <td className="p-2 text-center text-black">{i + 1}</td>
+              <td className="p-2 text-black font-medium">
                 {c.competidor.nombres} {c.competidor.apellidos}
               </td>
-              <td className="p-2 text-center">{c.competidor.ci}</td>
-              <td className="p-2 text-center">{c.competidor.escuela}</td>
+              <td className="p-2 text-center text-black">{c.competidor.ci}</td>
+              <td className="p-2 text-center text-black">{c.competidor.escuela}</td>
 
               {mostrarNivel && (
-                <td className="p-2 text-center">
-                  <span className="inline-block text-xs bg-blue-100 text-blue-700 border border-blue-300 px-2 py-0.5 rounded-md font-medium">
+                <td className="p-2 text-center text-black">
+                  <span className="inline-block text-xs bg-blue-100 text-blue-700 border border-blue-300 px-2 py-0.5 rounded-md font-bold">
                     {nivel}
                   </span>
                 </td>
               )}
 
-              <td className="p-2 text-center font-medium">
+              <td className="p-2 text-center text-black font-medium">
                 {nota !== null ? nota : '—'}
               </td>
 
               {mostrarEstado && (
                 <td className="p-2 text-center">
                   <span
-                    className={`inline-block text-xs border px-2 py-0.5 rounded-md font-medium ${chipClasificacionStyle}`}
+                    className={`inline-block text-xs border px-2 py-0.5 rounded-md font-bold ${chipClasificacionStyle}`}
                   >
                     {clasificacion}
                   </span>

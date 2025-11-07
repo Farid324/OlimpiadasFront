@@ -1,4 +1,8 @@
+//src/app/private/evaluaciones/evaluadores/evaluaciones-service.ts
+
 import { api } from '@/libs/api';
+
+export type FiltroEstado = 'PENDIENTE' | 'EVALUADO' | 'TODOS';
 
 export const evaluacionesService = {
   // ==========================================================
@@ -20,7 +24,6 @@ export const evaluacionesService = {
   // ==========================================================
   // 🔹 Registrar una nueva nota
   // ==========================================================
-  // 🔹 Registrar una nueva nota
   async registrarNota(payload: {
     idInscripcion: number;
     idUsuario: number;
@@ -31,7 +34,7 @@ export const evaluacionesService = {
   }) {
     const { data } = await api.post('/admin/evaluaciones/registrar-nota', {
       idInscripcion: payload.idInscripcion,
-      idEvaluador: payload.idUsuario, // backend espera este campo
+      idEvaluador: payload.idUsuario,            // backend espera este campo
       nota: payload.nota,
       comentario: payload.observaciones ?? null, // backend espera 'comentario'
     });
@@ -61,10 +64,24 @@ export const evaluacionesService = {
   // ==========================================================
   async listarCompetidores(params: {
     search?: string;
-    filtro?: 'PENDIENTE' | 'EVALUADO' | 'TODOS';
+    filtro?: FiltroEstado;
+    id_area?: number;   // puede venir 0, null o undefined desde el UI
+    id_nivel?: number;  // idem
   }) {
+    // Normaliza para no enviar 0/null y así evitar “falso filtro”
+    const qp: Record<string, unknown> = {};
+    if (params?.search) qp.search = params.search;
+    if (params?.filtro && params.filtro !== 'TODOS') qp.filtro = params.filtro;
+
+    if (typeof params?.id_area === 'number' && params.id_area > 0) {
+      qp.id_area = params.id_area;
+    }
+    if (typeof params?.id_nivel === 'number' && params.id_nivel > 0) {
+      qp.id_nivel = params.id_nivel;
+    }
+
     const { data } = await api.get('/admin/evaluaciones/mis-competidores', {
-      params,
+      params: qp,
     });
     return data;
   },

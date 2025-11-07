@@ -5,7 +5,6 @@ import { Users, ClipboardList, CheckCircle, Award } from "lucide-react";
 import Card from "../../../../components/ui/card";
 import { api } from "@/libs/api";
 
-// 🔹 Tipo de datos que devuelve el backend
 interface EvaluadorStats {
   total: number;
   pendientes: number;
@@ -13,30 +12,53 @@ interface EvaluadorStats {
   clasificados: number;
 }
 
-export default function CardsSummary() {
+type CardsSummaryProps = {
+  /** Cambia este valor para forzar un refetch (ej. reloadStats del padre) */
+  refreshToken?: string | number | boolean;
+};
+
+export default function CardsSummary({ refreshToken }: CardsSummaryProps) {
   const [stats, setStats] = useState<EvaluadorStats>({
     total: 0,
     pendientes: 0,
     evaluados: 0,
     clasificados: 0,
   });
-
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-     const fetchStats = async () => {
-       try {
-         const { data } = await api.get('/admin/evaluaciones/resumen');
-         setStats(data);
-       } catch (error) {
-         console.error("Error cargando estadísticas:", error);
-       } finally {
-         setLoading(false);
-       }
-     };
+    let alive = true;
 
-     fetchStats();
-  }, []);
+    const fetchStats = async () => {
+      try {
+        setLoading(true);
+        const { data } = await api.get("/admin/evaluaciones/resumen");
+
+        // sanea por si el backend cambia algo
+        const safe: EvaluadorStats = {
+          total: Number(data?.total ?? 0),
+          pendientes: Number(data?.pendientes ?? 0),
+          evaluados: Number(data?.evaluados ?? 0),
+          clasificados: Number(data?.clasificados ?? 0),
+        };
+
+        if (alive) setStats(safe);
+      } catch (error) {
+        if (alive) {
+          console.error("Error cargando estadísticas:", error);
+          setStats({ total: 0, pendientes: 0, evaluados: 0, clasificados: 0 });
+        }
+      } finally {
+        if (alive) setLoading(false);
+      }
+    };
+
+    fetchStats();
+    return () => {
+      alive = false;
+    };
+    // 🔁 se vuelve a ejecutar cuando cambias el token desde el padre
+  }, [refreshToken]);
 
   if (loading) {
     return (
@@ -54,14 +76,14 @@ export default function CardsSummary() {
       <Card
         title="Total competidores"
         value={stats.total}
-        icon={<Users className="text-blue-500" />}
+        icon={<Users className="text-black" />}
         className="bg-blue-50"
       />
       <Card
         title="Pendientes"
         value={stats.pendientes}
         icon={<ClipboardList className="text-yellow-500" />}
-        className="bg-yellow-50"
+        className="bg-blue-50"
       />
       <Card
         title="Evaluados"
