@@ -21,7 +21,7 @@ interface Props {
     institucion?: string;
     especialidad?: string;
     experiencia?: string;
-    id_area?: string;
+    id_area?: string; // ⚠️ usamos este para detectar si cambió el área en edición
   };
 }
 
@@ -30,7 +30,7 @@ interface Area {
   nombre_area: string;
 }
 
-//Validación Zod
+// Validación Zod
 const schema = z.object({
   nombre: z
     .string()
@@ -115,7 +115,7 @@ export default function RegisterResponsableModal({
     resolver: zodResolver(schema),
   });
 
-  //Precargar datos si es edición
+  // Precargar datos si es edición
   useEffect(() => {
     if (mode === 'edit' && initial) {
       setValue('nombre', initial.nombre || '');
@@ -125,18 +125,17 @@ export default function RegisterResponsableModal({
       setValue('institucion', initial.institucion || '');
       setValue('especialidad', initial.especialidad || '');
       setValue('experiencia', initial.experiencia || '');
-      // id_area se asigna cuando las áreas estén cargadas
+      // id_area se setea cuando lleguen las áreas (más abajo)
     }
   }, [mode, initial, setValue]);
 
-  //Cargar áreas y asignar área actual si está en edición
+  // Cargar áreas y setear el área en edición
   useEffect(() => {
     async function fetchAreas() {
       try {
         const { data } = await api.get<Area[]>('/areas');
         setAreas(data);
 
-        // Si es edición y tiene área, asignamos el valor al select
         if (mode === 'edit' && initial?.id_area) {
           setValue('id_area', initial.id_area);
         }
@@ -144,7 +143,6 @@ export default function RegisterResponsableModal({
         console.error('Error al cargar áreas');
       }
     }
-
     fetchAreas();
   }, [mode, initial?.id_area, setValue]);
 
@@ -154,7 +152,7 @@ export default function RegisterResponsableModal({
     setDupError(null);
 
     try {
-      // Validar duplicados solo al crear
+      // --- Duplicados de teléfono/CI/correo (como ya tenías) ---
       if (mode === 'create') {
         const [tel, ci, correo] = await Promise.all([
           api.get(`/responsables/check-telefono/${data.telefono}`),
@@ -176,6 +174,28 @@ export default function RegisterResponsableModal({
           setDupError('❌ El correo ya está registrado');
           setLoading(false);
           return;
+        }
+      }
+
+      // --- NUEVO: Un responsable por área ---
+      const areaIdNum = Number(data.id_area);
+      if (mode === 'create') {
+        const areaRes = await api.get(`/responsables/check-area/${areaIdNum}`);
+        if (areaRes.data?.exists) {
+          setDupError('❌ Ya existe un responsable asignado a esta área');
+          setLoading(false);
+          return;
+        }
+      } else if (mode === 'edit') {
+        const currentArea = initial?.id_area ? Number(initial.id_area) : undefined;
+        // Solo consultar si se cambió de área
+        if (currentArea !== undefined && areaIdNum !== currentArea) {
+          const areaRes = await api.get(`/responsables/check-area/${areaIdNum}`);
+          if (areaRes.data?.exists) {
+            setDupError('❌ Ya existe un responsable asignado a esta área');
+            setLoading(false);
+            return;
+          }
         }
       }
 
@@ -392,3 +412,4 @@ export default function RegisterResponsableModal({
     </div>
   );
 }
+
