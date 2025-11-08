@@ -153,16 +153,32 @@ export default function ResponsablesPage() {
         </Button>
       </div>
 
-      {/* Buscador */}
-      <div className="relative max-w-full">
-        <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-        <input
-          type="text"
-          placeholder="Buscar por nombre, correo o institución..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-9 border rounded-md h-11 text-gray-700 placeholder:text-gray-400"
-        />
+      {/* Buscador (estilo tarjeta grande) */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div className="relative">
+          <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Buscar por nombre, email o institución"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full h-12 pl-12 pr-10 rounded-lg bg-gray-50 border border-gray-200
+                      text-gray-800 placeholder:text-gray-400
+                      focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600
+                      transition"
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-xl leading-none
+                        text-gray-400 hover:text-gray-600"
+              aria-label="Limpiar búsqueda"
+            >
+              ×
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Tabla */}
