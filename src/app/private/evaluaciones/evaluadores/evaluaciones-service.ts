@@ -88,29 +88,32 @@ export const evaluacionesService = {
     return data;
   },
   // ==========================================================
-// 🔹 Listar competidores clasificados con evaluaciones firmadas
-// ==========================================================
-async getListarCompetidoresClasificados(params?: {
-  search?: string;
-  id_area?: number;
-  id_nivel?: number;
-}) {
-  // Normalizamos los parámetros para evitar enviar valores vacíos
-  const qp: Record<string, unknown> = {};
-  if (params?.search) qp.search = params.search;
-  if (typeof params?.id_area === 'number' && params.id_area > 0) {
-    qp.id_area = params.id_area;
-  }
-  if (typeof params?.id_nivel === 'number' && params.id_nivel > 0) {
-    qp.id_nivel = params.id_nivel;
-  }
+  // 🔹 Listar competidores clasificados con evaluaciones firmadas
+  // ==========================================================
+  async getListarCompetidoresClasificados(params?: {
+    search?: string;
+    id_area?: number;
+    id_nivel?: number;
+  }) {
+    // Normalizamos los parámetros para evitar enviar valores vacíos
+    const qp: Record<string, unknown> = {};
+    if (params?.search) qp.search = params.search;
+    if (typeof params?.id_area === 'number' && params.id_area > 0) {
+      qp.id_area = params.id_area;
+    }
+    if (typeof params?.id_nivel === 'number' && params.id_nivel > 0) {
+      qp.id_nivel = params.id_nivel;
+    }
 
-  // 🔹 Llamada al nuevo endpoint del backend
-  const { data } = await api.get(
-    '/admin/evaluaciones/listarCompetidoresFirmados',
-    { params: qp },
-  );
-  return data;
-},
-
+    // 🔹 Llamada al nuevo endpoint del backend
+    const { data } = await api.get(
+      '/admin/evaluaciones/listarCompetidoresFirmados',
+      { params: qp },
+    );
+    return data;
+  },
+  async getDetalleEvaluacion(idEvaluacion: number) {
+    const { data } = await api.get(`/admin/evaluaciones/${idEvaluacion}`);
+    return data;
+  }
 };
