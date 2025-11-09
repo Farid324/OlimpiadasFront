@@ -28,6 +28,7 @@ export const evaluacionesService = {
     idInscripcion: number;
     idUsuario: number;
     nota: number;
+    idFase: 1 | 2,
     descripcionConceptual?: string;
     etica?: string;
     observaciones?: string;
@@ -36,6 +37,7 @@ export const evaluacionesService = {
       idInscripcion: payload.idInscripcion,
       idEvaluador: payload.idUsuario,            // backend espera este campo
       nota: payload.nota,
+      idFase: payload.idFase,
       comentario: payload.observaciones ?? null, // backend espera 'comentario'
     });
     return data;
