@@ -168,7 +168,7 @@ export default function EvaluacionesEvaluadoresPage() {
       });
   }, [competidores, searchQuery, activeFilter]);
 
-  useEffect(() => { fetchCompetidores(); }, [fetchCompetidores]);
+  //useEffect(() => { fetchCompetidores(); }, [fetchCompetidores]);
 
   const fetchCompetidoresClasificados = useCallback(async () => {
     setLoading(true);
@@ -214,28 +214,25 @@ export default function EvaluacionesEvaluadoresPage() {
       });
   }, [competidores, searchQuery, activeFilter]);
 
-  //useEffect(() => { fetchCompetidoresClasificados(); }, [fetchCompetidoresClasificados]);
+  useEffect(() => { fetchCompetidoresClasificados(); }, [fetchCompetidoresClasificados]);
   
   const handleOpenModal = async (competidor: CompetidorInscripcion) => {
-  try {
-    // Si ya tiene una evaluación, buscamos su detalle completo en el backend
-    const evaluacionExistente = competidor.evaluaciones?.[0];
-      if (evaluacionExistente) {
+    try {
+      const evaluacionExistente = competidor.evaluaciones?.[0];
+      console.log('Evaluaciones del competidor:', competidor.evaluaciones);
+
+      if (evaluacionExistente && evaluacionExistente.id_evaluacion) {
         const detalle = await evaluacionesService.getDetalleEvaluacion(
           evaluacionExistente.id_evaluacion
         );
-
-        setModalCompetidor({
-          ...competidor,
-          evaluaciones: [detalle], // reemplazamos con la evaluación completa
-        });
+        setModalCompetidor({ ...competidor, evaluaciones: [detalle] });
       } else {
-        // Si no tiene evaluación, solo abrimos el modal con la info básica
+        console.warn('⚠️ Competidor sin id_evaluacion, no se cargó detalle');
         setModalCompetidor(competidor);
       }
     } catch (err) {
       console.error('Error al cargar la evaluación completa', err);
-      setModalCompetidor(competidor); // igual abrimos modal aunque falle
+      setModalCompetidor(competidor);
     }
   };
 
@@ -244,7 +241,7 @@ export default function EvaluacionesEvaluadoresPage() {
     nota: number;
     descripcionConceptual?: string;
     etica?: string;
-    observaciones?: string;
+    comentario?: string;
   }) => {
     if (!modalCompetidor) return;
 
@@ -252,47 +249,48 @@ export default function EvaluacionesEvaluadoresPage() {
       const idUsuario = Number(user?.id);
       const evaluacionExistente = modalCompetidor.evaluaciones?.[0];
 
-      if (evaluacionExistente) {
-        const idEvaluacion = evaluacionExistente.id_evaluacion; // ✅ siempre existe
-          await evaluacionesService.editarNota({
-            idEvaluacion,
-            idUsuario,
-            nuevaNota: data.nota,
-            observaciones: data.observaciones,
-          });
-
-        // setCompetidores(prev =>
-        //   prev.map(c =>
-        //     c.id_inscripcion === modalCompetidor.id_inscripcion
-        //       ? {
-        //           ...c,
-        //           evaluaciones: [{ ...(c.evaluaciones?.[0] ?? {}), nota: data.nota }],
-        //         }
-        //       : c
-        //   )
-        // );
+      if (evaluacionExistente && evaluacionExistente.id_evaluacion) {
+        const idEvaluacion = evaluacionExistente.id_evaluacion;
+        await evaluacionesService.editarNota({
+          idEvaluacion,
+          idUsuario,
+          nuevaNota: data.nota,
+          comentario: data.comentario,
+          idFase: 2,
+        });
       } else {
-        await evaluacionesService.registrarNota({
+        console.warn("No hay id_evaluacion disponible, registrando como nueva nota");
+        const nuevaEvaluacion = await evaluacionesService.registrarNota({
           idInscripcion: modalCompetidor.id_inscripcion,
           idUsuario,
           nota: data.nota,
           idFase: 1,
           descripcionConceptual: data.descripcionConceptual,
           etica: data.etica,
-          observaciones: data.observaciones,
+          comentario: data.comentario,
         });
+
+        // 🔹 Aseguramos que el backend devuelva id_evaluacion
+        console.log('Respuesta registrarNota:', nuevaEvaluacion);
 
         setCompetidores(prev =>
           prev.map(c =>
             c.id_inscripcion === modalCompetidor.id_inscripcion
               ? {
                   ...c,
-                  evaluaciones: [{ ...(c.evaluaciones?.[0] ?? {}), nota: data.nota }],
+                  evaluaciones: [
+                    {
+                      ...(c.evaluaciones?.[0] ?? {}),
+                      id_evaluacion: nuevaEvaluacion.id_evaluacion, // ✅ nuevo id
+                      nota: data.nota,
+                    },
+                  ],
                 }
               : c
           )
         );
       }
+
 
       setModalCompetidor(null);
       setReloadStats(prev => !prev);

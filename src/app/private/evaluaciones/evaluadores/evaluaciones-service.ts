@@ -31,14 +31,15 @@ export const evaluacionesService = {
     idFase: 1 | 2,
     descripcionConceptual?: string;
     etica?: string;
-    observaciones?: string;
+    comentario?: string;
   }) {
+    console.log(' Registrar nota payload:', payload);
     const { data } = await api.post('/admin/evaluaciones/registrar-nota', {
       idInscripcion: payload.idInscripcion,
       idEvaluador: payload.idUsuario,            // backend espera este campo
       nota: payload.nota,
       idFase: payload.idFase,
-      comentario: payload.observaciones ?? null, // backend espera 'comentario'
+      comentario: payload.comentario ?? null, // backend espera 'comentario'
     });
     return data;
   },
@@ -48,15 +49,18 @@ export const evaluacionesService = {
     idEvaluacion: number;
     idUsuario: number;
     nuevaNota: number;
+    idFase: 1 | 2,
     descripcionConceptual?: string;
     etica?: string;
-    observaciones?: string;
+    comentario?: string;
   }) {
+    console.log(' Editar nota payload:', payload);
     const { data } = await api.put('/admin/evaluaciones/editar-nota', {
       idEvaluacion: payload.idEvaluacion,
       idUsuario: payload.idUsuario,
       nuevaNota: payload.nuevaNota,
-      comentario: payload.observaciones ?? null,
+      idFase: payload.idFase,
+      comentario: payload.comentario ?? null,
     });
     return data;
   },
