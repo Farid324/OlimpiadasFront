@@ -264,7 +264,7 @@ export default function EvaluacionesEvaluadoresPage() {
           idInscripcion: modalCompetidor.id_inscripcion,
           idUsuario,
           nota: data.nota,
-          idFase: 1,
+          idFase: 2,
           descripcionConceptual: data.descripcionConceptual,
           etica: data.etica,
           comentario: data.comentario,
@@ -406,7 +406,7 @@ export default function EvaluacionesEvaluadoresPage() {
           isOpen={!!modalCompetidor}
           onClose={() => setModalCompetidor(null)}
           onSubmit={handleSubmitNota}
-          onSaved={() => { fetchCompetidores(); }}
+          onSaved={() => { fetchCompetidoresClasificados(); }}
           title={`${
             modalCompetidor.evaluaciones?.length > 0
               ? `Editar nota de ${modalCompetidor.competidor.nombres} ${modalCompetidor.competidor.apellidos}`
