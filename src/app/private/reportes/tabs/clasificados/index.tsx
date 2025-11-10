@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { api } from '@/libs/api';
-import { ChevronDown} from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 
 /* ===================== Tipos ===================== */
 type EstadoClasificado = 'CLASIFICADO' | 'NO_CLASIFICADO' | 'DESCALIFICADO' | 'TODOS';
@@ -239,9 +239,9 @@ export default function ClasificadosTab() {
 
   /* ===================== UI ===================== */
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="page-clasificados">
       {/* FILTROS */}
-      <div className="bg-white rounded-lg shadow p-4">
+      <div className="bg-white rounded-lg shadow p-4" data-testid="filters-card">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {/* Área */}
           <div className="relative">
@@ -251,6 +251,7 @@ export default function ClasificadosTab() {
               onChange={(e) => setFilters(f => ({ ...f, id_area: e.target.value === '' ? null : Number(e.target.value) }))}
               aria-label="Filtrar por área"
               disabled={loadingCatalogs}
+              data-testid="filter-area"
             >
               <option value="" disabled hidden style={{ color: '#6B7280' }}>Filtrar por área</option>
               <option value={0} style={{ color: '#111827' }}>Todas las áreas</option>
@@ -269,6 +270,7 @@ export default function ClasificadosTab() {
               onChange={(e) => setFilters(f => ({ ...f, id_nivel: e.target.value === '' ? null : Number(e.target.value) }))}
               aria-label="Filtrar por nivel"
               disabled={loadingCatalogs}
+              data-testid="filter-nivel"
             >
               <option value="" disabled hidden style={{ color: '#6B7280' }}>Filtrar por nivel</option>
               <option value={0} style={{ color: '#111827' }}>Todos los niveles</option>
@@ -287,6 +289,7 @@ export default function ClasificadosTab() {
               onChange={(e) => setFilters(f => ({ ...f, estado: (e.target.value || null) as EstadoClasificado | null }))}
               aria-label="Filtrar por estado"
               disabled={loadingCatalogs}
+              data-testid="filter-estado"
             >
               <option value="" disabled hidden style={{ color: '#6B7280' }}>Filtrar por Estado</option>
               <option value="TODOS" style={{ color: '#111827' }}>Todos los Estados</option>
@@ -300,10 +303,12 @@ export default function ClasificadosTab() {
       </div>
 
       {/* TABLA + ACCIONES */}
-      <div className="bg-white rounded-lg shadow p-4">
+      <div className="bg-white rounded-lg shadow p-4" data-testid="table-card">
         <div className="mb-2 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="font-semibold text-gray-700">Lista de Clasificados ({total})</h2>
+            <h2 className="font-semibold text-gray-700" data-testid="title-lista">
+              Lista de Clasificados (<span data-testid="total-count">{total}</span>)
+            </h2>
             <p className="text-sm text-gray-500">Olimpistas que pasaron a la ronda final</p>
           </div>
 
@@ -315,6 +320,7 @@ export default function ClasificadosTab() {
               aria-label={orderAsc ? 'Ordenar posición descendente' : 'Ordenar posición ascendente'}
               title={orderAsc ? 'Posición ↓' : 'Posición ↑'}
               className="inline-flex items-center justify-center rounded-md p-2 cursor-pointer select-none focus:outline-none focus-visible:outline-none"
+              data-testid="btn-sort-pos"
             >
               <SortPosIconDual asc={orderAsc} className="w-7 h-7" />
             </button>
@@ -324,6 +330,7 @@ export default function ClasificadosTab() {
               disabled={loadingRows || loadingExport || total === 0}
               className="bg-blue-600 hover:bg-blue-700"
               title={total === 0 ? 'No hay registros para exportar' : 'Exportar lista filtrada'}
+              data-testid="btn-exportar"
             >
               Exportar Lista
             </Button>
@@ -331,12 +338,14 @@ export default function ClasificadosTab() {
         </div>
 
         {loadingRows ? (
-          <p className="text-center text-gray-500">Cargando...</p>
+          <p className="text-center text-gray-500" data-testid="state-loading-rows">Cargando...</p>
         ) : total === 0 ? (
-          <div className="border rounded-md p-6 text-gray-500 text-center">No hay clasificados</div>
+          <div className="border rounded-md p-6 text-gray-500 text-center" data-testid="state-empty">
+            No hay clasificados
+          </div>
         ) : (
           <div className="max-h-[500px] overflow-y-auto overflow-x-auto" tabIndex={0}>
-            <table className="min-w-[1100px] border-collapse text-sm">
+            <table className="min-w-[1100px] border-collapse text-sm" data-testid="table-clasificados">
               <thead className="sticky top-0 bg-white z-10 border-b border-black">
                 <tr className="text-gray-700">
                   <th className="py-3 px-4 text-left font-semibold w-24">Posición</th>
@@ -350,7 +359,11 @@ export default function ClasificadosTab() {
               </thead>
               <tbody>
                 {sortedRows.map(r => (
-                  <tr key={r.id_inscripcion} className="border-b border-gray-200 hover:bg-gray-50">
+                  <tr
+                    key={r.id_inscripcion}
+                    className="border-b border-gray-200 hover:bg-gray-50"
+                    data-testid={`row-${r.id_inscripcion}`}
+                  >
                     <td className="py-3 px-4 text-black tabular-nums">
                       <span className="text-gray-500 mr-1">#</span>{r.posicion ?? '-'}
                     </td>
@@ -374,30 +387,42 @@ export default function ClasificadosTab() {
 
       {/* =============== MODAL DE CONFIRMACIÓN (igual al diseño) =============== */}
       {confirmOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3" role="dialog" aria-modal="true">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-3"
+          role="dialog"
+          aria-modal="true"
+          data-testid="modal-export"
+        >
           {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/40" onClick={() => setConfirmOpen(false)} />
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setConfirmOpen(false)}
+            data-testid="modal-export-backdrop"
+          />
 
           {/* Card */}
           <div className="relative z-10 w-full max-w-sm rounded-2xl bg-white shadow-2xl">
-            {/* Close button (X) estilo texto, como en tu otro modal */}
+            {/* Close button (X) */}
             <button
               onClick={() => setConfirmOpen(false)}
               aria-label="Cerrar"
               className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl leading-none"
+              data-testid="modal-export-close"
             >
               ✕
             </button>
 
             {/* Header */}
             <div className="px-5 pt-5 pb-2">
-              <h3 className="text-base font-semibold text-slate-900">Exportar lista de Olimpistas</h3>
+              <h3 className="text-base font-semibold text-slate-900" data-testid="modal-export-title">
+                Exportar lista de Olimpistas
+              </h3>
               <p className="text-sm text-slate-500 mt-1">Lista filtrada de olimpistas Fase clasificatoria</p>
             </div>
 
             {/* Panel resumen */}
             <div className="px-5 mt-3">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50" data-testid="modal-export-summary">
                 <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
                   <div>
                     <div className="text-xs text-gray-400">Area</div>
@@ -417,7 +442,7 @@ export default function ClasificadosTab() {
                   </div>
                   <div className="justify-self-start flex flex-col items-center w-16">
                     <div className="text-xs text-gray-400">Registros</div>
-                    <span className="mt-1 block text-base font-semibold text-slate-900 text-center">
+                    <span className="mt-1 block text-base font-semibold text-slate-900 text-center" data-testid="modal-export-total">
                       {total}
                     </span>
                   </div>
@@ -427,7 +452,7 @@ export default function ClasificadosTab() {
 
             {/* Footer */}
             <div className="px-5 py-4 flex items-center justify-end gap-3">
-              <Button variant="outline" onClick={() => setConfirmOpen(false)}>
+              <Button variant="outline" onClick={() => setConfirmOpen(false)} data-testid="btn-cancel-export">
                 Cancelar
               </Button>
               <Button
@@ -435,6 +460,7 @@ export default function ClasificadosTab() {
                 disabled={loadingExport || total === 0}
                 onClick={doExport}
                 title={total === 0 ? 'No hay registros para exportar' : 'Exportar lista filtrada'}
+                data-testid="btn-confirm-export"
               >
                 Exportar .xlsx
               </Button>
