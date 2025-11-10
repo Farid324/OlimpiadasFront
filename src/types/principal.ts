@@ -17,3 +17,16 @@ export interface CompetitorData {
 
 // Tipo para el estado de la pestaña activa
 export type ActiveTab = 'current' | 'historical';
+
+export type CeremoniaFilters = {
+  id_area?: number;
+  id_nivel?: number;
+  anio?: number;
+  q?: string; // Búsqueda (search query)
+};
+
+export type PublicacionFilters = {
+  id_area?: number;
+  id_nivel?: number;
+  anio?: number; // Opcional, pero bueno tenerlo por si quieres filtrar por año
+};

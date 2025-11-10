@@ -304,7 +304,7 @@ export default function ReportesPage() {
   const locked =
     phaseOfTab === "CLASIFICACION"
       ? !clasifAvail.unlocked
-      : !finalAvail.unlocked;
+      : finalAvail.unlocked;
   const lockMsg =
     phaseOfTab === "CLASIFICACION" ? clasifAvail.message : finalAvail.message;
 
