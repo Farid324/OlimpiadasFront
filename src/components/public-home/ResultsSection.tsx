@@ -53,7 +53,7 @@ export function ResultsSection(props: ResultsSectionProps) {
             <TabsList className="grid w-full max-w-md grid-cols-2">
               <TabsTrigger value="current" className="gap-2">
                 <Calendar className="h-4 w-4" />
-                Clasificando 2024
+                Clasificando 2025
               </TabsTrigger>
               <TabsTrigger value="historical" className="gap-2">
                 <Trophy className="h-4 w-4" />

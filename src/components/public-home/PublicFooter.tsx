@@ -8,7 +8,7 @@ export function PublicFooter() {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Trophy className="h-6 w-6" />
-              <span className="font-semibold">Oh! SanSi 2024</span>
+              <span className="font-semibold">Oh! SanSi 2025</span>
             </div>
             <p className="text-gray-400 text-sm">
               Olimpiada en Ciencias y Tecnología San Simón
@@ -32,7 +32,7 @@ export function PublicFooter() {
           </div>
         </div>
         <div className="border-t border-gray-800 mt-8 pt-6 text-center text-gray-400 text-sm">
-          © 2024 Oh! SanSi - Universidad Mayor de San Simón. Todos los derechos reservados.
+          © 2025 Oh! SanSi - Universidad Mayor de San Simón. Todos los derechos reservados.
         </div>
       </div>
     </footer>

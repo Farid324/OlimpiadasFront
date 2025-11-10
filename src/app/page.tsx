@@ -82,7 +82,7 @@ export default function Page() {
 
   const downloadPDF = () => {
     const doc = new jsPDF();
-    doc.setFontSize(18); doc.text('Oh! SanSi 2024', 14, 20);
+    doc.setFontSize(18); doc.text('Oh! SanSi 2025', 14, 20);
     doc.setFontSize(12); doc.text('Olimpiada en Ciencias y Tecnología San Simón', 14, 28);
     doc.setFontSize(10); doc.text(`Lista de ${activeTab === 'current' ? 'Clasificando' : 'Clasificados Históricos'}`, 14, 35);
     doc.text(`Generado el: ${new Date().toLocaleDateString('es-ES')}`, 14, 41);
