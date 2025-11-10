@@ -16,7 +16,9 @@ interface AxiosErrorResponse {
   };
 }
 
-async function parseErrorAxios(e: unknown): Promise<{ status?: number; message: string }> {
+async function parseErrorAxios(
+  e: unknown
+): Promise<{ status?: number; message: string }> {
   const error = e as AxiosErrorResponse;
   const status = error.response?.status;
   const body = error.response?.data;
@@ -56,7 +58,10 @@ export async function getClasificadosResumen(
   params?: ClasificadosResumenParams
 ): Promise<FetchResult<ClasificadoResumen[]>> {
   try {
-    const { data } = await api.get<ClasificadoResumen[]>("/reportes/clasificados/resumen", { params });
+    const { data } = await api.get<ClasificadoResumen[]>(
+      "/reportes/clasificados/resumen",
+      { params }
+    );
     return { ok: true, data };
   } catch (e) {
     const { status, message } = await parseErrorAxios(e);
@@ -70,7 +75,10 @@ export async function getClasificadosLista(
   params?: ClasificadosListaParams
 ): Promise<FetchResult<ClasificadoItem[]>> {
   try {
-    const { data } = await api.get<ClasificadoItem[]>("/reportes/clasificados", { params });
+    const { data } = await api.get<ClasificadoItem[]>(
+      "/reportes/clasificados",
+      { params }
+    );
     return { ok: true, data };
   } catch (e) {
     const { status, message } = await parseErrorAxios(e);
@@ -79,9 +87,7 @@ export async function getClasificadosLista(
   }
 }
 
-
 // ===== PREMIADOS =====
-
 
 export interface PremiadoItem {
   id_inscripcion: number;
@@ -110,6 +116,7 @@ interface PremiadosParams {
   estado?: "ORO" | "PLATA" | "BRONCE" | "MENCION" | "TODOS";
 }
 
+// Función para obtener lista de premiados
 export async function getPremiadosLista(
   params?: PremiadosParams
 ): Promise<FetchResult<PremiadoItem[]>> {
@@ -125,6 +132,7 @@ export async function getPremiadosLista(
   }
 }
 
+// Función para obtener resumen de premiados
 export async function getPremiadosResumen(
   params?: PremiadosParams
 ): Promise<FetchResult<PremiadosResumen>> {
@@ -162,9 +170,11 @@ export async function reorderPremiados(
 export async function getPremiadosHistorial(
   id_area: number,
   id_nivel: number
-): Promise<FetchResult<
-  Array<{ id: number; fecha: string; autor: string; orden: unknown }>
->> {
+): Promise<
+  FetchResult<
+    Array<{ id: number; fecha: string; autor: string; orden: unknown }>
+  >
+> {
   try {
     const { data } = await api.get<
       Array<{ id: number; fecha: string; autor: string; orden: unknown }>
@@ -184,4 +194,30 @@ export async function exportPremiados(params?: PremiadosParams): Promise<Blob> {
     responseType: "blob",
   });
   return data;
+}
+
+// ===== CERTIFICADOS =====
+type CertParams = {
+  id_area?: number;
+  id_nivel?: number;
+  anio?: number;
+};
+
+export async function exportCertificadosPremiados(params?: CertParams) {
+  const { data } = await api.get("/reportes/certificados/premiados/export", {
+    params,
+    responseType: "blob",
+  });
+  return data as Blob;
+}
+
+export async function exportCertificadosParticipacion(params?: CertParams) {
+  const { data } = await api.get(
+    "/reportes/certificados/participacion/export",
+    {
+      params,
+      responseType: "blob",
+    }
+  );
+  return data as Blob;
 }
