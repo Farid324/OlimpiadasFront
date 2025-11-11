@@ -10,7 +10,7 @@ export default function PrivateLayout({ children }: { children: React.ReactNode 
         <div className="flex items-center justify-between py-6 px-8">
           <div>
             <h1 className="text-2xl font-bold" style={{ color: 'var(--grisOscuro)' }}>
-              Panel de Control - Oh! SanSi 2024
+              Panel de Control - Oh! SanSi 2025
             </h1>
 
             <p className="text-sm text-gray-600">
