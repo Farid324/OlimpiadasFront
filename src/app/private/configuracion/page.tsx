@@ -123,8 +123,7 @@ export default function MedalleroConfigPage() {
           menciones: Number(editing.menciones ?? 0),
         };
 
-        let res;
-        res = await api.put<MedalleroItem>(
+        const res = await api.put<MedalleroItem>( 
           `/medallero-config/${editing.id_medallero}`,
           dto
         );

@@ -9,8 +9,6 @@ import {
 } from "@/components/reportes/service";
 
 import { FiChevronDown, FiDownload } from "react-icons/fi";
-import { FaFileExcel } from "react-icons/fa";
-import { FaRegFile } from "react-icons/fa6";
 import { FiFileText } from "react-icons/fi";
 
 type AreaDTO = { id: number; nombre: string };
@@ -110,6 +108,7 @@ export default function CertificadosTab() {
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (e) {
+      console.error("Error al exportar premiados:", e); // <-- Aquí la usas
       alert("No se pudo exportar los certificados de premiación.");
     } finally {
       setDownPremiados(false);
@@ -130,6 +129,7 @@ export default function CertificadosTab() {
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (e) {
+      console.error("Error al exportar participación:", e); // <-- Aquí la usas
       alert("No se pudo exportar los certificados de participación.");
     } finally {
       setDownParticipacion(false);

@@ -209,9 +209,12 @@ export default function PremiadosTab() {
     }
   };
 
+  /*useEffect(() => {
+    fetchRows(filters);
+  }, [filters.id_area, filters.id_nivel, filters.estado]);*/
   useEffect(() => {
     fetchRows(filters);
-  }, [filters.id_area, filters.id_nivel, filters.estado]);
+  }, [filters]);
 
   const safeAreas = useMemo(
     () => areas.filter((a) => !!a && typeof a.id === "number"),
@@ -240,6 +243,7 @@ export default function PremiadosTab() {
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (e) {
+      console.error("Error al exportar lista:", e);
       alert("No se pudo exportar la lista.");
     } finally {
       setLoadingExport(false);

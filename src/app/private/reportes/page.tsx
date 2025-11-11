@@ -303,10 +303,10 @@ export default function ReportesPage() {
     active === "Clasificados" ? "CLASIFICACION" : "FINAL";
   const locked =
     phaseOfTab === "CLASIFICACION"
-      ? !clasifAvail.unlocked
+      ? clasifAvail.unlocked
       : finalAvail.unlocked;
-  const lockMsg =
-    phaseOfTab === "CLASIFICACION" ? clasifAvail.message : finalAvail.message;
+  /*const lockMsg =
+    phaseOfTab === "CLASIFICACION" ? clasifAvail.message : finalAvail.message;*/
 
   return (
     <RoleGate allow={["ADMINISTRADOR"]}>
