@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { usePageHeader } from '@/contexts/pageHeader';
-import { evaluacionesService } from './adminEvaluaciones-service';
+import { evaluacionesService, Filters, Stats } from './adminEvaluaciones-service';
 import { CompetidorInscripcionAdmin } from '@/types/notas';
 import TabsView from './tabsView';
 import ClasificarView from './clasificarView';
@@ -17,43 +17,34 @@ interface Nivel {
   nombre_nivel: string;
 }
 
-interface Stats {
-  total: number;
-  completadas: number;
-  enProceso: number;
-  pendientes: number;
-}
-
-interface FiltersInput {
-  areaId?: number;
-  nivelId?: number;
-}
-
 export default function EvaluacionesPage() {
   const { setTitle } = usePageHeader();
+
+  // 🔹 Estados de referencia
   const [areas, setAreas] = useState<Area[]>([]);
   const [niveles, setNiveles] = useState<Nivel[]>([]);
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [competidores, setCompetidores] = useState<CompetidorInscripcionAdmin[]>([]);
   const [selectedArea, setSelectedArea] = useState<number | undefined>();
   const [selectedNivel, setSelectedNivel] = useState<number | undefined>();
+  const [activeTab, setActiveTab] = useState<'clasificar' | 'premiacion'>('clasificar');
+
+  // 🔹 Estados por fase
+  const [competidores, setCompetidores] = useState<CompetidorInscripcionAdmin[]>([]);
+  const [competidoresFinales, setCompetidoresFinales] = useState<CompetidorInscripcionAdmin[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [statsFinales, setStatsFinales] = useState<Stats | null>(null);
+
+  // 🔹 Modales
   const [modalCompetidor, setModalCompetidor] = useState<CompetidorInscripcionAdmin | null>(null);
-  const [activeTab, setActiveTab] = useState<"clasificar" | "premiacion">("clasificar");
+  const [modalCompetidorFinal, setModalCompetidorFinal] = useState<CompetidorInscripcionAdmin | null>(null);
 
-  const loadAll = async (filters?: FiltersInput) => {
-    const [list, s] = await Promise.all([
-      evaluacionesService.listar(filters),
-      evaluacionesService.stats(filters),
-    ]);
-    setCompetidores(list);
-    setStats(s);
-  };
+  // 🔹 Control de carga
+  const [loading, setLoading] = useState(false);
 
+  // ================================
+  // 🚀 Carga inicial de áreas/niveles
+  // ================================
   useEffect(() => {
     setTitle('Evaluaciones');
-  }, [setTitle]);
-
-  useEffect(() => {
     (async () => {
       const [a, n] = await Promise.all([
         evaluacionesService.areas(),
@@ -61,18 +52,52 @@ export default function EvaluacionesPage() {
       ]);
       setAreas(a);
       setNiveles(n);
-      await loadAll({});
     })();
-  }, []);
+  }, [setTitle]);
 
-  const handleFilters = async ({ areaId, nivelId }: FiltersInput): Promise<void> => {
+  // =================================
+  // 🔁 Carga automática según pestaña
+  // =================================
+  useEffect(() => {
+    const filters = { areaId: selectedArea, nivelId: selectedNivel };
+    const load = async () => {
+      setLoading(true);
+      try {
+        if (activeTab === 'clasificar') {
+          const [list, s] = await Promise.all([
+            evaluacionesService.listar(1, filters),
+            evaluacionesService.stats(1, filters),
+          ]);
+          setCompetidores(list);
+          setStats(s);
+        } else {
+          const [list, s] = await Promise.all([
+            evaluacionesService.listar(2, filters),
+            evaluacionesService.stats(2, filters),
+          ]);
+          setCompetidoresFinales(list);
+          setStatsFinales(s);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [activeTab, selectedArea, selectedNivel]);
+
+  // ======================
+  // 🎛️ Cambio de filtros
+  // ======================
+  const handleFilters = async ({ areaId, nivelId }: Filters): Promise<void> => {
     setSelectedArea(areaId);
     setSelectedNivel(nivelId);
-    await loadAll({ areaId, nivelId });
   };
 
+  // ======================
+  // 🖥️ Render principal
+  // ======================
   return (
-    <div className= "flex flex-col h-auto bg-gray-50 p-6 space-y-4">
+    <div className="flex flex-col h-auto bg-gray-50 p-6 space-y-4">
       <h1 className="text-lg font-semibold mb-1">Sistema de Evaluaciones</h1>
       <p className="text-sm text-gray-500 mb-4">
         Registro y seguimiento de evaluaciones por área y nivel
@@ -82,8 +107,13 @@ export default function EvaluacionesPage() {
         <TabsView onChange={setActiveTab} />
       </div>
 
+      {loading && (
+        <div className="text-center text-gray-500 py-10">
+          Cargando información...
+        </div>
+      )}
 
-      {activeTab === "clasificar" && (
+      {!loading && activeTab === 'clasificar' && (
         <ClasificarView
           areas={areas}
           niveles={niveles}
@@ -97,7 +127,21 @@ export default function EvaluacionesPage() {
           onCloseModal={() => setModalCompetidor(null)}
         />
       )}
-      {activeTab === "premiacion" && <PremiacionView />}
+
+      {!loading && activeTab === 'premiacion' && (
+        <PremiacionView
+          areas={areas}
+          niveles={niveles}
+          selectedArea={selectedArea}
+          selectedNivel={selectedNivel}
+          stats={statsFinales}
+          competidores={competidoresFinales}
+          modalCompetidor={modalCompetidorFinal}
+          onChangeFilters={handleFilters}
+          onViewCompetidor={setModalCompetidorFinal}
+          onCloseModal={() => setModalCompetidorFinal(null)}
+        />
+      )}
     </div>
   );
 }
