@@ -4,12 +4,12 @@ export type OlimpistaRow = {
   nombreCompleto: string;
   area: string;
   nivel: string;
-  puntuacion?: number | null;
+  puntuacion: number | null;
   unidadEducativa: string;
   departamento: string;
 };
 
 export type AreaCounter = {
   nombre_area: string;
-  total: number;
+  total: number; 
 };
