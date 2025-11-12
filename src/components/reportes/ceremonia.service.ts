@@ -27,7 +27,6 @@ export type CeremoniaFilters = {
   q?: string;
 };
 
-// Normaliza params: quita null/undefined/0
 const toParams = (p: CeremoniaFilters = {}) => {
   const out: Record<string, string | number> = {};
   if (p.id_area && Number(p.id_area) !== 0) out.id_area = Number(p.id_area);
@@ -37,15 +36,23 @@ const toParams = (p: CeremoniaFilters = {}) => {
   return out;
 };
 
-/** Resumen para cards (oro, plata, bronce, mención, total) */
 export async function getCeremoniaResumen(params: CeremoniaFilters = {}) {
-  const { data } = await api.get<CeremoniaResumen>('/reportes/ceremonia/resumen', {
+  const { data } = await api.get('/reportes/ceremonia/resumen', {
     params: toParams(params),
   });
-  return data;
+
+  // Normalizamos por si el backend antiguo devolvía plural
+  const normalized: CeremoniaResumen = {
+    oro: Number(data.oro ?? data.oros ?? 0),
+    plata: Number(data.plata ?? data.platas ?? 0),
+    bronce: Number(data.bronce ?? data.bronces ?? 0),
+    mencion: Number(data.mencion ?? data.menciones ?? 0),
+    total: Number(data.total ?? data.totales ?? 0),
+  };
+
+  return normalized;
 }
 
-/** Lista JSON (si luego quieres un preview) */
 export async function getCeremoniaLista(params: CeremoniaFilters = {}) {
   const { data } = await api.get<CeremoniaItem[]>('/reportes/ceremonia', {
     params: toParams(params),
@@ -53,7 +60,6 @@ export async function getCeremoniaLista(params: CeremoniaFilters = {}) {
   return data;
 }
 
-/** Descarga el Excel de ceremonia */
 export async function exportCeremoniaExcel(params: CeremoniaFilters = {}) {
   const clean = toParams(params);
   const res = await api.get<Blob>('/reportes/ceremonia/export', {
