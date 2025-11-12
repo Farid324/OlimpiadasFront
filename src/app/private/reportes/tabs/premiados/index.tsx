@@ -1,3 +1,4 @@
+//src/app/private/reportes/tabs/premiados/index.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -209,12 +210,14 @@ export default function PremiadosTab() {
     }
   };
 
-  /*useEffect(() => {
-    fetchRows(filters);
-  }, [filters.id_area, filters.id_nivel, filters.estado]);*/
   useEffect(() => {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(filters));
     fetchRows(filters);
   }, [filters]);
+
+  useEffect(() => {
+    console.log("premiados FE:", rows);
+  }, [rows]);
 
   const safeAreas = useMemo(
     () => areas.filter((a) => !!a && typeof a.id === "number"),
@@ -418,7 +421,7 @@ export default function PremiadosTab() {
           >
             <table className="min-w-[1100px] border-collapse text-sm">
               <thead className="sticky top-0 bg-white z-10 border-b border-black">
-                <tr className="text-gray-700">
+                <tr className="text-black">
                   <th className="py-3 px-4 text-left font-semibold w-24">
                     Posición
                   </th>
@@ -463,15 +466,19 @@ export default function PremiadosTab() {
                         {r.premio}
                       </span>
                     </td>
-                    <td className="py-3 px-4">{r.area}</td>
-                    <td className="py-3 px-4">{r.nivel}</td>
-                    <td className="py-3 px-4 text-center">
-                      {typeof r.puntuacion === "number"
-                        ? r.puntuacion.toFixed(1)
+                    <td className="py-3 px-4 text-black">{r.area}</td>
+                    <td className="py-3 px-4 text-black">{r.nivel}</td>
+                    <td className="py-3 px-4 text-center text-black">
+                      {r.puntuacion !== null &&
+                      r.puntuacion !== undefined &&
+                      !Number.isNaN(Number(r.puntuacion))
+                        ? Number(r.puntuacion).toFixed(1)
                         : "-"}
                     </td>
-                    <td className="py-3 px-4">{r.unidadEducativa}</td>
-                    <td className="py-3 px-4">{r.departamento}</td>
+                    <td className="py-3 px-4 text-black">
+                      {r.unidadEducativa}
+                    </td>
+                    <td className="py-3 px-4 text-black">{r.departamento}</td>
                   </tr>
                 ))}
               </tbody>
