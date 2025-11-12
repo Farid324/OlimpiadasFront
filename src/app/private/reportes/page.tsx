@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { api } from "@/libs/api";
 import { usePageHeader } from "@/contexts/pageHeader";
-import { Users, Trophy, Medal, Lock, Unlock } from "lucide-react";
+import { Users, Trophy, Medal} from "lucide-react";
 import RoleGate from "@/components/features/RoleGate";
 
 /* =========================
