@@ -93,17 +93,26 @@ export default function OlimpistasPage() {
       </div>
 
       { }
-      <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+      <div className="relative w-full">
+        <Search
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
+          size={18}
+        />
         <input
           type="text"
           placeholder="Buscar por nombre, área, unidad o departamento"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          className="w-full h-11 rounded-md border pl-10 pr-3 text-gray-600 placeholder:text-gray-400"
+          className="
+      w-full rounded-lg border-gray-300 bg-gray-100
+      pl-9 pr-3 py-2 text-sm text-gray-700
+      placeholder:text-gray-400 shadow-sm h-9 border px-3
+      focus:outline-none focus:ring-0 focus:border-gray-200 hover:border-gray-400 transition-colors
+    "
           aria-label="Buscar"
         />
       </div>
+
       { }
       <OlimpistasTable rows={rows} loading={loading} />
 

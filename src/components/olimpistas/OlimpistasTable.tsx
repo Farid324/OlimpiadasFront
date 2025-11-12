@@ -37,7 +37,7 @@ export default function OlimpistasTable({ rows, loading }: Props) {
                 <th className="pb-3 px-4 text-left">Nombre completo</th>
                 <th className="pb-3 px-4 text-left">Área</th>
                 <th className="pb-3 px-4 text-left">Nivel</th>
-                <th className="pb-3 px-4 text-center w-28">Puntuación</th>
+                
                 <th className="pb-3 px-4 text-left">Unidad Educativa</th>
                 <th className="pb-3 px-4 text-left">Departamento</th>
               </tr>
@@ -48,10 +48,7 @@ export default function OlimpistasTable({ rows, loading }: Props) {
                   <td className="py-3 px-4 text-black">{r.nombreCompleto}</td>
                   <td className="py-3 px-4 text-black">{r.area}</td>
                   <td className="py-3 px-4 text-black">{r.nivel}</td>
-                  {/* Puntuación formateada */}
-                  <td className="py-3 px-4 text-black text-center tabular-nums w-28">
-                    {fmtScore(r.puntuacion)}
-                  </td>
+                  
                   <td className="py-3 px-4 text-black">{r.unidadEducativa}</td>
                   <td className="py-3 px-4 text-black">{r.departamento}</td>
                 </tr>
