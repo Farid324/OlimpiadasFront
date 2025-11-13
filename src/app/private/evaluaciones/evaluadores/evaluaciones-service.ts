@@ -116,8 +116,13 @@ export const evaluacionesService = {
     );
     return data;
   },
-  async getDetalleEvaluacion(idEvaluacion: number) {
-    const { data } = await api.get(`/admin/evaluaciones/${idEvaluacion}`);
+  // 🔸 Obtener detalle de evaluación (fase 1 o 2)
+  async getEvaluacion(id: number, fase: 1 | 2 = 1) {
+    const url =
+      fase === 1
+        ? `/admin/evaluaciones/${id}`
+        : `/admin/evaluaciones/fase-dos/${id}`;
+    const { data } = await api.get(url);
     return data;
-  }
+  },
 };

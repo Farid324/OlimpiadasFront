@@ -10,12 +10,12 @@ function SortPosIconDual({ asc, className }: { asc: boolean; className?: string 
   const strokeW = 2;
   return (
     <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
-      {/* Descendente (flecha abajo) */}
+      {/* Descendente */}
       <g stroke={asc ? inactive : active} strokeWidth={strokeW} strokeLinecap="round" strokeLinejoin="round">
         <path d="M7 3v14" />
         <path d="M4 16l3 3 3-3" />
       </g>
-      {/* Ascendente (flecha arriba) */}
+      {/* Ascendente */}
       <g stroke={asc ? active : inactive} strokeWidth={strokeW} strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 21V7" />
         <path d="M14 10l3-3 3 3" />
@@ -32,8 +32,8 @@ interface Props {
   mostrarEstado?: boolean;
 }
 
-/** --- (se mantiene) fallback si alguna vez necesitas leer una posición persistida --- */
-function getPosicion(c: CompetidorInscripcion, fallbackIndex: number): number {
+/** Fallback por si algún día traes posición persistida desde BE */
+function getPosicionPersistida(c: CompetidorInscripcion, fallbackIndex: number): number {
   const fromEval = (c as any)?.evaluaciones?.[0]?.posicion;
   const p =
     (c as any)?.posicion ??
@@ -42,9 +42,9 @@ function getPosicion(c: CompetidorInscripcion, fallbackIndex: number): number {
   return typeof p === 'number' && !Number.isNaN(p) ? p : fallbackIndex + 1;
 }
 
-/* ================== NUEVO: helpers robustos para ranking por NOTA ================== */
+/* ================== Helpers para ranking por NOTA ================== */
 
-/** Id estable del competidor (usa id_competidor o, de fallback, el CI+índice) */
+/** Id estable del competidor (usa id_competidor, si no CI+índice) */
 function getCompetidorId(c: CompetidorInscripcion, idx: number): string | number {
   const id = (c as any)?.competidor?.id_competidor;
   if (id !== undefined && id !== null) return id;
@@ -52,10 +52,10 @@ function getCompetidorId(c: CompetidorInscripcion, idx: number): string | number
   return `${ci}-${idx}`;
 }
 
-/** Nota numérica robusta:
+/** Nota robusta:
  * - Acepta string o number
- * - Si no hay nota => null (queda al final)
- * - Si es -1 (descalificado) => -Infinity (más bajo que cualquier nota)
+ * - null si no hay (se va al final)
+ * - -1 => -Infinity (más bajo que cualquier nota)
  */
 function getNota(c: CompetidorInscripcion): number | null {
   const raw = (c as any)?.evaluaciones?.[0]?.nota;
@@ -65,11 +65,7 @@ function getNota(c: CompetidorInscripcion): number | null {
   return n;
 }
 
-/**
- * Construye un mapa id -> posición (1..N) calculada por NOTA (desc).
- * Empates se resuelven por índice natural para que sea estable.
- * Los sin nota van al final, también numerados (1..N global).
- */
+/** Mapa id -> posición 1..N calculada por nota desc; sin nota al final */
 function buildDynamicPositionMap(rows: CompetidorInscripcion[]): Map<string | number, number> {
   const enriched = rows.map((item, idx) => ({
     id: getCompetidorId(item, idx),
@@ -77,20 +73,19 @@ function buildDynamicPositionMap(rows: CompetidorInscripcion[]): Map<string | nu
     idx,
   }));
 
-  // Orden por: (1) tiene nota primero, (2) nota desc, (3) índice asc
+  // Con nota primero, luego por nota desc, desempate por índice
   enriched.sort((a, b) => {
     const aHas = a.nota !== null;
     const bHas = b.nota !== null;
     if (aHas && !bHas) return -1;
     if (!aHas && bHas) return 1;
     if (aHas && bHas) {
-      if (b.nota! !== a.nota!) return (b.nota! - a.nota!);
+      if (b.nota! !== a.nota!) return b.nota! - a.nota!;
       return a.idx - b.idx;
     }
     return a.idx - b.idx;
   });
 
-  // Asignar posiciones 1..N según el orden resultante
   const map = new Map<string | number, number>();
   enriched.forEach((r, i) => map.set(r.id, i + 1));
   return map;
@@ -103,36 +98,34 @@ export default function CompetidorList({
   mostrarNivel,
   mostrarEstado,
 }: Props) {
-  // true = se ve 1,2,3,... (mayores notas primero porque pos=1 es la mayor)
-  const [orderAsc, setOrderAsc] = useState<boolean>(true);
-
-  // Calcula posiciones por nota cada vez que cambie `data`
-  const posMap = useMemo(() => buildDynamicPositionMap(data), [data]);
-
-  // Orden estable por posición (derivada del ranking de notas)
-  const sorted = useMemo(() => {
-    const withIdx = data.map((item, idx) => {
-      const id = getCompetidorId(item, idx);
-      const dynPos = posMap.get(id);
-      const pos = typeof dynPos === 'number' ? dynPos : getPosicion(item, idx);
-      return { item, idx, pos };
-    });
-
-    // orderAsc=true → 1..N (mayores notas arriba); false → N..1
-    withIdx.sort((a, b) => (orderAsc ? a.pos - b.pos : b.pos - a.pos) || a.idx - b.idx);
-    return withIdx;
-  }, [data, orderAsc, posMap]);
-
   if (!data.length)
     return <p className="text-gray-400 text-center mt-6">No hay registros.</p>;
 
+  // Botón de flechas: controla si mostramos 1..N o N..1
+  const [orderAsc, setOrderAsc] = useState<boolean>(true);
+
+  // Calcula posiciones por nota cada vez que cambie data
+  const posMap = useMemo(() => buildDynamicPositionMap(data), [data]);
+
+  // Proyección ordenable: posición base (=ranking por nota), con fallback a posición persistida
+  const rows = useMemo(() => {
+    const projected = data.map((item, idx) => {
+      const id = getCompetidorId(item, idx);
+      const dyn = posMap.get(id);
+      const pos = typeof dyn === 'number' ? dyn : getPosicionPersistida(item, idx);
+      return { item, idx, pos };
+    });
+    projected.sort((a, b) => (orderAsc ? a.pos - b.pos : b.pos - a.pos) || a.idx - b.idx);
+    return projected;
+  }, [data, posMap, orderAsc]);
+
   return (
     <div className="w-full">
-      {/* Toolbar (se mantiene, solo alterna la dirección visual si lo deseas) */}
+      {/* Toolbar: botón de reordenar por posición */}
       <div className="mb-2 flex items-center justify-end">
         <button
           type="button"
-          onClick={() => setOrderAsc((v) => !v)}
+          onClick={() => setOrderAsc(v => !v)}
           aria-pressed={orderAsc}
           aria-label={orderAsc ? 'Ordenar posición descendente' : 'Ordenar posición ascendente'}
           title={orderAsc ? 'Posición ↓' : 'Posición ↑'}
@@ -158,10 +151,11 @@ export default function CompetidorList({
         </thead>
 
         <tbody>
-          {sorted.map(({ item: c, pos }, i) => {
-            const nota = (c as any)?.evaluaciones?.[0]?.nota ?? null;
-            const nivel = (c as any)?.nivel?.nombre_nivel ?? '—';
-            const clasificacion = (c as any)?.clasificacion ?? '—';
+          {rows.map(({ item: c, pos }, i) => {
+            const nota = c.evaluaciones?.[0]?.nota ?? null;
+            const nivel = c.nivel?.nombre_nivel ?? '—';
+            const clasificacion = c.clasificacion ?? '—';
+            const firmada = c.evaluaciones?.[0]?.estado_registro === 'FIRMADA';
 
             const chipClasificacionStyle =
               clasificacion === 'CLASIFICADO'
@@ -172,16 +166,21 @@ export default function CompetidorList({
 
             return (
               <tr
-                key={(c as any)?.competidor?.id_competidor ?? i}
-                className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
+                key={c.competidor.id_competidor ?? i}
+                className={`border-b border-gray-200 transition-colors group relative ${
+                  firmada ? 'opacity-60 hover:bg-gray-100' : 'hover:bg-gray-50'
+                }`}
               >
-                {/* Posición 1..N basada en la NOTA (ranking dinámico) */}
-                <td className="p-2 text-center text-black tabular-nums">{pos}</td>
+                {/* Posición dinámica 1..N basada en ranking por nota */}
+                <td className="p-2 text-center text-black">{pos}</td>
+
                 <td className="p-2 text-black font-medium">
-                  {(c as any)?.competidor?.nombres} {(c as any)?.competidor?.apellidos}
+                  {c.competidor.nombres} {c.competidor.apellidos}
                 </td>
-                <td className="p-2 text-center text-black">{(c as any)?.competidor?.ci}</td>
-                <td className="p-2 text-center text-black">{(c as any)?.competidor?.escuela}</td>
+                <td className="p-2 text-center text-black">{c.competidor.ci}</td>
+                <td className="p-2 text-center text-black">
+                  {c.competidor.escuela}
+                </td>
 
                 {mostrarNivel && (
                   <td className="p-2 text-center text-black">
@@ -205,12 +204,17 @@ export default function CompetidorList({
                   </td>
                 )}
 
-                <td className="p-2 flex justify-center gap-2">
-                  {nota === null ? (
+                <td className="p-2 flex justify-center gap-2 relative">
+                  {!nota ? (
                     <Button
                       onClick={() => onEvaluar(c)}
                       size="sm"
-                      className="bg-blue-600 hover:bg-indigo-700 text-white rounded-md shadow-sm transition-colors"
+                      className={`rounded-md shadow-sm transition-colors ${
+                        firmada
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          : 'bg-blue-600 hover:bg-indigo-700 text-white'
+                      }`}
+                      disabled={firmada}
                     >
                       Evaluar
                     </Button>
@@ -219,10 +223,27 @@ export default function CompetidorList({
                       onClick={() => onEditar(c)}
                       size="sm"
                       variant="outline"
-                      className="border-gray-500 text-gray-600 hover:bg-indigo-50 transition-colors rounded-md shadow-sm"
+                      className={`rounded-md shadow-sm transition-colors ${
+                        firmada
+                          ? 'border-gray-400 text-gray-500 cursor-not-allowed bg-gray-100'
+                          : 'border-gray-500 text-gray-600 hover:bg-indigo-50'
+                      }`}
+                      disabled={firmada}
                     >
                       Editar
                     </Button>
+                  )}
+
+                  {/* Tooltip nativo */}
+                  {firmada && (
+                    <div
+                      className="absolute bottom-full mb-1 hidden group-hover:block
+                                 bg-gray-800 text-white text-xs rounded-md px-2 py-1 whitespace-nowrap
+                                 left-1/2 -translate-x-1/2"
+                    >
+                      Fase cerrada
+                      <div className="absolute left-1/2 -bottom-1 w-2 h-2 bg-gray-800 rotate-45 -translate-x-1/2"></div>
+                    </div>
                   )}
                 </td>
               </tr>

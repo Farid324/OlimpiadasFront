@@ -36,11 +36,12 @@ export default function ModalEvaluacion({
   initialData,
   competidor,
 }: EvaluacionModalProps) {
+  // 🟢 Solo UNA definición del formData
   const [formData, setFormData] = useState({
-    nota: initialData?.nota?.toString() ?? "",
-    descripcionConceptual: initialData?.descripcionConceptual ?? "",
-    etica: initialData?.etica ?? "Sí cumple",
-    observaciones: initialData?.observaciones ?? "",
+    nota: "",
+    descripcionConceptual: "",
+    etica: "Sí cumple",
+    observaciones: "",
   });
 
   const [errors, setErrors] = useState({
@@ -51,6 +52,7 @@ export default function ModalEvaluacion({
 
   const [eticaDisabled, setEticaDisabled] = useState(false);
 
+  // 🔄 Actualiza el formulario cuando cambia initialData, competidor o se abre el modal
   useEffect(() => {
     if (initialData && isOpen) {
       setFormData({
@@ -60,10 +62,12 @@ export default function ModalEvaluacion({
         observaciones: initialData.observaciones ?? "",
       });
     }
-  }, [initialData, isOpen]);
+  }, [initialData, isOpen, competidor]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
     const { name, value } = e.target;
     const updated = { ...formData, [name]: value };
@@ -97,7 +101,8 @@ export default function ModalEvaluacion({
     }
 
     if (!formData.descripcionConceptual.trim()) {
-      newErrors.descripcionConceptual = "La descripción conceptual es obligatoria.";
+      newErrors.descripcionConceptual =
+        "La descripción conceptual es obligatoria.";
     }
 
     if (!["Sí cumple", "No cumple"].includes(formData.etica)) {
@@ -132,7 +137,10 @@ export default function ModalEvaluacion({
         <div className="flex justify-between items-start mb-6">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">
-              {title || `Evaluar a ${competidor?.nombres || ""} ${competidor?.apellidos || ""}`}
+              {title ||
+                `Evaluar a ${competidor?.nombres || ""} ${
+                  competidor?.apellidos || ""
+                }`}
             </h2>
             <p className="text-sm text-gray-500">
               Registra la nota y observaciones de la evaluación
@@ -239,10 +247,8 @@ export default function ModalEvaluacion({
           </div>
         </div>
 
-        {/* Línea divisoria */}
-        <div className="my-6 border-t border-gray-200"></div>
-
         {/* Footer */}
+        <div className="my-6 border-t border-gray-200"></div>
         <div className="flex justify-end gap-3">
           <button
             onClick={onClose}
