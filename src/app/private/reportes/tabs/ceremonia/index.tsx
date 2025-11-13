@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Award, ChevronDown } from 'lucide-react';
 import { api } from '@/libs/api';
 import CeremoniaExportModal from '@/components/reportes/CeremoniaExportModal';
+import { getCeremoniaLista } from '@/components/reportes/ceremonia.service';
 
 type Filters = {
   id_area?: number | null;
@@ -20,7 +21,7 @@ const STORAGE_KEY = 'reportes:ceremonia:filters:v1';
 const DEFAULT_FILTERS: Filters = { id_area: null, id_nivel: null, anio: null, q: null };
 
 const pick = (o: Record<string, unknown> | null | undefined, keys: string[]) =>
-  keys.map(k => o?.[k]).find(v => v !== undefined && v !== null);
+  keys.map((k) => o?.[k]).find((v) => v !== undefined && v !== null);
 
 function mapCatalog<T extends { id: number; nombre: string }>(
   data: unknown,
@@ -55,14 +56,18 @@ export default function CeremoniaTab() {
     try {
       const raw = sessionStorage.getItem(STORAGE_KEY);
       if (raw) return JSON.parse(raw) as Filters;
-    } catch {}
+    } catch {
+      // ignore
+    }
     return DEFAULT_FILTERS;
   });
 
   useEffect(() => {
     try {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(filters));
-    } catch {}
+    } catch {
+      // ignore
+    }
   }, [filters]);
 
   const [areas, setAreas] = useState<AreaDTO[]>([]);
@@ -99,17 +104,49 @@ export default function CeremoniaTab() {
 
   // === Modal de confirmación ===
   const [openModal, setOpenModal] = useState(false);
+  const [checkingExport, setCheckingExport] = useState(false);
+
   const areaNombre =
     filters.id_area == null || filters.id_area === 0
       ? 'Todas las áreas'
-      : safeAreas.find(a => a.id === filters.id_area)?.nombre ?? '—';
+      : safeAreas.find((a) => a.id === filters.id_area)?.nombre ?? '—';
+
   const nivelNombre =
     filters.id_nivel == null || filters.id_nivel === 0
       ? 'Todos los niveles'
-      : safeNiveles.find(n => n.id === filters.id_nivel)?.nombre ?? '—';
+      : safeNiveles.find((n) => n.id === filters.id_nivel)?.nombre ?? '—';
 
   const areaPlaceholder = filters.id_area == null;
   const nivelPlaceholder = filters.id_nivel == null;
+
+  // Handler del botón: NO abrir modal si no hay datos que exportar
+  const handleClickExport = async () => {
+    try {
+      setCheckingExport(true);
+
+      const lista = await getCeremoniaLista({
+        id_area: filters.id_area ?? undefined,
+        id_nivel: filters.id_nivel ?? undefined,
+        anio: filters.anio ?? undefined,
+        q: filters.q ?? undefined,
+      });
+
+      const count = Array.isArray(lista) ? lista.length : 0;
+
+      if (count === 0) {
+        alert('No hay premiados para los filtros seleccionados. Ajusta los filtros antes de exportar.');
+        return;
+      }
+
+      // Sí hay datos → recién abrimos el modal
+      setOpenModal(true);
+    } catch (err) {
+      console.error('Error al verificar datos de ceremonia:', err);
+      alert('No se pudo verificar si hay datos para exportar. Intenta nuevamente.');
+    } finally {
+      setCheckingExport(false);
+    }
+  };
 
   return (
     <>
@@ -125,7 +162,10 @@ export default function CeremoniaTab() {
                 }`}
                 value={filters.id_area ?? ''}
                 onChange={(e) =>
-                  setFilters((f) => ({ ...f, id_area: e.target.value === '' ? null : Number(e.target.value) }))
+                  setFilters((f) => ({
+                    ...f,
+                    id_area: e.target.value === '' ? null : Number(e.target.value),
+                  }))
                 }
                 aria-label="Filtrar por área"
                 disabled={loadingCatalogs}
@@ -153,7 +193,10 @@ export default function CeremoniaTab() {
                 }`}
                 value={filters.id_nivel ?? ''}
                 onChange={(e) =>
-                  setFilters((f) => ({ ...f, id_nivel: e.target.value === '' ? null : Number(e.target.value) }))
+                  setFilters((f) => ({
+                    ...f,
+                    id_nivel: e.target.value === '' ? null : Number(e.target.value),
+                  }))
                 }
                 aria-label="Filtrar por nivel"
                 disabled={loadingCatalogs}
@@ -196,10 +239,11 @@ export default function CeremoniaTab() {
                 <div className="text-sm text-gray-500">Formato especial ordenado por medallas y áreas</div>
 
                 <button
-                  onClick={() => setOpenModal(true)}
-                  className="mt-3 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition"
+                  onClick={handleClickExport}
+                  disabled={checkingExport}
+                  className="mt-3 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Exportar .xlsx
+                  {checkingExport ? 'Verificando…' : 'Exportar .xlsx'}
                 </button>
               </div>
             </div>
@@ -218,4 +262,3 @@ export default function CeremoniaTab() {
     </>
   );
 }
-
