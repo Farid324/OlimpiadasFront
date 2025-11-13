@@ -240,7 +240,7 @@ export default function CertificadosTab() {
               type="button"
               onClick={handleExportPremiados}
               disabled={disable || downPremiados}
-              className="inline-flex items-center gap-2 rounded-md bg-[#0F62FE] hover:bg-[#0C53D5] text-white px-4 py-2 text-sm transition disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm transition disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <FiDownload className="w-4 h-4" />
               {downPremiados ? "Exportando…" : "Exportar Excel"}

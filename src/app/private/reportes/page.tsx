@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { api } from "@/libs/api";
 import { usePageHeader } from "@/contexts/pageHeader";
-import { Users, Trophy, Medal} from "lucide-react";
+import { Users, Trophy, Medal } from "lucide-react";
 import RoleGate from "@/components/features/RoleGate";
 
 /* =========================
@@ -108,7 +108,7 @@ function CardMetric({
 
 //   return (
 //     <div className="flex items-center gap-2">
-     
+
 //     </div>
 //   );
 // }
@@ -294,7 +294,7 @@ export default function ReportesPage() {
     active === "Clasificados" ? "CLASIFICACION" : "FINAL";
   const locked =
     phaseOfTab === "CLASIFICACION"
-      ? clasifAvail.unlocked
+      ? !clasifAvail.unlocked
       : finalAvail.unlocked;
   /*const lockMsg =
     phaseOfTab === "CLASIFICACION" ? clasifAvail.message : finalAvail.message;*/
