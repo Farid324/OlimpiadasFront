@@ -40,6 +40,7 @@ export default function CompetidorList({
           const nota = c.evaluaciones?.[0]?.nota ?? null;
           const nivel = c.nivel?.nombre_nivel ?? '—';
           const clasificacion = c.clasificacion ?? '—';
+          const firmada = c.evaluaciones?.[0]?.estado_registro === 'FIRMADA';
 
           const chipClasificacionStyle =
             clasificacion === 'CLASIFICADO'
@@ -51,14 +52,18 @@ export default function CompetidorList({
           return (
             <tr
               key={c.competidor.id_competidor}
-              className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
+              className={`border-b border-gray-200 transition-colors group relative ${
+                firmada ? 'opacity-60 hover:bg-gray-100' : 'hover:bg-gray-50'
+              }`}
             >
               <td className="p-2 text-center text-black">{i + 1}</td>
               <td className="p-2 text-black font-medium">
                 {c.competidor.nombres} {c.competidor.apellidos}
               </td>
               <td className="p-2 text-center text-black">{c.competidor.ci}</td>
-              <td className="p-2 text-center text-black">{c.competidor.escuela}</td>
+              <td className="p-2 text-center text-black">
+                {c.competidor.escuela}
+              </td>
 
               {mostrarNivel && (
                 <td className="p-2 text-center text-black">
@@ -82,12 +87,17 @@ export default function CompetidorList({
                 </td>
               )}
 
-              <td className="p-2 flex justify-center gap-2">
+              <td className="p-2 flex justify-center gap-2 relative">
                 {!nota ? (
                   <Button
                     onClick={() => onEvaluar(c)}
                     size="sm"
-                    className="bg-blue-600 hover:bg-indigo-700 text-white rounded-md shadow-sm transition-colors"
+                    className={`rounded-md shadow-sm transition-colors ${
+                      firmada
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : 'bg-blue-600 hover:bg-indigo-700 text-white'
+                    }`}
+                    disabled={firmada}
                   >
                     Evaluar
                   </Button>
@@ -96,10 +106,27 @@ export default function CompetidorList({
                     onClick={() => onEditar(c)}
                     size="sm"
                     variant="outline"
-                    className="border-gray-500 text-gray-600 hover:bg-indigo-50 transition-colors rounded-md shadow-sm"
+                    className={`rounded-md shadow-sm transition-colors ${
+                      firmada
+                        ? 'border-gray-400 text-gray-500 cursor-not-allowed bg-gray-100'
+                        : 'border-gray-500 text-gray-600 hover:bg-indigo-50'
+                    }`}
+                    disabled={firmada}
                   >
                     Editar
                   </Button>
+                )}
+
+                {/* Tooltip nativo */}
+                {firmada && (
+                  <div
+                    className="absolute bottom-full mb-1 hidden group-hover:block
+                               bg-gray-800 text-white text-xs rounded-md px-2 py-1 whitespace-nowrap
+                               left-1/2 -translate-x-1/2"
+                  >
+                    Fase cerrada
+                    <div className="absolute left-1/2 -bottom-1 w-2 h-2 bg-gray-800 rotate-45 -translate-x-1/2"></div>
+                  </div>
                 )}
               </td>
             </tr>
@@ -109,4 +136,3 @@ export default function CompetidorList({
     </table>
   );
 }
-
