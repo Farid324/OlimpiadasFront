@@ -13,11 +13,11 @@ interface EvaluadorStats {
 }
 
 type CardsSummaryProps = {
-  /** Cambia este valor para forzar un refetch (ej. reloadStats del padre) */
   refreshToken?: string | number | boolean;
+  idFase: 1 | 2;
 };
 
-export default function CardsSummary({ refreshToken }: CardsSummaryProps) {
+export default function CardsSummary({ refreshToken, idFase }: CardsSummaryProps) {
   const [stats, setStats] = useState<EvaluadorStats>({
     total: 0,
     pendientes: 0,
@@ -30,11 +30,12 @@ export default function CardsSummary({ refreshToken }: CardsSummaryProps) {
     let alive = true;
 
     const fetchStats = async () => {
+      setLoading(true);
       try {
-        setLoading(true);
-        const { data } = await api.get("/admin/evaluaciones/resumen");
+        const { data } = await api.get("/admin/evaluaciones/resumen", {
+          params: { idFase },
+        });
 
-        // sanea por si el backend cambia algo
         const safe: EvaluadorStats = {
           total: Number(data?.total ?? 0),
           pendientes: Number(data?.pendientes ?? 0),
@@ -57,16 +58,14 @@ export default function CardsSummary({ refreshToken }: CardsSummaryProps) {
     return () => {
       alive = false;
     };
-    // 🔁 se vuelve a ejecutar cuando cambias el token desde el padre
-  }, [refreshToken]);
+  }, [refreshToken, idFase]); // ✅ recarga al cambiar tab o refreshToken
 
   if (loading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-pulse">
-        <div className="h-28 bg-gray-100 rounded-2xl" />
-        <div className="h-28 bg-gray-100 rounded-2xl" />
-        <div className="h-28 bg-gray-100 rounded-2xl" />
-        <div className="h-28 bg-gray-100 rounded-2xl" />
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="h-28 bg-gray-100 rounded-2xl" />
+        ))}
       </div>
     );
   }
@@ -100,5 +99,3 @@ export default function CardsSummary({ refreshToken }: CardsSummaryProps) {
     </div>
   );
 }
-
- 

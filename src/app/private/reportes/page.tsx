@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { api } from "@/libs/api";
 import { usePageHeader } from "@/contexts/pageHeader";
-import { Users, Trophy, Medal, Lock, Unlock } from "lucide-react";
+import { Users, Trophy, Medal } from "lucide-react";
 import RoleGate from "@/components/features/RoleGate";
 
 /* =========================
@@ -71,56 +71,47 @@ function CardMetric({
 /* =========================
    UI: Chips de fase (candados)
    ========================= */
-function PhaseChips({
-  clasifUnlocked,
-  finalUnlocked,
-  onClickClasif,
-  onClickFinal,
-}: {
-  clasifUnlocked: boolean;
-  finalUnlocked: boolean;
-  onClickClasif?: () => void;
-  onClickFinal?: () => void;
-}) {
-  const Chip = ({
-    label,
-    unlocked,
-    onClick,
-  }: {
-    label: string;
-    unlocked: boolean;
-    onClick?: () => void;
-  }) => (
-    <button
-      type="button"
-      onClick={onClick}
-      className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs border bg-white text-slate-700 border-slate-300"
-      aria-pressed={unlocked}
-    >
-      {unlocked ? (
-        <Unlock className="w-4 h-4 text-emerald-500" aria-hidden />
-      ) : (
-        <Lock className="w-4 h-4 text-slate-400" aria-hidden />
-      )}
-      <span className="font-medium">{label}</span>
-    </button>
-  );
+// function PhaseChips({
+//   clasifUnlocked,
+//   finalUnlocked,
+//   onClickClasif,
+//   onClickFinal,
+// }: {
+//   clasifUnlocked: boolean;
+//   finalUnlocked: boolean;
+//   onClickClasif?: () => void;
+//   onClickFinal?: () => void;
+// }) {
+//   const Chip = ({
+//     label,
+//     unlocked,
+//     onClick,
+//   }: {
+//     label: string;
+//     unlocked: boolean;
+//     onClick?: () => void;
+//   }) => (
+//     <button
+//       type="button"
+//       onClick={onClick}
+//       className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs border bg-white text-slate-700 border-slate-300"
+//       aria-pressed={unlocked}
+//     >
+//       {unlocked ? (
+//         <Unlock className="w-4 h-4 text-emerald-500" aria-hidden />
+//       ) : (
+//         <Lock className="w-4 h-4 text-slate-400" aria-hidden />
+//       )}
+//       <span className="font-medium">{label}</span>
+//     </button>
+//   );
 
-  return (
-    <div className="flex items-center gap-2">
-      <Chip
-        label="Fase de Clasificación"
-        unlocked={clasifUnlocked}
-        onClick={onClickClasif}
-      />
-      <Chip
-        label="Fase Final"
-        unlocked={finalUnlocked}
-        onClick={onClickFinal}
-      />
-    </div>
-  );
-}
+//   return (
+//     <div className="flex items-center gap-2">
+
+//     </div>
+//   );
+// }
 
 /* =========================
    UI: Segmented Tabs
@@ -303,7 +294,7 @@ export default function ReportesPage() {
     active === "Clasificados" ? "CLASIFICACION" : "FINAL";
   const locked =
     phaseOfTab === "CLASIFICACION"
-      ? clasifAvail.unlocked
+      ? !clasifAvail.unlocked
       : finalAvail.unlocked;
   /*const lockMsg =
     phaseOfTab === "CLASIFICACION" ? clasifAvail.message : finalAvail.message;*/
@@ -321,10 +312,6 @@ export default function ReportesPage() {
               Generación de listas y documentos para clasificados y premiados
             </p>
           </div>
-          <PhaseChips
-            clasifUnlocked={clasifAvail.unlocked}
-            finalUnlocked={finalAvail.unlocked}
-          />
         </div>
 
         {/* Tabs */}

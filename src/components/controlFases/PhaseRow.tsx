@@ -50,7 +50,7 @@ function EstadoChip({ estado }: { estado: EstadoUI }) {
 }
 
 const btnMap: Record<AccionColor, string> = {
-  primary: "bg-indigo-600 hover:bg-indigo-700 text-white",
+  primary: "bg-blue-600 hover:bg-blue-700 text-white",
   neutral: "bg-slate-200 hover:bg-slate-300 text-slate-800",
   success: "bg-emerald-600 hover:bg-emerald-700 text-white",
 };

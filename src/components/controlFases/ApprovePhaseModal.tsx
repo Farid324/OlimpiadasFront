@@ -1,7 +1,7 @@
 // src/components/controlFases/ApprovePhaseModal.tsx
-import React from 'react';
-import type { FilaFase as AdminRow } from './types';
-import type { FilaFaseResp as RespRow } from './responsable/types';
+import React from "react";
+import type { FilaFase as AdminRow } from "./types";
+import type { FilaFaseResp as RespRow } from "./responsable/types";
 
 type RowLike = (AdminRow | RespRow) & {
   idArea?: number | string;
@@ -73,11 +73,11 @@ export default function ApprovePhaseModal({
             Cancelar
           </button>
           <button
-            className="rounded-lg bg-indigo-600 px-3.5 py-2 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+            className="rounded-lg bg-blue-600 px-3.5 py-2 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
             onClick={() => onConfirm(row)}
             disabled={loading}
           >
-            {loading ? 'Aprobando…' : 'Aprobar fase'}
+            {loading ? "Aprobando…" : "Aprobar fase"}
           </button>
         </div>
       </div>

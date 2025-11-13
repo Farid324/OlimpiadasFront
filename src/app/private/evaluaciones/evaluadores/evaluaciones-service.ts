@@ -119,15 +119,5 @@ export const evaluacionesService = {
   async getDetalleEvaluacion(idEvaluacion: number) {
     const { data } = await api.get(`/admin/evaluaciones/${idEvaluacion}`);
     return data;
-  },
-  async  getEstadoFaseEvaluador(idUsuario: number, idNivel: number, tipo: 'CLASIFICACION' | 'FINAL') {
-  const response = await api.get('/admin/evaluaciones/estado-fase-evaluador', {
-    params: {
-      idUsuario,
-      idNivel,
-      tipo,
-    },
-  });
-  return response.data as { closed: boolean; status: 'EN_PROCESO' | 'CERRADA' | 'VALIDADA' };
-}
+  }
 };
