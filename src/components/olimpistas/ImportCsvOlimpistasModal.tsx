@@ -36,7 +36,7 @@ export default function ImportCsvOlimpistasModal({
   const [summary, setSummary] = useState<CsvSummary | null>(null);
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
- 
+
   const onPick = (e: React.ChangeEvent<HTMLInputElement>) => {
     setError(null);
     setSummary(null);
@@ -96,7 +96,7 @@ export default function ImportCsvOlimpistasModal({
     a.download = "plantilla_olimpistas.csv";
     a.click();
     URL.revokeObjectURL(url);
-    
+
   };
 
   return (
@@ -115,7 +115,7 @@ export default function ImportCsvOlimpistasModal({
         </p>
 
         <div className="space-y-4">
-          {}
+          { }
           <div className="border rounded-lg p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <FileUp className="text-blue-600" />
@@ -132,10 +132,11 @@ export default function ImportCsvOlimpistasModal({
             <div className="flex gap-2">
               <button
                 onClick={downloadTemplate}
-                className="inline-flex items-center gap-2 px-3 py-2 border rounded-md hover:bg-gray-50"
+                className="inline-flex items-center gap-2 px-3 py-2 border rounded-md text-black hover:bg-gray-50"
               >
-                <Download size={16} /> Plantilla
+                <Download size={16} className="text-black" /> Plantilla
               </button>
+
               <button
                 onClick={() => inputRef.current?.click()}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
@@ -152,12 +153,12 @@ export default function ImportCsvOlimpistasModal({
             </div>
           </div>
 
-          {}
+          { }
           {!summary && (
             <div className="flex justify-end gap-2">
               <button
                 onClick={onClose}
-                className="px-4 py-2 border rounded-md hover:bg-gray-50"
+                className="inline-flex items-center gap-2 px-3 py-2 border rounded-md text-black hover:bg-gray-50"
               >
                 Cancelar
               </button>
@@ -172,7 +173,7 @@ export default function ImportCsvOlimpistasModal({
             </div>
           )}
 
-          {}
+          { }
           {summary && (
             <div className="space-y-3">
               <div className="border rounded-lg p-4">

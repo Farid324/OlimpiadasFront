@@ -1,7 +1,7 @@
 // src/components/olimpistas/AreaCarousel.tsx
 "use client";
 
-import { ChevronLeft, ChevronRight, Users2, BookOpen } from "lucide-react";
+import { ChevronLeft, ChevronRight, Users, BookOpen } from "lucide-react";
 import { useRef } from "react";
 import type { AreaCounter } from "@/types/olimpista";
 
@@ -42,8 +42,8 @@ export default function AreaCarousel({ items, active, onSelect }: Props) {
             {totalAll} Olimpistas
           </p>
           {/* Ícono (no superpuesto) */}
-          <span className="absolute top-3 right-3 text-black/60">
-            <Users2 className="h-5 w-5" />
+          <span className="absolute top-3 right-3 text-black">
+            <Users className="h-5 w-5" />
           </span>
         </button>
 
@@ -60,7 +60,7 @@ export default function AreaCarousel({ items, active, onSelect }: Props) {
               {it.total} Olimpistas
             </p>
             {/* Ícono (no superpuesto) */}
-            <span className="absolute top-3 right-3 text-black/60">
+            <span className="absolute top-3 right-3 text-black">
               <BookOpen className="h-5 w-5" />
             </span>
           </button>
