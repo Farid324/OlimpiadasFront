@@ -52,16 +52,15 @@ export default function ModalEvaluacion({
   const [eticaDisabled, setEticaDisabled] = useState(false);
 
   useEffect(() => {
-  if (initialData && isOpen) {
-    setFormData({
-      nota: initialData.nota?.toString() ?? "",
-      descripcionConceptual: initialData.descripcionConceptual ?? "",
-      etica: initialData.etica ?? "Sí cumple",
-      observaciones: initialData.observaciones ?? "",
-    });
-  }
-}, [initialData, isOpen]);
-
+    if (initialData && isOpen) {
+      setFormData({
+        nota: initialData.nota?.toString() ?? "",
+        descripcionConceptual: initialData.descripcionConceptual ?? "",
+        etica: initialData.etica ?? "Sí cumple",
+        observaciones: initialData.observaciones ?? "",
+      });
+    }
+  }, [initialData, isOpen]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -147,12 +146,6 @@ export default function ModalEvaluacion({
           </button>
         </div>
 
-        {/* <div className="mt-2 text-sm text-gray-700 space-y-1">
-          {competidor?.ci && <p><span className="font-medium">CI:</span> {competidor.ci}</p>}
-          {competidor?.colegio && <p><span className="font-medium">Colegio:</span> {competidor.colegio}</p>}
-          {competidor?.nivel && <p><span className="font-medium">Nivel:</span> {competidor.nivel}</p>}
-        </div> */}
-
         {/* Inputs */}
         <div className="space-y-6">
           {/* Nota */}
@@ -167,7 +160,7 @@ export default function ModalEvaluacion({
               onChange={handleChange}
               className={`w-full rounded-lg border ${
                 errors.nota ? "border-red-400" : "border-gray-300"
-              } focus:border-gray-400 focus:ring-0 focus:shadow-sm text-sm placeholder-gray-400 py-2 px-3 transition`}
+              } focus:border-gray-400 focus:ring-0 focus:shadow-sm text-sm placeholder-gray-400 py-2 px-3 transition text-black`}
               placeholder="Ej: 85.5 o -1 si fue descalificado"
             />
             {errors.nota && (
@@ -186,7 +179,7 @@ export default function ModalEvaluacion({
               onChange={handleChange}
               className={`w-full rounded-lg border ${
                 errors.descripcionConceptual ? "border-red-400" : "border-gray-300"
-              } focus:border-gray-400 focus:ring-0 focus:shadow-sm text-sm placeholder-gray-400 py-2 px-3 transition`}
+              } focus:border-gray-400 focus:ring-0 focus:shadow-sm text-sm placeholder-gray-400 py-2 px-3 transition text-black`}
               rows={2}
               placeholder="Describe el desempeño académico del olimpista..."
             />
@@ -208,11 +201,11 @@ export default function ModalEvaluacion({
                 value={formData.etica}
                 onChange={handleChange}
                 disabled={eticaDisabled}
-                className={`appearance-none w-full rounded-lg border ${
+                className={`os-select appearance-none w-full rounded-lg border ${
                   errors.etica ? "border-red-400" : "border-gray-300"
                 } focus:border-gray-400 focus:ring-0 focus:shadow-sm text-sm py-2 px-3 pr-10 transition bg-white ${
                   eticaDisabled ? "bg-gray-100 cursor-not-allowed" : ""
-                }`}
+                } text-black`}
               >
                 <option value="Sí cumple">Sí cumple</option>
                 <option value="No cumple">No cumple</option>
@@ -239,7 +232,7 @@ export default function ModalEvaluacion({
               name="observaciones"
               value={formData.observaciones}
               onChange={handleChange}
-              className="w-full rounded-lg border border-gray-300 focus:border-gray-400 focus:ring-0 focus:shadow-sm text-sm placeholder-gray-400 py-2 px-3 transition"
+              className="w-full rounded-lg border border-gray-300 focus:border-gray-400 focus:ring-0 focus:shadow-sm text-sm placeholder-gray-400 py-2 px-3 transition text-black"
               rows={3}
               placeholder="Comentarios adicionales..."
             />
@@ -259,11 +252,16 @@ export default function ModalEvaluacion({
           </button>
           <button
             onClick={handleSubmit}
-            className="px-4 py-2 text-sm rounded-lg bg-[#6E42FF] text-white hover:bg-[#5b37d8] transition"
+            className="px-4 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-indigo-700 transition"
           >
             Guardar Evaluación
           </button>
         </div>
+
+        {/* Fuerza el color negro de las <option> del select */}
+        <style jsx global>{`
+          select.os-select option { color: #111827; }
+        `}</style>
       </div>
     </div>
   );
