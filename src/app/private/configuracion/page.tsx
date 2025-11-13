@@ -9,10 +9,12 @@ import {
     Settings, // Para Áreas
     Award,    // Para Oro
     Shield,   // Para Total Medallas
-    Medal     // Para Plata y Bronce
+    Medal,    // Para Plata y Bronce
+    X,        // Para cerrar modal
+    Save      // Para botón de guardar
 } from 'lucide-react'; 
 import { usePageHeader } from '@/contexts/pageHeader';
-import { Input } from '@/components/ui/Input';
+import { Input } from '@/components/ui/Input'; // Aunque la barra de búsqueda se elimina, se mantiene el import por si se requiere en el futuro.
 
 /* -------------------- Types -------------------- */
 type MedalleroItem = {
@@ -31,7 +33,7 @@ type MedalleroItem = {
 /* -------------------- Page -------------------- */
 export default function MedalleroConfigPage() {
   const [items, setItems] = useState<MedalleroItem[]>([]);
-  const [q, setQ] = useState('');
+  // const [q, setQ] = useState(''); // ✨ Eliminado: Barra de búsqueda
   const [loading, setLoading] = useState(false);
 
   const { setTitle } = usePageHeader();
@@ -84,13 +86,15 @@ export default function MedalleroConfigPage() {
 
   // filtered list by search (search by area_nombre + nivel_nombre)
   const filtered = useMemo(() => {
-    if (!q.trim()) return items;
-    const qq = q.trim().toLowerCase();
+    // ✨ Eliminado: Lógica de filtrado por búsqueda
+    // if (!q.trim()) return items;
+    // const qq = q.trim().toLowerCase();
     
-    return items.filter((it) => 
-      it.area_nombre.toLowerCase().includes(qq) || it.nivel_nombre.toLowerCase().includes(qq)
-    );
-  }, [items, q]);
+    // return items.filter((it) => 
+    //   it.area_nombre.toLowerCase().includes(qq) || it.nivel_nombre.toLowerCase().includes(qq)
+    // );
+    return items; // Retorna todos los items ya que no hay búsqueda
+  }, [items /* , q */]); // ✨ Eliminado: dependencia 'q'
 
   /* -------------------- Handlers -------------------- */
   function openEdit(item: MedalleroItem) {
@@ -167,17 +171,17 @@ export default function MedalleroConfigPage() {
     return (item.oros ?? 0) + (item.platas ?? 0) + (item.bronces ?? 0) + (item.menciones ?? 0);
   }
 
-  function getPercent(item: MedalleroItem) {
+  function getPercent(item: MedalleroItem): number { // Retorna un número directamente
     const participantes = item.participantes ?? 0;
     const total = getTotal(item);
     if (!participantes) return 0;
     return (total / participantes) * 100;
   }
 
-  function formatPercentage(value: number, total: number): string {
-    if (total === 0) return '0.0%';
-    return ((value / total) * 100).toFixed(1) + '%';
-  }
+  // function formatPercentage(value: number, total: number): string { // Esta función ya no es necesaria en CardMetricWithPercent
+  //   if (total === 0) return '0.0%';
+  //   return ((value / total) * 100).toFixed(1) + '%';
+  // }
 
   /* -------------------- Render -------------------- */
   return (
@@ -199,37 +203,37 @@ export default function MedalleroConfigPage() {
         <CardMetricWithPercent 
           label="Oro Total" value={metrics.oros} total={metrics.totalPremios} 
           icon={<Award className="w-6 h-6 text-yellow-600"/>} 
-          subValue={formatPercentage(metrics.oros, metrics.totalPremios)} 
+          subValue={metrics.totalPremios > 0 ? (metrics.oros / metrics.totalPremios * 100).toFixed(1) + '%' : '0.0%'} 
           totalValue={metrics.totalParticipantes}
           />
         <CardMetricWithPercent 
           label="Plata Total" value={metrics.platas} total={metrics.totalPremios} 
           icon={<Medal className="w-6 h-6 text-gray-400"/>} // Usa Medal
-          subValue={formatPercentage(metrics.platas, metrics.totalPremios)}
+          subValue={metrics.totalPremios > 0 ? (metrics.platas / metrics.totalPremios * 100).toFixed(1) + '%' : '0.0%'} 
           totalValue={metrics.totalParticipantes}
           />
         <CardMetricWithPercent 
           label="Bronce Total" value={metrics.bronces} total={metrics.totalPremios} 
-          icon={<Medal className="w-6 h-6 text-amber-800"/>} 
-          subValue={formatPercentage(metrics.bronces, metrics.totalPremios)}
+          icon={<Medal className="w-6 h-6 text-amber-800"/>} // ✨ ICONO DE BRONCE CORREGIDO
+          subValue={metrics.totalPremios > 0 ? (metrics.bronces / metrics.totalPremios * 100).toFixed(1) + '%' : '0.0%'} 
           totalValue={metrics.totalParticipantes}
           />
         <CardMetricWithPercent 
           label="Menciones" value={metrics.menciones} total={metrics.totalPremios} 
           icon={<span className="text-xl font-bold text-gray-500">M</span>} 
-          subValue={formatPercentage(metrics.menciones, metrics.totalPremios)}
+          subValue={metrics.totalPremios > 0 ? (metrics.menciones / metrics.totalPremios * 100).toFixed(1) + '%' : '0.0%'} 
           totalValue={metrics.totalParticipantes}
           />
         <CardMetricWithPercent 
           label="Total Medallas" value={metrics.totalPremios} total={metrics.totalPremios} 
           icon={<Shield className="w-6 h-6 text-gray-500"/>} // Usa Shield (Escudo)
-          subValue={formatPercentage(metrics.totalPremiados, metrics.totalParticipantes) + ' premiados'}
+          subValue={metrics.totalParticipantes > 0 ? (metrics.totalPremiados / metrics.totalParticipantes * 100).toFixed(1) + '% premiados' : '0.0% premiados'}
           totalValue={metrics.totalParticipantes}
           />
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
+      {/* Filters (Barra de búsqueda eliminada) */}
+      {/* <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
         <div className="relative w-full sm:w-1/2">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input
@@ -240,6 +244,7 @@ export default function MedalleroConfigPage() {
           />
         </div>
       </div>
+      */}
 
       {/* Table */}
       <div className="bg-white rounded-lg shadow p-4">
@@ -252,7 +257,7 @@ export default function MedalleroConfigPage() {
           <p className="text-center text-gray-500">Cargando...</p>
         ) : filtered.length === 0 ? (
           <div className="border rounded-md p-6 text-gray-500 text-center bg-gray-50">
-            No hay configuraciones {q ? 'para la búsqueda actual' : 'disponibles'}
+            No hay configuraciones { /* q ? 'para la búsqueda actual' : */ 'disponibles'}
           </div>
         ) : (
           <div className="max-h-[540px] overflow-y-auto">
@@ -262,7 +267,6 @@ export default function MedalleroConfigPage() {
               role="region"
               aria-label="Tabla de configuración de medallero"
             >
-              {/* ✨ CORRECCIÓN: Se elimina min-w-[1200px] para que la tabla sea más corta y solo ocupe el espacio necesario. */}
               <table className="border-collapse text-sm w-full"> 
                 <thead className="sticky top-0 bg-white z-10 border-b border-black">
                   <tr className="text-gray-700">
@@ -281,7 +285,7 @@ export default function MedalleroConfigPage() {
                       <div className="text-[11px]">Plata</div>
                     </th>
                     <th className="py-3 px-1 text-center font-semibold whitespace-nowrap">
-                      <Medal className="w-5 h-5 text-amber-800 mx-auto mb-1"/> 
+                      <Medal className="w-5 h-5 text-amber-800 mx-auto mb-1"/> {/* ✨ ICONO DE BRONCE CORREGIDO */}
                       <div className="text-[11px]">Bronce</div>
                     </th>
                     <th className="py-3 px-1 text-center font-semibold whitespace-nowrap">
@@ -317,19 +321,19 @@ export default function MedalleroConfigPage() {
                         {/* Celdas de Medalla compactas y centradas (px-1) */}
                         <td className="py-4 px-1 text-center text-gray-700 whitespace-nowrap">
                           <span className="font-bold">{it.oros}</span>
-                          <div className="text-[10px] text-gray-500 font-normal mt-0.5">{formatPercentage(it.oros, participantes)}</div>
+                          <div className="text-[10px] text-gray-500 font-normal mt-0.5">{participantes > 0 ? (it.oros / participantes * 100).toFixed(1) + '%' : '0.0%'}</div>
                         </td>
                         <td className="py-4 px-1 text-center text-gray-700 whitespace-nowrap">
                           <span className="font-bold">{it.platas}</span>
-                          <div className="text-[10px] text-gray-500 font-normal mt-0.5">{formatPercentage(it.platas, participantes)}</div>
+                          <div className="text-[10px] text-gray-500 font-normal mt-0.5">{participantes > 0 ? (it.platas / participantes * 100).toFixed(1) + '%' : '0.0%'}</div>
                         </td>
                         <td className="py-4 px-1 text-center text-gray-700 whitespace-nowrap">
                           <span className="font-bold">{it.bronces}</span>
-                          <div className="text-[10px] text-gray-500 font-normal mt-0.5">{formatPercentage(it.bronces, participantes)}</div>
+                          <div className="text-[10px] text-gray-500 font-normal mt-0.5">{participantes > 0 ? (it.bronces / participantes * 100).toFixed(1) + '%' : '0.0%'}</div>
                         </td>
                         <td className="py-4 px-1 text-center text-gray-700 whitespace-nowrap">
                           <span className="font-bold">{it.menciones}</span>
-                          <div className="text-[10px] text-gray-500 font-normal mt-0.5">{formatPercentage(it.menciones, participantes)}</div>
+                          <div className="text-[10px] text-gray-500 font-normal mt-0.5">{participantes > 0 ? (it.menciones / participantes * 100).toFixed(1) + '%' : '0.0%'}</div>
                         </td>
 
                         <td className="py-4 px-4 text-gray-700 text-center">{total}</td>
@@ -395,75 +399,90 @@ export default function MedalleroConfigPage() {
           <div className="absolute inset-0 bg-black/40" onClick={closeEdit} />
           
           <div className="bg-white rounded-lg shadow-lg w-[680px] z-10 overflow-hidden text-gray-900"> 
-            <div className="flex justify-between items-center p-4 border-b">
-              <h3 className="text-lg font-semibold text-gray-900">Editar Medallero: {editing.area_nombre} ({editing.nivel_nombre})</h3>
-              <button onClick={closeEdit} className="text-gray-600 hover:text-black">Cerrar</button>
+            <div className="flex justify-between items-center p-4 border-b border-gray-200"> {/* Borde gris más claro */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Editar Configuración de Medallero</h3>
+                {/* ✨ Detalle de área/nivel/participantes en el modal */}
+                <p className="text-sm text-gray-500">{editing.area_nombre} - {editing.nivel_nombre} ({editing.participantes} participantes)</p>
+              </div>
+              <button onClick={closeEdit} className="text-gray-600 hover:text-black p-1 rounded-full hover:bg-gray-100">
+                <X className="w-5 h-5" /> {/* ✨ Icono X para cerrar */}
+              </button>
             </div>
 
             <div className="p-4 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <label className="flex flex-col">
-                  <span className="text-sm text-gray-600">Oros</span>
+                  <span className="text-sm text-gray-700">Medallas de Oro</span> {/* ✨ Texto más específico */}
                   <input
                     type="number"
                     min={0}
                     value={editing.oros ?? 0}
                     onChange={(e) => updateEditingField('oros', Number(e.target.value))}
-                    className="mt-1 p-2 border rounded-md text-gray-900" 
+                    className="mt-1 p-2 border border-gray-300 rounded-md text-gray-900 focus:ring-blue-500 focus:border-blue-500" // ✨ Estilo de input mejorado
                   />
                 </label>
 
                 <label className="flex flex-col">
-                  <span className="text-sm text-gray-600">Platas</span>
+                  <span className="text-sm text-gray-700">Medallas de Plata</span> {/* ✨ Texto más específico */}
                   <input
                     type="number"
                     min={0}
                     value={editing.platas ?? 0}
                     onChange={(e) => updateEditingField('platas', Number(e.target.value))}
-                    className="mt-1 p-2 border rounded-md text-gray-900" 
+                    className="mt-1 p-2 border border-gray-300 rounded-md text-gray-900 focus:ring-blue-500 focus:border-blue-500" 
                   />
                 </label>
 
                 <label className="flex flex-col">
-                  <span className="text-sm text-gray-600">Bronces</span>
+                  <span className="text-sm text-gray-700">Medallas de Bronce</span> {/* ✨ Texto más específico */}
                   <input
                     type="number"
                     min={0}
                     value={editing.bronces ?? 0}
                     onChange={(e) => updateEditingField('bronces', Number(e.target.value))}
-                    className="mt-1 p-2 border rounded-md text-gray-900" 
+                    className="mt-1 p-2 border border-gray-300 rounded-md text-gray-900 focus:ring-blue-500 focus:border-blue-500" 
                   />
                 </label>
 
                 <label className="flex flex-col">
-                  <span className="text-sm text-gray-600">Menciones</span>
+                  <span className="text-sm text-gray-700">Menciones de Honor</span> {/* ✨ Texto más específico */}
                   <input
                     type="number"
                     min={0}
                     value={editing.menciones ?? 0}
                     onChange={(e) => updateEditingField('menciones', Number(e.target.value))}
-                    className="mt-1 p-2 border rounded-md text-gray-900" 
+                    className="mt-1 p-2 border border-gray-300 rounded-md text-gray-900 focus:ring-blue-500 focus:border-blue-500" 
                   />
                 </label>
               </div>
 
-              <div className="pt-2 border-t">
+              {/* ✨ "Total de premios: 28(8.6% de 324 participantes)" */}
+              <div className="pt-2"> 
                 <p className="text-sm text-gray-600">
-                  Participantes: <span className="font-semibold text-gray-800">{editing.participantes}</span>
-                </p>
-                <p className="text-sm text-gray-600 mt-1">
-                  Total premios: <span className="font-semibold">{getTotal(editing)}</span> — % premiados: <span className="font-semibold">{getPercent(editing).toFixed(2)}%</span>
+                  Total de premios: <span className="font-semibold text-gray-800">{getTotal(editing)}</span>
+                  {editing.participantes > 0 && 
+                    <span className="ml-1 text-gray-500">
+                      ({getPercent(editing).toFixed(1)}% de {editing.participantes} participantes)
+                    </span>
+                  }
                 </p>
               </div>
 
-              <div className="flex justify-end gap-3">
-                <button onClick={closeEdit} className="px-4 py-2 rounded-md border text-gray-700 hover:bg-gray-100">Cancelar</button>
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200"> {/* ✨ Borde superior en los botones */}
+                <button 
+                  onClick={closeEdit} 
+                  className="px-4 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50" // ✨ Estilo de botón Cancelar
+                >
+                  Cancelar
+                </button>
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="px-4 py-2 rounded-md bg-blue-600 text-white disabled:opacity-60"
+                  className="px-4 py-2 rounded-md bg-blue-600 text-white flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed" // ✨ Estilo de botón Guardar con icono
                 >
-                  {saving ? 'Guardando...' : 'Guardar cambios'}
+                  <Save className="w-5 h-5" /> {/* ✨ Icono de Guardar */}
+                  {saving ? 'Guardando...' : 'Guardar Cambios'}
                 </button>
               </div>
             </div>
@@ -493,9 +512,6 @@ function CardMetricNoIcon({ label, value, subValue, icon }: { label: string; val
 
 function CardMetricWithPercent({ label, value, icon, subValue }: { label: string; value: React.ReactNode; total: number; icon: React.ReactNode; subValue: string; totalValue: number }) {
   const isTotalMedallas = label.includes('Total Medallas');
-  const percentText = isTotalMedallas ? subValue : subValue.replace('%', '% del total');
-  const percentValue = isTotalMedallas ? '' : subValue.split('%')[0] + '%';
-  const displayValue = value;
   
   return (
     <div className="bg-white p-4 rounded-lg shadow h-28 flex flex-col justify-between relative">
@@ -504,10 +520,9 @@ function CardMetricWithPercent({ label, value, icon, subValue }: { label: string
         <span className="text-xl font-bold">{icon}</span> 
       </div>
       <div className="flex flex-col">
-        <p className="text-3xl font-bold text-black">{displayValue}</p>
+        <p className="text-3xl font-bold text-black">{value}</p>
         <p className="text-sm font-normal text-gray-500">
-            {percentValue}
-            {isTotalMedallas && <span className="text-xs ml-1 text-gray-400">{percentText}</span>}
+            {isTotalMedallas ? subValue : subValue.replace('%', '% del total')}
         </p>
       </div>
     </div>
