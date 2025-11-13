@@ -104,7 +104,9 @@ export default function CertificadosTab() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "certificados-premiados.xlsx";
+      a.download = `certificados-premiados_${filters.id_area ?? "todas"}_${
+        filters.id_nivel ?? "todos"
+      }.xlsx`;
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (e) {
@@ -125,7 +127,9 @@ export default function CertificadosTab() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "certificados-participacion.xlsx";
+      a.download = `certificados-participacion_${filters.id_area ?? "todas"}_${
+        filters.id_nivel ?? "todos"
+      }.xlsx`;
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (e) {
@@ -264,7 +268,7 @@ export default function CertificadosTab() {
               type="button"
               onClick={handleExportParticipacion}
               disabled={disable || downParticipacion}
-              className="inline-flex items-center gap-2 rounded-md bg-white border border-slate-200 hover:bg-slate-50 text-slate-800 px-4 py-2 text-sm transition disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-md bg-white border border-slate-200 hover:bg-slate-50 text-slate-800 px-4 py-2 text-sm transition disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <FiDownload className="w-4 h-4" />
               {downParticipacion ? "Exportando…" : "Exportar Excel"}
