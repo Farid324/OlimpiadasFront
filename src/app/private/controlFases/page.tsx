@@ -87,7 +87,7 @@ export default function ControlFasesPage() {
       </div>
 
       {/* KPIs en grid, manteniendo el mismo tipo de separación y estilo de cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Evaluaciones Completadas"
           value={kpis.evaluacionesCompletadas.valor}
