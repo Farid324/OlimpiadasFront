@@ -333,27 +333,27 @@ export default function EvaluadoresPage() {
                             <MoreVertical className="w-5 h-5 text-gray-700" />
                           </button>
 
-                          {isMenuOpen && (
-                            <div
-                              role="menu"
-                              className="absolute right-2 top-10 z-20 w-40 rounded-md border bg-white shadow-lg overflow-hidden"
+                        {isMenuOpen && (
+                          <div
+                            role="menu"
+                            className="absolute right-2 bottom-10 z-20 w-40 rounded-md border-gray-300 bg-white shadow-lg overflow-hidden"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => openEdit(e)}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-gray-50 text-gray-700"
                             >
-                              <button
-                                type="button"
-                                onClick={() => openEdit(e)}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-gray-50"
-                              >
-                                <Pencil className="w-4 h-4" /> Editar
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => askDelete(e)}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
-                              >
-                                <Trash2 className="w-4 h-4" /> Eliminar
-                              </button>
-                            </div>
-                          )}
+                              <Pencil className="w-4 h-4" /> Editar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => askDelete(e)}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4" /> Eliminar
+                            </button>
+                          </div>
+                        )}
                         </td>
                       </tr>
                     );
