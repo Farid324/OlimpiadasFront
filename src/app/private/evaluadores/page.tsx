@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '@/libs/api';
 import { Button } from '@/components/ui/Button';
 import { LuUsers, LuUserCog, LuLayers, LuAward } from 'react-icons/lu';
-import { Mail, Phone, MoreVertical, Pencil, Trash2, X } from 'lucide-react';
+import { Mail, Phone, MoreVertical, Pencil, Trash2, X, CheckCircle2 } from 'lucide-react';
 import { FiSearch } from 'react-icons/fi';
 import AddEvaluatorModal from '@/components/features/RegistroEva/AddEvaluatorModal';
 import { usePageHeader } from '@/contexts/pageHeader';
@@ -36,6 +36,7 @@ export default function EvaluadoresPage() {
   const [editData, setEditData] = useState<Evaluador | null>(null);
   const [menuOpenId, setMenuOpenId] = useState<number | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ id: number; nombre: string } | null>(null);
+  const [deleteSuccess, setDeleteSuccess] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   async function load(query?: string) {
@@ -88,6 +89,13 @@ export default function EvaluadoresPage() {
     };
   }, []);
 
+  // Ocultar mensaje de éxito después de 3 segundos
+  useEffect(() => {
+    if (!deleteSuccess) return;
+    const t = setTimeout(() => setDeleteSuccess(null), 3000);
+    return () => clearTimeout(t);
+  }, [deleteSuccess]);
+
   const metrics = useMemo(() => {
     const total = evaluadores.length;
     const activos = evaluadores.filter((e) => !!e.activo).length;
@@ -127,6 +135,7 @@ export default function EvaluadoresPage() {
       await api.delete(`/evaluadores/${confirmDelete.id}`);
       setConfirmDelete(null);
       refetch();
+      setDeleteSuccess('Evaluador eliminado con éxito');
     } catch {
       setConfirmDelete(null);
     }
@@ -141,6 +150,14 @@ export default function EvaluadoresPage() {
           Administración de Evaluadores por Área de competencia
         </p>
       </div>
+
+      {/* Mensaje de éxito al eliminar */}
+      {deleteSuccess && (
+        <div className="bg-green-50 border border-green-200 text-green-800 text-sm px-4 py-2 rounded-lg flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4" />
+          <span>{deleteSuccess}</span>
+        </div>
+      )}
 
       {/* Cards (mismo tamaño que Responsables) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -161,7 +178,6 @@ export default function EvaluadoresPage() {
         </Button>
       </div>
 
-      {/* Buscador con misma tarjeta que Responsables */}
       {/* Buscador (estilo tarjeta grande, igual que Responsables) */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
         <div className="relative">
@@ -190,7 +206,6 @@ export default function EvaluadoresPage() {
           )}
         </div>
       </div>
-
 
       {/* Tabla */}
       <div className="bg-white rounded-lg shadow p-4">
