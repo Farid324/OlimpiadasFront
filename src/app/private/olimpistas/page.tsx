@@ -92,26 +92,40 @@ export default function OlimpistasPage() {
         </button>
       </div>
 
-      { }
-      <div className="relative w-full">
-        <Search
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
-          size={18}
-        />
-        <input
-          type="text"
-          placeholder="Buscar por nombre, área, unidad o departamento"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          className="
-      w-full rounded-lg border-gray-300 bg-gray-100
-      pl-9 pr-3 py-2 text-sm text-gray-700
-      placeholder:text-gray-400 shadow-sm h-9 border px-3
-      focus:outline-none focus:ring-0 focus:border-gray-200 hover:border-gray-400 transition-colors
-    "
-          aria-label="Buscar"
-        />
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div className="relative w-full">
+          <Search
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+          />
+
+          <input
+            type="text"
+            placeholder="Buscar por nombre, área, unidad o departamento"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            className="
+        w-full h-12 pl-12 pr-10 rounded-lg bg-gray-50 border border-gray-200
+        text-gray-800 placeholder:text-gray-400
+        focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600
+        transition
+      "
+            aria-label="Buscar"
+          />
+
+          {q && (
+            <button
+              type="button"
+              onClick={() => setQ('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-xl leading-none
+                   text-gray-400 hover:text-gray-600"
+              aria-label="Limpiar búsqueda"
+            >
+              ×
+            </button>
+          )}
+        </div>
       </div>
+
 
       { }
       <OlimpistasTable rows={rows} loading={loading} />
