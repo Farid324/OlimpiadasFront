@@ -59,6 +59,7 @@ export const MENU_BY_ROLE: Record<RoleName, MenuItem[]> = {
   RESPONSABLE_DE_AREA: [
     { icon: 'LuHouse', label: 'Panel Principal', href: '/private/panelPrincipal' },
     { icon: 'LuUsers', label: 'Olimpistas', href: '/private/olimpistas' },
+    { icon: 'FiUserCheck', label: 'Evaluadores', href: '/private/evaluadores' },
     { icon: 'LuGitBranch', label: 'Control de Fases', href: '/private/controlFases/responsables' },
     { icon: 'LuChartColumn', label: 'Reportes', href: '/private/reportes/responsables' },
   ],

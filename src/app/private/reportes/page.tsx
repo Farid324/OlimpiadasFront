@@ -327,8 +327,8 @@ export default function ReportesPage() {
     active === "Clasificados" ? "CLASIFICACION" : "FINAL";
   const locked =
     phaseOfTab === "CLASIFICACION"
-      ? !clasifAvail.unlocked
-      : !finalAvail.unlocked;
+      ? clasifAvail.unlocked
+      : finalAvail.unlocked;
   // OJO: aquí sigues usando unlocked como locked (es lo que ya tenías).
 
   return (

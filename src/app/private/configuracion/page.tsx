@@ -33,7 +33,7 @@ export default function ConfiguracionPage() {
   const [activeTab, setActiveTab] = useState<TabKey>('Configuracion');
 
   return (
-    <div className="space-y-6 p-2 md:p-0">
+    <div className="p-6 space-y-6 text-gray-900">
       
       {/* Contenedor Principal (Tarjeta Blanca) */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 min-h-[600px] p-6 flex flex-col gap-6">

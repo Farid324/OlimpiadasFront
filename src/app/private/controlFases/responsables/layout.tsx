@@ -1,12 +1,9 @@
-// src/app/private/controlFases/responsables/layout.tsx
 'use client';
 
-import React, { useEffect } from 'react';
-import { usePageHeader } from '@/contexts/pageHeader';
-
-export default function LayoutResp({ children }: { children: React.ReactNode }) {
-  const { setTitle } = usePageHeader();
-  useEffect(() => setTitle('Control de Fases (Responsable)'), [setTitle]);
-
-  return <>{children}</>;
+export default function ResponsablesLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="p-6">
+      {children}
+    </div>
+  );
 }
