@@ -39,7 +39,7 @@ function mapCatalog<T extends { id: number; nombre: string }>(
 
 /** 🔁 RUTAS CORRECTAS A CATALOGOS */
 async function getAreas(): Promise<AreaDTO[]> {
-  const { data } = await api.get('/admin/evaluaciones/areas');
+  const { data } = await api.get('/admin/evaluaciones/mis-areas');
   return mapCatalog<AreaDTO>(data, ['id_area', 'id', 'value'], ['nombre_area', 'nombre', 'label']);
 }
 async function getNiveles(): Promise<NivelDTO[]> {
