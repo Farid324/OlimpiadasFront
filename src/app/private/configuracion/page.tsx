@@ -1,3 +1,4 @@
+//src/app/private/configuracion/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';

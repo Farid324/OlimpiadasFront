@@ -1,10 +1,11 @@
 // src/components/controlFases/responsable/service.ts
 import { getFromAPI } from "../apiClient";
-// si tienes postToAPI ya creado en apiClient, impórtalo:
 import { postToAPI } from "../apiClient";
 import type { ControlFasesRespPayload, FilaFaseResp } from "./types";
 
 const ENDPOINT = "control-fases/responsables";
+
+export type PhaseTypeResp = "CLASIFICACION" | "FINAL";
 
 function isEmpty(v?: string | null) {
   const s = (v ?? "").trim();
@@ -34,15 +35,18 @@ function readCurrentUserFullName(): string | null {
   }
 }
 
-export async function fetchControlFasesResp(): Promise<ControlFasesRespPayload> {
-  const data = await getFromAPI<ControlFasesRespPayload>(ENDPOINT);
+export async function fetchControlFasesResp(
+  type: PhaseTypeResp = "CLASIFICACION",
+): Promise<ControlFasesRespPayload> {
+  const data = await getFromAPI<ControlFasesRespPayload>(
+    `${ENDPOINT}?type=${type}`,
+  );
   const meName = readCurrentUserFullName();
 
   const filas: FilaFaseResp[] = (data.filas ?? []).map((f) => {
     const responsable = !isEmpty(f.responsable) ? f.responsable : meName ?? "—";
     const fechaHora = f.fechaHora ?? "";
 
-    // UI de acción: sólo cuando está "Listo para aprobar"
     const accionLabel =
       typeof f.accionLabel === "string" && f.accionLabel.trim() !== ""
         ? f.accionLabel
@@ -72,6 +76,5 @@ export async function fetchControlFasesResp(): Promise<ControlFasesRespPayload> 
 
 // --------- acción ---------
 export async function aprobarFaseResp(id: number | string): Promise<void> {
-  // Ajusta el endpoint si tu back usa otra ruta
   await postToAPI(`${ENDPOINT}/${id}/approve`, {});
 }

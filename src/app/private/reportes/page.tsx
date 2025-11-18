@@ -1,6 +1,7 @@
 // src/app/private/reportes/page.tsx
 "use client";
 
+import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { api } from "@/libs/api";
@@ -36,6 +37,24 @@ type TabKey =
   | "Ceremonia"
   | "Publicación";
 
+type PhaseAvailability = {
+  unlocked: boolean;
+  message: string | null;
+};
+
+const defaultPhaseAvailability: PhaseAvailability = {
+  unlocked: false,
+  message: null,
+};
+
+const phaseByTab: Record<TabKey, PhaseType> = {
+  Clasificados: "CLASIFICACION",
+  Premiados: "FINAL",
+  Certificados: "FINAL",
+  Ceremonia: "FINAL",
+  Publicación: "FINAL",
+};
+
 async function getResumenClasificados(): Promise<ReportResumenDTO> {
   const { data } = await api.get<ReportResumenDTO>(
     "/reportes/clasificados/resumen"
@@ -69,8 +88,8 @@ function CardMetric({
   icon,
 }: {
   label: string;
-  value: React.ReactNode;
-  icon: React.ReactNode;
+  value: ReactNode;
+  icon: ReactNode;
 }) {
   return (
     <div className="bg-white p-4 rounded-lg shadow h-28 flex flex-col justify-between">
@@ -207,47 +226,45 @@ export default function ReportesPage() {
 
   const [active, setActive] = useState<TabKey>("Clasificados");
 
-  // Disponibilidad por fase
-  const [clasifAvail, setClasifAvail] = useState<{
-    unlocked: boolean;
-    message: string | null;
-  }>({
-    unlocked: false,
-    message: null,
-  });
-  const [finalAvail, setFinalAvail] = useState<{
-    unlocked: boolean;
-    message: string | null;
-  }>({
-    unlocked: false,
-    message: null,
+  // Disponibilidad por fase (CLASIFICACION / FINAL)
+  const [availability, setAvailability] = useState<
+    Record<PhaseType, PhaseAvailability>
+  >({
+    CLASIFICACION: defaultPhaseAvailability,
+    FINAL: defaultPhaseAvailability,
   });
 
   useEffect(() => {
     (async () => {
       try {
-        const [a, b] = await Promise.all([
+        const [clasif, final] = await Promise.all([
           checkAvailability("CLASIFICACION"),
           checkAvailability("FINAL"),
         ]);
-        setClasifAvail(a);
-        setFinalAvail(b);
-      } catch {
-        setClasifAvail({
-          unlocked: false,
-          message: "No fue posible verificar el estado de la fase.",
+
+        setAvailability({
+          CLASIFICACION: clasif,
+          FINAL: final,
         });
-        setFinalAvail({
-          unlocked: false,
-          message: "No fue posible verificar el estado de la fase.",
+      } catch {
+        setAvailability({
+          CLASIFICACION: {
+            unlocked: false,
+            message: "No fue posible verificar el estado de la fase.",
+          },
+          FINAL: {
+            unlocked: false,
+            message: "No fue posible verificar el estado de la fase.",
+          },
         });
       }
     })();
   }, []);
 
   // KPIs clasificados
-  const [resumenClasif, setResumenClasif] =
-    useState<ReportResumenDTO | null>(null);
+  const [resumenClasif, setResumenClasif] = useState<ReportResumenDTO | null>(
+    null
+  );
 
   useEffect(() => {
     getResumenClasificados()
@@ -323,13 +340,15 @@ export default function ReportesPage() {
   }, [resumenClasif, resumenCeremonia]);
 
   // Fase que controla la pestaña activa y bloqueo
-  const phaseOfTab: PhaseType =
-    active === "Clasificados" ? "CLASIFICACION" : "FINAL";
-  const locked =
-    phaseOfTab === "CLASIFICACION"
-      ? clasifAvail.unlocked
-      : finalAvail.unlocked;
-  // OJO: aquí sigues usando unlocked como locked (es lo que ya tenías).
+  const phaseOfTab: PhaseType = phaseByTab[active];
+  const currentPhaseAvailability = availability[phaseOfTab];
+  const locked = !currentPhaseAvailability.unlocked;
+
+  const lockedMessage: string =
+    currentPhaseAvailability.message ??
+    (phaseOfTab === "FINAL"
+      ? "La fase final aún no ha sido aprobada. Los reportes se habilitarán una vez que des el aval correspondiente."
+      : "La fase de clasificación aún no ha sido aprobada. Los reportes se habilitarán una vez que des el aval correspondiente.");
 
   return (
     <RoleGate allow={["ADMINISTRADOR"]}>
@@ -354,10 +373,7 @@ export default function ReportesPage() {
         {/* Banner de bloqueo */}
         {locked && (
           <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-amber-800 text-sm">
-            <strong>Fase Bloqueada.</strong>{" "}
-            {phaseOfTab === "FINAL"
-              ? "La fase final aún no ha sido aprobada. Los reportes se habilitarán una vez que des el aval correspondiente."
-              : "La fase de clasificación aún no ha sido aprobada. Los reportes se habilitarán una vez que des el aval correspondiente."}
+            <strong>Fase Bloqueada.</strong> {lockedMessage}
           </div>
         )}
 

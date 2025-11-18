@@ -1,4 +1,4 @@
-// src/app/private/reportes/tabs/clasificados/index.tsx
+//src/app/private/reportes/tabs/clasificados/index.tsx
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
