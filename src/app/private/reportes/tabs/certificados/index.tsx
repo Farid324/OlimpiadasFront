@@ -59,8 +59,6 @@ export default function CertificadosTab() {
   });
 
   const [loadingCatalogs, setLoadingCatalogs] = useState(false);
-  const [downPremiados, setDownPremiados] = useState(false);
-  const [downParticipacion, setDownParticipacion] = useState(false);
   const [confirmType, setConfirmType] = useState<
     "PREMIADOS" | "PARTICIPACION" | null
   >(null);

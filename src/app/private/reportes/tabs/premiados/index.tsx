@@ -169,31 +169,12 @@ async function getNiveles(): Promise<NivelDTO[]> {
   );
 }
 
-async function getListaPremiados(
-  filters?: ReportFilters
-): Promise<PremiadoItemDTO[]> {
-  const { data } = await api.get<PremiadoItemDTO[]>("/reportes/premiados", {
-    params: toParams(filters),
-  });
-  return data;
-}
-
 async function exportPremiados(filters?: ReportFilters): Promise<Blob> {
   const res = await api.get("/reportes/premiados/export", {
     params: toParams(filters),
     responseType: "blob",
   });
   return res.data as Blob;
-}
-
-async function guardarOrdenPremiados(
-  id_area: number,
-  id_nivel: number,
-  orden: Array<{ id_inscripcion: number; posicion: number }>
-): Promise<void> {
-  await api.post(`/reportes/premiados/${id_area}/${id_nivel}/reordenar`, {
-    orden,
-  });
 }
 
 /* ===================== Componente ===================== */

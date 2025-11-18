@@ -1,6 +1,6 @@
 // src/components/reportes/service.ts
 import { api } from "@/libs/api";
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 
 // Resultado genérico para cualquier petición
 export type FetchResult<T> =
