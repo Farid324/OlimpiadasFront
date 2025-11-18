@@ -1,3 +1,4 @@
+//src/components/controlFases/ProgressBar.tsx
 import React from "react";
 
 export default function ProgressBar({

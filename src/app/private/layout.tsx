@@ -1,3 +1,4 @@
+//src/app/private/layout.tsx
 'use client';
 
 import { useState } from 'react';
