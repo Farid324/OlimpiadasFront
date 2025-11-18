@@ -3,8 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '@/libs/api';
 // ✨ IMPORTACIONES COMPLETAS Y ESTÉTICAS DE LUCIDE ICONS
-import { 
-    Search, 
+import {  
     Edit, 
     Settings, // Para Áreas
     Award,    // Para Oro
@@ -14,8 +13,6 @@ import {
     Save      // Para botón de guardar
 } from 'lucide-react'; 
 import { usePageHeader } from '@/contexts/pageHeader';
-import { Input } from '@/components/ui/Input'; // Aunque la barra de búsqueda se elimina, se mantiene el import por si se requiere en el futuro.
-
 /* -------------------- Types -------------------- */
 type MedalleroItem = {
   id_medallero: number;
