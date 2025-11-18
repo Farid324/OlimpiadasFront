@@ -3,7 +3,8 @@ import React, { useState } from "react";
 import ProgressBar from "./ProgressBar";
 import type { FilaFase, AccionColor, FaseActual, EstadoUI } from "./types";
 import ApprovePhaseModal from "./ApprovePhaseModal";
-import { closePhase } from "./phaseApi";
+import { closePhase, validatePhase } from "./phaseApi";
+import type { PhaseType } from "./phaseApi";
 
 function PillFilled({
   children,
@@ -72,9 +73,13 @@ function getErrorMessage(error: unknown): string {
 export default function PhaseRow({
   fila,
   onRefresh,
+  phaseType,
+  canApprove,
 }: {
   fila: FilaFase;
   onRefresh: () => void | Promise<void>;
+  phaseType: PhaseType;
+  canApprove: boolean;
 }) {
   const {
     area,
@@ -94,15 +99,18 @@ export default function PhaseRow({
   } = fila;
 
   const porcentaje =
-    progresoTotal > 0
-      ? Math.round((progresoHecho / progresoTotal) * 100)
-      : 0;
+    progresoTotal > 0 ? Math.round((progresoHecho / progresoTotal) * 100) : 0;
 
   const [open, setOpen] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   async function handleConfirm(): Promise<void> {
+    if (!canApprove) {
+      setErrorMsg("Solo el responsable del área puede aprobar la fase.");
+      return;
+    }
+
     if (!idArea || !idNivel) {
       setErrorMsg("No se pudo identificar el área y nivel de la fila.");
       return;
@@ -112,19 +120,27 @@ export default function PhaseRow({
       setLoading(true);
       setErrorMsg(null);
 
-      await closePhase(Number(idArea), Number(idNivel), {
-        type: "CLASIFICACION",
+      const idAreaNum = Number(idArea);
+      const idNivelNum = Number(idNivel);
+
+      await closePhase(idAreaNum, idNivelNum, {
+        type: phaseType,
       });
 
-      setOpen(false);
+      await validatePhase(idAreaNum, idNivelNum, {
+        type: phaseType,
+      });
+
       await onRefresh();
+      setOpen(false);
     } catch (error: unknown) {
-      // el back ya manda "aún existen evaluaciones pendientes"
       setErrorMsg(getErrorMessage(error));
     } finally {
       setLoading(false);
     }
   }
+
+  const isButtonDisabled = !!accionDisabled || !canApprove;
 
   return (
     <>
@@ -198,7 +214,7 @@ export default function PhaseRow({
           {accionLabel && (
             <button
               className={`inline-flex items-center rounded-lg px-3.5 py-2 text-xs font-medium shadow-sm focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${btnMap[accionColor]}`}
-              disabled={!!accionDisabled}
+              disabled={isButtonDisabled}
               onClick={() => setOpen(true)}
             >
               {accionLabel}

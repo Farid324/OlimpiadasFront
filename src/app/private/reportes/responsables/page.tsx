@@ -1,11 +1,18 @@
 // src/app/private/reportes/responsables/page.tsx
-'use client';
+"use client";
 
-import { useEffect, useMemo, useState } from 'react';
-import dynamic from 'next/dynamic';
-import { api } from '@/libs/api';
-import { usePageHeader } from '@/contexts/pageHeader';
-import { Users, Trophy, Medal, Lock, LockOpen, CircleCheck } from 'lucide-react';
+import { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import { api } from "@/libs/api";
+import { usePageHeader } from "@/contexts/pageHeader";
+import {
+  Users,
+  Trophy,
+  Medal,
+  Lock,
+  LockOpen,
+  CircleCheck,
+} from "lucide-react";
 
 type Resumen = {
   clasificados: number;
@@ -16,14 +23,40 @@ type Resumen = {
   totalPremiados: number;
 };
 
-type Phase = 'CLASIF' | 'FINAL';
+type Phase = "CLASIF" | "FINAL";
+type PhaseType = "CLASIFICACION" | "FINAL";
+
+type PhaseAvailability = {
+  unlocked: boolean;
+  message: string | null;
+};
+
+const defaultPhaseAvailability: PhaseAvailability = {
+  unlocked: false,
+  message: null,
+};
+
+const phaseMap: Record<Phase, PhaseType> = {
+  CLASIF: "CLASIFICACION",
+  FINAL: "FINAL",
+};
 
 /* Carga perezosa del tab reutilizado de Clasificados (mismo que Admin) */
-const ClasificadosTab = dynamic(() => import('../tabs/clasificados'), { ssr: false });
+const ClasificadosTab = dynamic(() => import("../tabs/clasificados"), {
+  ssr: false,
+});
 
 /* Helper para cargar las métricas del backend */
 const getResumen = async (): Promise<Resumen> =>
-  (await api.get<Resumen>('/reportes/clasificados/resumen')).data;
+  (await api.get<Resumen>("/reportes/clasificados/resumen")).data;
+
+async function checkAvailability(type: PhaseType): Promise<PhaseAvailability> {
+  const { data } = await api.get<{ unlocked: boolean; message: string | null }>(
+    "/phases/availability",
+    { params: { type } }
+  );
+  return data;
+}
 
 /** Card métrica individual */
 const Card = ({
@@ -46,12 +79,12 @@ const Card = ({
 
 /** Botonera de fases: Fase de Clasificación / Fase Final con candados. */
 const pillBase =
-  'px-3 py-1 text-sm rounded-full transition inline-flex items-center gap-2';
+  "px-3 py-1 text-sm rounded-full transition inline-flex items-center gap-2";
 
 const PhaseTabs = ({
   active,
   onChange,
-  finalLocked = true, // <- Si quieres habilitar Fase Final, pasa false desde el padre
+  finalLocked = true,
 }: {
   active: Phase;
   onChange: (p: Phase) => void;
@@ -62,37 +95,37 @@ const PhaseTabs = ({
     aria-label="Fases de reportes"
     className="inline-flex items-center gap-1 rounded-full bg-gray-100 p-1"
   >
-    {/* Botón: Fase de Clasificación (activa y desbloqueada) */}
+    {/* Botón: Fase de Clasificación */}
     <button
       type="button"
       role="tab"
-      aria-selected={active === 'CLASIF'}
+      aria-selected={active === "CLASIF"}
       className={`${pillBase} ${
-        active === 'CLASIF'
-          ? 'bg-white text-black shadow'
-          : 'text-gray-600 hover:bg-white hover:text-black'
+        active === "CLASIF"
+          ? "bg-white text-black shadow"
+          : "text-gray-600 hover:bg-white hover:text-black"
       }`}
-      onClick={() => onChange('CLASIF')}
+      onClick={() => onChange("CLASIF")}
     >
       Fase de Clasificación <LockOpen className="w-4 h-4 text-green-600" />
     </button>
 
-    {/* Botón: Fase Final (bloqueada por ahora) */}
+    {/* Botón: Fase Final */}
     <button
       type="button"
       role="tab"
-      aria-selected={active === 'FINAL'}
+      aria-selected={active === "FINAL"}
       aria-disabled={finalLocked}
       disabled={finalLocked}
       className={`${pillBase} ${
         finalLocked
-          ? 'text-gray-600 cursor-not-allowed'
-          : active === 'FINAL'
-          ? 'bg-white text-black shadow'
-          : 'text-gray-600 hover:bg-white hover:text-black'
+          ? "text-gray-600 cursor-not-allowed"
+          : active === "FINAL"
+          ? "bg-white text-black shadow"
+          : "text-gray-600 hover:bg-white hover:text-black"
       }`}
-      onClick={() => !finalLocked && onChange('FINAL')}
-      title={finalLocked ? 'Fase Final bloqueada' : 'Fase Final'}
+      onClick={() => !finalLocked && onChange("FINAL")}
+      title={finalLocked ? "Fase Final bloqueada" : "Fase Final"}
     >
       Fase Final <Lock className="w-4 h-4 text-red-500" />
     </button>
@@ -130,10 +163,44 @@ const SectionPillLeft = ({ children }: { children: React.ReactNode }) => (
 export default function ReportesResponsablePage() {
   const { setTitle } = usePageHeader();
   useEffect(() => {
-    setTitle('Reportes');
+    setTitle("Reportes");
   }, [setTitle]);
 
-  const [phase, setPhase] = useState<Phase>('CLASIF');
+  const [phase, setPhase] = useState<Phase>("CLASIF");
+
+  // Disponibilidad por fase
+  const [availability, setAvailability] = useState<
+    Record<PhaseType, PhaseAvailability>
+  >({
+    CLASIFICACION: defaultPhaseAvailability,
+    FINAL: defaultPhaseAvailability,
+  });
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [clasif, final] = await Promise.all([
+          checkAvailability("CLASIFICACION"),
+          checkAvailability("FINAL"),
+        ]);
+        setAvailability({
+          CLASIFICACION: clasif,
+          FINAL: final,
+        });
+      } catch {
+        setAvailability({
+          CLASIFICACION: {
+            unlocked: false,
+            message: "No fue posible verificar el estado de la fase.",
+          },
+          FINAL: {
+            unlocked: false,
+            message: "No fue posible verificar el estado de la fase.",
+          },
+        });
+      }
+    })();
+  }, []);
 
   /* ——— Métricas (cards) ——— */
   const [resumen, setResumen] = useState<Resumen | null>(null);
@@ -148,21 +215,63 @@ export default function ReportesResponsablePage() {
           bronce: 0,
           menciones: 0,
           totalPremiados: 0,
-        }),
+        })
       );
   }, []);
 
   const cards = useMemo(
     () => [
-      { k: 'clasificados', label: 'Clasificados', value: resumen?.clasificados ?? 0, icon: <Users /> },
-      { k: 'oro',          label: 'Oro',          value: resumen?.oro ?? 0,          icon: <Trophy /> },
-      { k: 'plata',        label: 'Plata',        value: resumen?.plata ?? 0,        icon: <Medal /> },
-      { k: 'bronce',       label: 'Bronce',       value: resumen?.bronce ?? 0,       icon: <Medal /> },
-      { k: 'menciones',    label: 'Menciones',    value: resumen?.menciones ?? 0,    icon: <Medal /> },
-      { k: 'total',        label: 'Total Premiados', value: resumen?.totalPremiados ?? 0, icon: <Users /> },
+      {
+        k: "clasificados",
+        label: "Clasificados",
+        value: resumen?.clasificados ?? 0,
+        icon: <Users />,
+      },
+      {
+        k: "oro",
+        label: "Oro",
+        value: resumen?.oro ?? 0,
+        icon: <Trophy />,
+      },
+      {
+        k: "plata",
+        label: "Plata",
+        value: resumen?.plata ?? 0,
+        icon: <Medal />,
+      },
+      {
+        k: "bronce",
+        label: "Bronce",
+        value: resumen?.bronce ?? 0,
+        icon: <Medal />,
+      },
+      {
+        k: "menciones",
+        label: "Menciones",
+        value: resumen?.menciones ?? 0,
+        icon: <Medal />,
+      },
+      {
+        k: "total",
+        label: "Total Premiados",
+        value: resumen?.totalPremiados ?? 0,
+        icon: <Users />,
+      },
     ],
-    [resumen],
+    [resumen]
   );
+
+  const currentPhaseType: PhaseType = phaseMap[phase];
+  const currentAvail = availability[currentPhaseType];
+  const locked = !currentAvail.unlocked;
+
+  const lockedMessage =
+    currentPhaseType === "FINAL"
+      ? "La fase final aún no ha sido aprobada. Los reportes se habilitarán una vez que des el aval correspondiente."
+      : "La fase de clasificación aún no ha sido aprobada. Los reportes se habilitarán una vez que des el aval correspondiente.";
+
+  const finalLocked = !availability.FINAL.unlocked;
+  const clasifUnlocked = availability.CLASIFICACION.unlocked;
 
   return (
     <div className="p-6 space-y-6">
@@ -173,29 +282,42 @@ export default function ReportesResponsablePage() {
         </p>
       </div>
 
-      {/* ===== Botones de fase (píldoras con candados) ===== */}
-      <PhaseTabs active={phase} onChange={setPhase} finalLocked />
+      {/* Tabs de fase con candados */}
+      <PhaseTabs active={phase} onChange={setPhase} finalLocked={finalLocked} />
 
-      {phase === 'CLASIF' && <ApprovedBanner />}
+      {/* Banner de fase aprobada SOLO cuando la de clasificación está aprobada y activa */}
+      {phase === "CLASIF" && clasifUnlocked && <ApprovedBanner />}
 
-      {/* ===== Grid de cards de métricas ===== */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6">
-        {cards.map((c) => (
-          <Card
-            key={c.k}
-            label={c.label}
-            value={c.value}
-            icon={<div className="w-6 h-6">{c.icon}</div>}
-          />
-        ))}
+      {/* Banner de bloqueo si la fase seleccionada está bloqueada */}
+      {locked && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-amber-800 text-sm">
+          <strong>Fase Bloqueada.</strong> {lockedMessage}
+        </div>
+      )}
+
+      {/* Grid de cards de métricas */}
+      <div
+        className={locked ? "opacity-50 pointer-events-none select-none" : ""}
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6">
+          {cards.map((c) => (
+            <Card
+              key={c.k}
+              label={c.label}
+              value={c.value}
+              icon={<div className="w-6 h-6">{c.icon}</div>}
+            />
+          ))}
+        </div>
       </div>
 
-      {/* ===== Píldora/título de sección alineada a la izquierda ===== */}
-      <SectionPillLeft>Clasificados</SectionPillLeft>
-
-      {/* ===== Contenido compartido: tabla/lista de Clasificados ===== */}
-      <ClasificadosTab />
+      {/* Título de sección + contenido (por ahora solo Clasificados) */}
+      <div
+        className={locked ? "opacity-50 pointer-events-none select-none" : ""}
+      >
+        <SectionPillLeft>Clasificados</SectionPillLeft>
+        <ClasificadosTab />
+      </div>
     </div>
   );
 }
-

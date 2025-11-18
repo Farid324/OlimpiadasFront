@@ -7,118 +7,208 @@ import { fetchControlFases } from "@/components/controlFases/service";
 import type { ControlFasesResponse } from "@/components/controlFases/types";
 import StatCard from "@/components/controlFases/StatCard";
 import PhaseTable from "@/components/controlFases/PhaseTable";
+import { useAuth } from "@/hooks/useAuth";
+import RoleGate from "@/components/features/RoleGate";
 
-// Tipo genérico para errores
+type PhaseTab = "CLASIFICACION" | "FINAL";
+
 interface AppError {
   message?: string;
 }
 
+const PhaseTabsCF = ({
+  active,
+  onChange,
+  shouldLoadFinal,
+}: {
+  active: PhaseTab;
+  onChange: (p: PhaseTab) => void;
+  shouldLoadFinal: () => void;
+}) => (
+  <div className="inline-flex items-center gap-1 rounded-full bg-gray-100 p-1">
+    <button
+      type="button"
+      className={[
+        "px-3 py-1 text-sm rounded-full transition",
+        active === "CLASIFICACION"
+          ? "bg-white text-black shadow"
+          : "text-gray-600 hover:bg-white hover:text-black",
+      ].join(" ")}
+      onClick={() => {
+        onChange("CLASIFICACION");
+      }}
+    >
+      Fase Clasificatoria
+    </button>
+    <button
+      type="button"
+      className={[
+        "px-3 py-1 text-sm rounded-full transition",
+        active === "FINAL"
+          ? "bg-white text-black shadow"
+          : "text-gray-600 hover:bg-white hover:text-black",
+      ].join(" ")}
+      onClick={() => {
+        onChange("FINAL");
+        shouldLoadFinal();
+      }}
+    >
+      Fase Final
+    </button>
+  </div>
+);
+
 export default function ControlFasesPage() {
   const { setTitle } = usePageHeader();
-  const [data, setData] = useState<ControlFasesResponse | null>(null);
+  const { user } = useAuth();
+
+  const canApprove =
+    user?.role === "RESPONSABLE_DE_AREA";
+
+  const [activePhase, setActivePhase] = useState<PhaseTab>("CLASIFICACION");
+
+  const [dataByPhase, setDataByPhase] = useState<{
+    CLASIFICACION: ControlFasesResponse | null;
+    FINAL: ControlFasesResponse | null;
+  }>({
+    CLASIFICACION: null,
+    FINAL: null,
+  });
+
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => setTitle("Control de Fases"), [setTitle]);
 
-  const load = async (): Promise<void> => {
+  const load = async (phase: PhaseTab): Promise<void> => {
     try {
       setLoading(true);
-      const d = await fetchControlFases();
-      setData(d);
+      const d = await fetchControlFases(phase);
+      setDataByPhase((prev) => ({ ...prev, [phase]: d }));
       setError(null);
     } catch (e: unknown) {
       const err = e as AppError;
       setError(err?.message || "No se pudo cargar la información.");
-      setData(null);
+      setDataByPhase((prev) => ({ ...prev, [phase]: null }));
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    void load();
+    void load("CLASIFICACION");
   }, []);
 
-  // Estado de carga inicial (mismo look de card blanca)
+  const data = dataByPhase[activePhase];
+
   if (loading && !data) {
     return (
-      <div className="p-6">
-        <div className="bg-white rounded-lg shadow p-4 text-gray-600">
-          Cargando…
+      <RoleGate allow={["ADMINISTRADOR", "RESPONSABLE_DE_AREA"]}>
+        <div className="p-6">
+          <div className="bg-white rounded-lg shadow p-4 text-gray-600">
+            Cargando…
+          </div>
         </div>
-      </div>
+      </RoleGate>
     );
   }
 
-  // Estado sin datos (mismo estilo de tarjetas)
   if (!data) {
     return (
-      <div className="p-6 space-y-4">
-        {error && (
-          <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-amber-700 text-sm">
-            {error}
+      <RoleGate allow={["ADMINISTRADOR", "RESPONSABLE_DE_AREA"]}>
+        <div className="p-6 space-y-4">
+          {error && (
+            <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-amber-700 text-sm">
+              {error}
+            </div>
+          )}
+          <div className="bg-white rounded-lg shadow p-4 text-gray-600">
+            No hay datos para mostrar.
           </div>
-        )}
-        <div className="bg-white rounded-lg shadow p-4 text-gray-600">
-          No hay datos para mostrar.
         </div>
-      </div>
+      </RoleGate>
     );
   }
 
   const { kpis, filas } = data;
 
+  const title =
+    activePhase === "CLASIFICACION"
+      ? "Fase Clasificatoria – Estado por Área / Nivel"
+      : "Fase Final – Estado por Área / Nivel";
+
+  const subtitle =
+    activePhase === "CLASIFICACION"
+      ? "Control y aprobación de la fase clasificatoria por área"
+      : "Control y aprobación de la fase final por área";
+
   return (
-    <div className="p-6 space-y-6">
-      {/* Mensaje de error (si lo hay) */}
-      {error && (
-        <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-amber-700 text-sm">
-          {error}
+    <RoleGate allow={["ADMINISTRADOR", "RESPONSABLE_DE_AREA"]}>
+      <div className="p-6 space-y-6">
+        {error && (
+          <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-amber-700 text-sm">
+            {error}
+          </div>
+        )}
+
+        {/* Header + Tabs */}
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h1 className="text-2xl font-bold text-black">Control de Fases</h1>
+            <p className="text-gray-500 text-sm">
+              Gestión y aprobación de fases de evaluación por área
+            </p>
+          </div>
+
+          <PhaseTabsCF
+            active={activePhase}
+            onChange={(p) => {
+              setActivePhase(p);
+            }}
+            shouldLoadFinal={() => {
+              if (!dataByPhase.FINAL) {
+                void load("FINAL");
+              }
+            }}
+          />
         </div>
-      )}
 
-      {/* Header de página (alineado con Responsables / Evaluaciones) */}
-      <div>
-        <h1 className="text-2xl font-bold text-black">Control de Fases</h1>
-        <p className="text-gray-500 text-sm">
-          Gestión y aprobación de fases de evaluación por área
-        </p>
-      </div>
+        {/* KPIs */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            title="Evaluaciones Completadas"
+            value={kpis.evaluacionesCompletadas.valor}
+            subtitle={`de ${kpis.evaluacionesCompletadas.total} totales`}
+          />
+          <StatCard
+            title="Fases Completadas"
+            value={kpis.fasesCompletadas.valor}
+            subtitle={`de ${kpis.fasesCompletadas.total} áreas`}
+          />
+          <StatCard
+            title="Aprobaciones Pendientes"
+            value={kpis.aprobacionesPendientes.valor}
+            subtitle={kpis.aprobacionesPendientes.nota}
+          />
+          <StatCard
+            title="Progreso General"
+            value={`${kpis.progresoGeneral.porcentaje}%`}
+            subtitle={kpis.progresoGeneral.nota}
+          />
+        </div>
 
-      {/* KPIs en grid, manteniendo el mismo tipo de separación y estilo de cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Evaluaciones Completadas"
-          value={kpis.evaluacionesCompletadas.valor}
-          subtitle={`de ${kpis.evaluacionesCompletadas.total} totales`}
-        />
-        <StatCard
-          title="Fases Completadas"
-          value={kpis.fasesCompletadas.valor}
-          subtitle={`de ${kpis.fasesCompletadas.total} áreas`}
-        />
-        <StatCard
-          title="Aprobaciones Pendientes"
-          value={kpis.aprobacionesPendientes.valor}
-          subtitle={kpis.aprobacionesPendientes.nota}
-        />
-        <StatCard
-          title="Progreso General"
-          value={`${kpis.progresoGeneral.porcentaje}%`}
-          subtitle={kpis.progresoGeneral.nota}
-        />
+        {/* Tabla */}
+        <div className="bg-white rounded-lg shadow p-4">
+          <PhaseTable
+            title={title}
+            subtitle={subtitle}
+            filas={filas}
+            onRefresh={() => load(activePhase)}
+            phaseType={activePhase}
+            canApprove={canApprove}
+          />
+        </div>
       </div>
-
-      {/* Tabla dentro de una card blanca, como en Responsables/Evaluaciones */}
-      <div className="bg-white rounded-lg shadow p-4">
-        <PhaseTable
-          title="Estado de fases por Área"
-          subtitle="Control y Aprobación de Fases de Evaluación"
-          filas={filas}
-          onRefresh={load}
-        />
-      </div>
-    </div>
+    </RoleGate>
   );
 }
