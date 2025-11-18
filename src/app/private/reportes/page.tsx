@@ -246,8 +246,9 @@ export default function ReportesPage() {
   }, []);
 
   // KPIs clasificados
-  const [resumenClasif, setResumenClasif] =
-    useState<ReportResumenDTO | null>(null);
+  const [resumenClasif, setResumenClasif] = useState<ReportResumenDTO | null>(
+    null
+  );
 
   useEffect(() => {
     getResumenClasificados()
@@ -329,7 +330,6 @@ export default function ReportesPage() {
     phaseOfTab === "CLASIFICACION"
       ? !clasifAvail.unlocked
       : !finalAvail.unlocked;
-  // OJO: aquí sigues usando unlocked como locked (es lo que ya tenías).
 
   return (
     <RoleGate allow={["ADMINISTRADOR"]}>

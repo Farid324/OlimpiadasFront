@@ -1,14 +1,14 @@
 // src/components/reportes/CeremoniaExportModal.tsx
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { X } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { X } from "lucide-react";
 import {
   exportCeremoniaExcel,
   getCeremoniaResumen,
   getCeremoniaLista,
   type CeremoniaResumen,
-} from '@/components/reportes/ceremonia.service';
+} from "@/components/reportes/ceremonia.service";
 
 type Filters = {
   id_area?: number | null;
@@ -90,7 +90,7 @@ export default function CeremoniaExportModal({
       onClose();
     } catch (e) {
       console.error(e);
-      alert('No se pudo exportar el Excel. Intenta nuevamente.');
+      alert("No se pudo exportar el Excel. Intenta nuevamente.");
     } finally {
       setDownloading(false);
     }
@@ -102,7 +102,6 @@ export default function CeremoniaExportModal({
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-3">
       <div className="w-full max-w-xl rounded-2xl bg-white shadow-xl">
-        
         {/* HEADER */}
         <div className="flex items-center justify-between border-b px-6 py-4">
           <h3 className="text-lg font-semibold text-gray-900">
@@ -128,7 +127,6 @@ export default function CeremoniaExportModal({
               <div className="text-sm text-gray-500">Cargando resumen…</div>
             ) : (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 text-gray-900">
-
                 {/* Fila 1 */}
                 <Info label="Área" value={areaNombre} />
                 <Info label="Nivel" value={nivelNombre} />
@@ -146,10 +144,12 @@ export default function CeremoniaExportModal({
                     <CardCount label="Oro" value={resumen?.oro ?? 0} />
                     <CardCount label="Plata" value={resumen?.plata ?? 0} />
                     <CardCount label="Bronce" value={resumen?.bronce ?? 0} />
-                    <CardCount label="Menciones" value={resumen?.mencion ?? 0} />
+                    <CardCount
+                      label="Menciones"
+                      value={resumen?.mencion ?? 0}
+                    />
                   </div>
                 </div>
-
               </div>
             )}
           </div>
@@ -169,7 +169,7 @@ export default function CeremoniaExportModal({
             disabled={loading || downloading}
             className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
           >
-            {downloading ? 'Exportando…' : 'Exportar .xlsx'}
+            {downloading ? "Exportando…" : "Exportar .xlsx"}
           </button>
         </div>
       </div>

@@ -4,7 +4,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { api } from "@/libs/api";
-import { Download, ChevronDown, ArrowDownUp, Save } from "lucide-react";
+import { Download, ChevronDown } from "lucide-react";
+import { getPremiadosLista as getPremiadosListaSvc } from "@/components/reportes/service";
 
 /* ===================== Tipos ===================== */
 type EstadoPremio = "ORO" | "PLATA" | "BRONCE" | "MENCION" | "TODOS";
@@ -109,6 +110,46 @@ function sortRows(rows: PremiadoItemDTO[], asc: boolean): PremiadoItemDTO[] {
   return copy;
 }
 
+/* ====== Icono de orden (tabla) ====== */
+function SortPosIconDual({
+  asc,
+  className,
+}: {
+  asc: boolean;
+  className?: string;
+}) {
+  const active = "#1a73e8";
+  const inactive = "#cbd5e1";
+  const strokeW = 2;
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      aria-hidden="true"
+    >
+      <g
+        stroke={asc ? inactive : active}
+        strokeWidth={strokeW}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M7 3v14" />
+        <path d="M4 16l3 3 3-3" />
+      </g>
+      <g
+        stroke={asc ? active : inactive}
+        strokeWidth={strokeW}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M17 21V7" />
+        <path d="M14 10l3-3 3 3" />
+      </g>
+    </svg>
+  );
+}
+
 /* ===================== API ===================== */
 async function getAreas(): Promise<AreaDTO[]> {
   const { data } = await api.get("/areas");
@@ -176,7 +217,6 @@ export default function PremiadosTab({
   const [loadingCatalogs, setLoadingCatalogs] = useState(true);
   const [loadingRows, setLoadingRows] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [savingOrder, setSavingOrder] = useState(false);
   const [orderAsc, setOrderAsc] = useState<boolean>(true);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
@@ -259,26 +299,19 @@ export default function PremiadosTab({
     }
   };
 
-  /* ===== Guardar orden ===== */
-  const doGuardarOrden = async () => {
-    if (!filters.id_area || !filters.id_nivel) {
-      alert("Seleccione un área y un nivel antes de guardar el orden.");
-      return;
+  async function getListaPremiados(
+    filters?: ReportFilters
+  ): Promise<PremiadoItemDTO[]> {
+    const res = await getPremiadosListaSvc({
+      id_area: filters?.id_area ?? undefined,
+      id_nivel: filters?.id_nivel ?? undefined,
+      estado: filters?.estado ?? undefined,
+    });
+    if (!res.ok) {
+      return [];
     }
-    setSavingOrder(true);
-    try {
-      const payload = sortedRows.map((r, i) => ({
-        id_inscripcion: r.id_inscripcion,
-        posicion: i + 1,
-      }));
-      await guardarOrdenPremiados(filters.id_area, filters.id_nivel, payload);
-      alert("Orden guardado correctamente.");
-    } catch {
-      alert("Error al guardar el orden.");
-    } finally {
-      setSavingOrder(false);
-    }
-  };
+    return res.data;
+  }
 
   /* ===== UI ===== */
   return (
@@ -390,10 +423,16 @@ export default function PremiadosTab({
                 type="button"
                 onClick={() => setOrderAsc((v) => !v)}
                 aria-pressed={orderAsc}
+                aria-label={
+                  orderAsc
+                    ? "Ordenar posición descendente"
+                    : "Ordenar posición ascendente"
+                }
                 title={orderAsc ? "Posición ↓" : "Posición ↑"}
-                className="inline-flex items-center justify-center rounded-md p-2"
+                className="inline-flex items-center justify-center rounded-md p-2 cursor-pointer select-none focus:outline-none focus-visible:outline-none"
+                data-testid="btn-sort-pos"
               >
-                <ArrowDownUp className="w-5 h-5" />
+                <SortPosIconDual asc={orderAsc} className="w-7 h-7" />
               </button>
 
               <Button
@@ -403,15 +442,6 @@ export default function PremiadosTab({
               >
                 <Download className="mr-2 w-4 h-4" />
                 {loadingExport ? "Exportando…" : "Exportar Lista"}
-              </Button>
-
-              <Button
-                onClick={doGuardarOrden}
-                disabled={savingOrder || total === 0}
-                className="bg-emerald-600 hover:bg-emerald-700"
-              >
-                <Save className="mr-2 w-4 h-4" />
-                {savingOrder ? "Guardando…" : "Guardar orden"}
               </Button>
             </div>
           </div>

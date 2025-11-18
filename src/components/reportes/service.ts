@@ -1,5 +1,6 @@
 // src/components/reportes/service.ts
 import { api } from "@/libs/api";
+import axios, { AxiosError } from "axios";
 
 // Resultado genérico para cualquier petición
 export type FetchResult<T> =
@@ -14,6 +15,27 @@ interface AxiosErrorResponse {
       message?: string | string[];
     };
   };
+}
+
+interface ApiErrorResponse {
+  message?: string;
+}
+
+function handleExportError(error: unknown): never {
+  const defaultMessage = "No se pudo exportar.";
+
+  if (axios.isAxiosError<ApiErrorResponse>(error)) {
+    const status = error.response?.status;
+    const msg = error.response?.data?.message ?? defaultMessage;
+
+    if (status === 423) {
+      throw new Error(`LOCKED::${msg}`);
+    }
+
+    throw new Error(msg);
+  }
+
+  throw new Error(defaultMessage);
 }
 
 async function parseErrorAxios(
@@ -203,21 +225,38 @@ type CertParams = {
   anio?: number;
 };
 
-export async function exportCertificadosPremiados(params?: CertParams) {
-  const { data } = await api.get("/reportes/certificados/premiados/export", {
-    params,
-    responseType: "blob",
-  });
-  return data as Blob;
+export async function exportCertificadosParticipacion(
+  params?: CertParams
+): Promise<Blob> {
+  try {
+    const { data } = await api.get<Blob>(
+      "/reportes/certificados/participacion/export",
+      {
+        params,
+        responseType: "blob",
+      }
+    );
+
+    return data;
+  } catch (error: unknown) {
+    handleExportError(error);
+  }
 }
 
-export async function exportCertificadosParticipacion(params?: CertParams) {
-  const { data } = await api.get(
-    "/reportes/certificados/participacion/export",
-    {
-      params,
-      responseType: "blob",
-    }
-  );
-  return data as Blob;
+export async function exportCertificadosPremiados(
+  params?: CertParams
+): Promise<Blob> {
+  try {
+    const { data } = await api.get<Blob>(
+      "/reportes/certificados/premiados/export",
+      {
+        params,
+        responseType: "blob",
+      }
+    );
+
+    return data;
+  } catch (error: unknown) {
+    handleExportError(error);
+  }
 }

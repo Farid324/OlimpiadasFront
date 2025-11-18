@@ -20,6 +20,7 @@ type Filters = {
 };
 
 const NIVEL_ORDER: Record<string, number> = { Secundaria: 0, Primaria: 1 };
+const STORAGE_KEY = "reportes:certificados:filters:v1";
 
 const pick = (o: Record<string, unknown> | null | undefined, keys: string[]) =>
   keys.map((k) => o?.[k]).find((v) => v !== undefined && v !== null);
@@ -46,14 +47,46 @@ function mapCatalog<T extends { id: number; nombre: string }>(
 export default function CertificadosTab() {
   const [areas, setAreas] = useState<AreaDTO[]>([]);
   const [niveles, setNiveles] = useState<NivelDTO[]>([]);
-  const [filters, setFilters] = useState<Filters>({
-    id_area: null,
-    id_nivel: null,
+  const [filters, setFilters] = useState<Filters>(() => {
+    if (typeof window === "undefined") {
+      return { id_area: null, id_nivel: null };
+    }
+    try {
+      const raw = sessionStorage.getItem(STORAGE_KEY);
+      if (raw) return JSON.parse(raw) as Filters;
+    } catch {}
+    return { id_area: null, id_nivel: null };
   });
 
   const [loadingCatalogs, setLoadingCatalogs] = useState(false);
   const [downPremiados, setDownPremiados] = useState(false);
   const [downParticipacion, setDownParticipacion] = useState(false);
+  const [confirmType, setConfirmType] = useState<
+    "PREMIADOS" | "PARTICIPACION" | null
+  >(null);
+  const [loadingExport, setLoadingExport] = useState(false);
+
+  // labels para el modal
+  const getAreaLabel = () =>
+    filters.id_area == null
+      ? "—"
+      : filters.id_area === 0
+      ? "Todas las áreas"
+      : areas.find((a) => a.id === filters.id_area)?.nombre ??
+        String(filters.id_area);
+
+  const getNivelLabel = () =>
+    filters.id_nivel == null
+      ? "—"
+      : filters.id_nivel === 0
+      ? "Todos los niveles"
+      : niveles.find((n) => n.id === filters.id_nivel)?.nombre ??
+        String(filters.id_nivel);
+
+  const tipoLabel =
+    confirmType === "PREMIADOS"
+      ? "Certificados de Premiación"
+      : "Certificados de Participación";
 
   // cargar catálogos
   useEffect(() => {
@@ -94,9 +127,15 @@ export default function CertificadosTab() {
     };
   }, []);
 
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(filters));
+    } catch {}
+  }, [filters]);
+
   const handleExportPremiados = async () => {
     try {
-      setDownPremiados(true);
+      setLoadingExport(true);
       const blob = await exportCertificadosPremiados({
         id_area: filters.id_area ?? undefined,
         id_nivel: filters.id_nivel ?? undefined,
@@ -110,16 +149,16 @@ export default function CertificadosTab() {
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (e) {
-      console.error("Error al exportar premiados:", e); // <-- Aquí la usas
+      console.error("Error al exportar premiados:", e);
       alert("No se pudo exportar los certificados de premiación.");
     } finally {
-      setDownPremiados(false);
+      setLoadingExport(false);
     }
   };
 
   const handleExportParticipacion = async () => {
     try {
-      setDownParticipacion(true);
+      setLoadingExport(true);
       const blob = await exportCertificadosParticipacion({
         id_area: filters.id_area ?? undefined,
         id_nivel: filters.id_nivel ?? undefined,
@@ -133,14 +172,98 @@ export default function CertificadosTab() {
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (e) {
-      console.error("Error al exportar participación:", e); // <-- Aquí la usas
+      console.error("Error al exportar participación:", e);
       alert("No se pudo exportar los certificados de participación.");
     } finally {
-      setDownParticipacion(false);
+      setLoadingExport(false);
     }
   };
 
   const disable = loadingCatalogs;
+
+  {
+    confirmType && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3">
+        {/* Backdrop */}
+        <div
+          className="absolute inset-0 bg-black/40"
+          onClick={() => setConfirmType(null)}
+        />
+
+        {/* Card */}
+        <div className="relative z-10 w-full max-w-sm rounded-2xl bg-white shadow-2xl">
+          {/* Close */}
+          <button
+            onClick={() => setConfirmType(null)}
+            aria-label="Cerrar"
+            className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl leading-none"
+          >
+            ✕
+          </button>
+
+          {/* Header */}
+          <div className="px-5 pt-5 pb-2">
+            <h3 className="text-base font-semibold text-slate-900">
+              Exportar {tipoLabel}
+            </h3>
+            <p className="text-sm text-slate-500 mt-1">
+              Se exportará un Excel con los filtros seleccionados.
+            </p>
+          </div>
+
+          {/* Resumen */}
+          <div className="px-5 mt-3">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50">
+              <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
+                <div>
+                  <div className="text-xs text-gray-400">Área</div>
+                  <div className="mt-1 text-base font-semibold text-slate-900">
+                    {getAreaLabel()}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-400">Nivel</div>
+                  <div className="mt-1 text-base font-semibold text-slate-900">
+                    {getNivelLabel()}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-400">Tipo de lista</div>
+                  <div className="mt-1 text-base font-semibold text-slate-900">
+                    {tipoLabel}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="px-5 py-4 flex items-center justify-end gap-3">
+            <button
+              onClick={() => setConfirmType(null)}
+              className="rounded-lg border px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={async () => {
+                if (confirmType === "PREMIADOS") {
+                  await handleExportPremiados();
+                } else {
+                  await handleExportParticipacion();
+                }
+                setConfirmType(null);
+              }}
+              disabled={loadingExport}
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+            >
+              {loadingExport ? "Exportando…" : "Exportar .xlsx"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -242,12 +365,12 @@ export default function CertificadosTab() {
             </div>
             <button
               type="button"
-              onClick={handleExportPremiados}
-              disabled={disable || downPremiados}
+              onClick={() => setConfirmType("PREMIADOS")}
+              disabled={disable}
               className="inline-flex items-center gap-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm transition disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <FiDownload className="w-4 h-4" />
-              {downPremiados ? "Exportando…" : "Exportar Excel"}
+              Exportar Excel
             </button>
           </div>
 
@@ -266,12 +389,12 @@ export default function CertificadosTab() {
             </div>
             <button
               type="button"
-              onClick={handleExportParticipacion}
-              disabled={disable || downParticipacion}
+              onClick={() => setConfirmType("PARTICIPACION")}
+              disabled={disable}
               className="inline-flex items-center gap-2 rounded-md bg-white border border-slate-200 hover:bg-slate-50 text-slate-800 px-4 py-2 text-sm transition disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <FiDownload className="w-4 h-4" />
-              {downParticipacion ? "Exportando…" : "Exportar Excel"}
+              Exportar Excel
             </button>
           </div>
         </div>
