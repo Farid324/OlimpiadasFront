@@ -182,7 +182,7 @@ export default function MedalleroConfigPage() {
 
   /* -------------------- Render -------------------- */
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen text-gray-900">
+   <div className="p-6 space-y-6 text-gray-900">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-black">Configuración de Medallero</h1>

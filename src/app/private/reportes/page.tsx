@@ -20,6 +20,14 @@ type ReportResumenDTO = {
   totalPremiados: number;
 };
 
+type CeremoniaResumenDTO = {
+  total: number;
+  oro: number;
+  plata: number;
+  bronce: number;
+  mencion: number;
+};
+
 type PhaseType = "CLASIFICACION" | "FINAL";
 type TabKey =
   | "Clasificados"
@@ -31,6 +39,13 @@ type TabKey =
 async function getResumenClasificados(): Promise<ReportResumenDTO> {
   const { data } = await api.get<ReportResumenDTO>(
     "/reportes/clasificados/resumen"
+  );
+  return data;
+}
+
+async function getResumenCeremonia(): Promise<CeremoniaResumenDTO> {
+  const { data } = await api.get<CeremoniaResumenDTO>(
+    "/reportes/ceremonia/resumen"
   );
   return data;
 }
@@ -161,7 +176,7 @@ function SegmentedTabs({
 }
 
 /* ==========================================
-   Carga perezosa de pestañas (tipadas con prop)
+   Carga perezosa de pestañas
    ========================================== */
 type TabProps = { disabled?: boolean };
 
@@ -230,13 +245,15 @@ export default function ReportesPage() {
     })();
   }, []);
 
-  // KPIs (si no hay BE, muestra 0 sin romper)
-  const [resumen, setResumen] = useState<ReportResumenDTO | null>(null);
+  // KPIs clasificados
+  const [resumenClasif, setResumenClasif] =
+    useState<ReportResumenDTO | null>(null);
+
   useEffect(() => {
     getResumenClasificados()
-      .then(setResumen)
+      .then(setResumenClasif)
       .catch(() =>
-        setResumen({
+        setResumenClasif({
           clasificados: 0,
           oro: 0,
           plata: 0,
@@ -247,57 +264,72 @@ export default function ReportesPage() {
       );
   }, []);
 
-  const cards = useMemo(
-    () => [
+  // KPIs ceremonia (premios)
+  const [resumenCeremonia, setResumenCeremonia] =
+    useState<CeremoniaResumenDTO | null>(null);
+
+  useEffect(() => {
+    getResumenCeremonia()
+      .then(setResumenCeremonia)
+      .catch(() => setResumenCeremonia(null));
+  }, []);
+
+  // Cards: siempre usamos los premios desde Ceremonia
+  const cards = useMemo(() => {
+    const oro = resumenCeremonia?.oro ?? 0;
+    const plata = resumenCeremonia?.plata ?? 0;
+    const bronce = resumenCeremonia?.bronce ?? 0;
+    const menciones = resumenCeremonia?.mencion ?? 0;
+    const totalPremiados = resumenCeremonia?.total ?? 0;
+
+    return [
       {
         key: "clasificados",
         label: "Clasificados",
-        value: resumen?.clasificados ?? 0,
+        value: resumenClasif?.clasificados ?? 0,
         icon: <Users className="w-6 h-6" />,
       },
       {
         key: "oro",
         label: "Oro",
-        value: resumen?.oro ?? 0,
+        value: oro,
         icon: <Trophy className="w-6 h-6" />,
       },
       {
         key: "plata",
         label: "Plata",
-        value: resumen?.plata ?? 0,
+        value: plata,
         icon: <Medal className="w-6 h-6" />,
       },
       {
         key: "bronce",
         label: "Bronce",
-        value: resumen?.bronce ?? 0,
+        value: bronce,
         icon: <Medal className="w-6 h-6" />,
       },
       {
         key: "menciones",
         label: "Menciones",
-        value: resumen?.menciones ?? 0,
+        value: menciones,
         icon: <Medal className="w-6 h-6" />,
       },
       {
         key: "total",
         label: "Total Premiados",
-        value: resumen?.totalPremiados ?? 0,
+        value: totalPremiados,
         icon: <Users className="w-6 h-6" />,
       },
-    ],
-    [resumen]
-  );
+    ];
+  }, [resumenClasif, resumenCeremonia]);
 
   // Fase que controla la pestaña activa y bloqueo
   const phaseOfTab: PhaseType =
     active === "Clasificados" ? "CLASIFICACION" : "FINAL";
   const locked =
     phaseOfTab === "CLASIFICACION"
-      ? !clasifAvail.unlocked
+      ? clasifAvail.unlocked
       : finalAvail.unlocked;
-  /*const lockMsg =
-    phaseOfTab === "CLASIFICACION" ? clasifAvail.message : finalAvail.message;*/
+  // OJO: aquí sigues usando unlocked como locked (es lo que ya tenías).
 
   return (
     <RoleGate allow={["ADMINISTRADOR"]}>
@@ -319,7 +351,7 @@ export default function ReportesPage() {
           <SegmentedTabs active={active} onChange={setActive} />
         </div>
 
-        {/* Banner de bloqueo (amarillo) */}
+        {/* Banner de bloqueo */}
         {locked && (
           <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-amber-800 text-sm">
             <strong>Fase Bloqueada.</strong>{" "}
@@ -329,7 +361,7 @@ export default function ReportesPage() {
           </div>
         )}
 
-        {/* Cards (visibles pero “congeladas” si está bloqueado) */}
+        {/* Cards */}
         <div
           className={locked ? "opacity-50 pointer-events-none select-none" : ""}
         >
@@ -345,7 +377,7 @@ export default function ReportesPage() {
           </div>
         </div>
 
-        {/* Contenido del tab (congelado si bloqueado) */}
+        {/* Contenido del tab */}
         <div
           className={locked ? "opacity-50 pointer-events-none select-none" : ""}
         >

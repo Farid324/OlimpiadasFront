@@ -3,22 +3,25 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Award, ChevronDown } from 'lucide-react';
-import { exportCeremoniaExcel } from '@/components/reportes/ceremonia.service';
 import { api } from '@/libs/api';
+import CeremoniaExportModal from '@/components/reportes/CeremoniaExportModal';
+import { getCeremoniaLista } from '@/components/reportes/ceremonia.service';
 
 type Filters = {
   id_area?: number | null;
   id_nivel?: number | null;
+  anio?: number | null;
+  q?: string | null;
 };
 
 type AreaDTO = { id: number; nombre: string };
 type NivelDTO = { id: number; nombre: string };
 
 const STORAGE_KEY = 'reportes:ceremonia:filters:v1';
-const DEFAULT_FILTERS: Filters = { id_area: null, id_nivel: null };
+const DEFAULT_FILTERS: Filters = { id_area: null, id_nivel: null, anio: null, q: null };
 
 const pick = (o: Record<string, unknown> | null | undefined, keys: string[]) =>
-  keys.map(k => o?.[k]).find(v => v !== undefined && v !== null);
+  keys.map((k) => o?.[k]).find((v) => v !== undefined && v !== null);
 
 function mapCatalog<T extends { id: number; nombre: string }>(
   data: unknown,
@@ -53,14 +56,18 @@ export default function CeremoniaTab() {
     try {
       const raw = sessionStorage.getItem(STORAGE_KEY);
       if (raw) return JSON.parse(raw) as Filters;
-    } catch {}
+    } catch {
+      // ignore
+    }
     return DEFAULT_FILTERS;
   });
 
   useEffect(() => {
     try {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(filters));
-    } catch {}
+    } catch {
+      // ignore
+    }
   }, [filters]);
 
   const [areas, setAreas] = useState<AreaDTO[]>([]);
@@ -95,117 +102,163 @@ export default function CeremoniaTab() {
     [niveles],
   );
 
-  const [loadingExport, setLoadingExport] = useState(false);
-  const handleExport = async () => {
-    try {
-      setLoadingExport(true);
-      await exportCeremoniaExcel({
-        id_area: filters.id_area ?? undefined, // ✅ claves correctas
-        id_nivel: filters.id_nivel ?? undefined,
-      });
-    } catch (err) {
-      console.error('Error al generar la lista de ceremonia:', err);
-      alert('No se pudo generar el Excel. Intenta nuevamente.');
-    } finally {
-      setLoadingExport(false);
-    }
-  };
+  // === Modal de confirmación ===
+  const [openModal, setOpenModal] = useState(false);
+  const [checkingExport, setCheckingExport] = useState(false);
+
+  const areaNombre =
+    filters.id_area == null || filters.id_area === 0
+      ? 'Todas las áreas'
+      : safeAreas.find((a) => a.id === filters.id_area)?.nombre ?? '—';
+
+  const nivelNombre =
+    filters.id_nivel == null || filters.id_nivel === 0
+      ? 'Todos los niveles'
+      : safeNiveles.find((n) => n.id === filters.id_nivel)?.nombre ?? '—';
 
   const areaPlaceholder = filters.id_area == null;
   const nivelPlaceholder = filters.id_nivel == null;
 
+  // Handler del botón: NO abrir modal si no hay datos que exportar
+  const handleClickExport = async () => {
+    try {
+      setCheckingExport(true);
+
+      const lista = await getCeremoniaLista({
+        id_area: filters.id_area ?? undefined,
+        id_nivel: filters.id_nivel ?? undefined,
+        anio: filters.anio ?? undefined,
+        q: filters.q ?? undefined,
+      });
+
+      const count = Array.isArray(lista) ? lista.length : 0;
+
+      if (count === 0) {
+        alert('No hay premiados para los filtros seleccionados. Ajusta los filtros antes de exportar.');
+        return;
+      }
+
+      // Sí hay datos → recién abrimos el modal
+      setOpenModal(true);
+    } catch (err) {
+      console.error('Error al verificar datos de ceremonia:', err);
+      alert('No se pudo verificar si hay datos para exportar. Intenta nuevamente.');
+    } finally {
+      setCheckingExport(false);
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {/* Área */}
-          <div className="relative">
-            <select
-              className={`h-11 w-full appearance-none rounded-md border px-3 pr-9 ${
-                areaPlaceholder ? 'text-gray-500' : 'text-black'
-              }`}
-              value={filters.id_area ?? ''}
-              onChange={(e) =>
-                setFilters((f) => ({ ...f, id_area: e.target.value === '' ? null : Number(e.target.value) }))
-              }
-              aria-label="Filtrar por área"
-              disabled={loadingCatalogs}
-            >
-              <option value="" disabled hidden style={{ color: '#6B7280' }}>
-                Filtrar por área
-              </option>
-              <option value={0} style={{ color: '#111827' }}>
-                Todas las áreas
-              </option>
-              {safeAreas.map((a) => (
-                <option key={`area-${a.id}`} value={a.id} style={{ color: '#111827' }}>
-                  {a.nombre}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-          </div>
-
-          {/* Nivel */}
-          <div className="relative">
-            <select
-              className={`h-11 w-full appearance-none rounded-md border px-3 pr-9 ${
-                nivelPlaceholder ? 'text-gray-500' : 'text-black'
-              }`}
-              value={filters.id_nivel ?? ''}
-              onChange={(e) =>
-                setFilters((f) => ({ ...f, id_nivel: e.target.value === '' ? null : Number(e.target.value) }))
-              }
-              aria-label="Filtrar por nivel"
-              disabled={loadingCatalogs}
-            >
-              <option value="" disabled hidden style={{ color: '#6B7280' }}>
-                Filtrar por nivel
-              </option>
-              <option value={0} style={{ color: '#111827' }}>
-                Todos los niveles
-              </option>
-              {safeNiveles.map((n) => (
-                <option key={`nivel-${n.id}`} value={n.id} style={{ color: '#111827' }}>
-                  {n.nombre}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-          </div>
-        </div>
-      </div>
-
-      <section className="bg-white rounded-lg shadow">
-        <header className="px-6 pt-6">
-          <h2 className="text-base md:text-lg font-semibold text-gray-900">Formato para Ceremonia</h2>
-          <p className="text-gray-500 text-sm">
-            Listas especialmente formateadas para la ceremonia de premiación
-          </p>
-        </header>
-
-        <div className="px-6">
-          <hr className="mt-4 border-gray-200" />
-        </div>
-
-        <div className="p-6">
-          <div className="border border-gray-200 rounded-lg p-8 flex flex-col items-center justify-center text-center bg-gray-50">
-            <div className="flex flex-col items-center justify-center space-y-2">
-              <Award className="w-10 h-10 text-blue-600" strokeWidth={2.2} />
-              <div className="text-sm font-semibold text-gray-800">Lista para Ceremonia</div>
-              <div className="text-sm text-gray-500">Formato especial ordenado por medallas y áreas</div>
-
-              <button
-                onClick={handleExport}
-                disabled={loadingExport}
-                className="mt-3 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition disabled:opacity-60"
+    <>
+      <div className="space-y-6">
+        {/* Filtros */}
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {/* Área */}
+            <div className="relative">
+              <select
+                className={`h-11 w-full appearance-none rounded-md border px-3 pr-9 ${
+                  areaPlaceholder ? 'text-gray-500' : 'text-black'
+                }`}
+                value={filters.id_area ?? ''}
+                onChange={(e) =>
+                  setFilters((f) => ({
+                    ...f,
+                    id_area: e.target.value === '' ? null : Number(e.target.value),
+                  }))
+                }
+                aria-label="Filtrar por área"
+                disabled={loadingCatalogs}
               >
-                {loadingExport ? 'Generando…' : 'Generar Lista de Ceremonia'}
-              </button>
+                <option value="" disabled hidden style={{ color: '#6B7280' }}>
+                  Filtrar por área
+                </option>
+                <option value={0} style={{ color: '#111827' }}>
+                  Todas las áreas
+                </option>
+                {safeAreas.map((a) => (
+                  <option key={`area-${a.id}`} value={a.id} style={{ color: '#111827' }}>
+                    {a.nombre}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            </div>
+
+            {/* Nivel */}
+            <div className="relative">
+              <select
+                className={`h-11 w-full appearance-none rounded-md border px-3 pr-9 ${
+                  nivelPlaceholder ? 'text-gray-500' : 'text-black'
+                }`}
+                value={filters.id_nivel ?? ''}
+                onChange={(e) =>
+                  setFilters((f) => ({
+                    ...f,
+                    id_nivel: e.target.value === '' ? null : Number(e.target.value),
+                  }))
+                }
+                aria-label="Filtrar por nivel"
+                disabled={loadingCatalogs}
+              >
+                <option value="" disabled hidden style={{ color: '#6B7280' }}>
+                  Filtrar por nivel
+                </option>
+                <option value={0} style={{ color: '#111827' }}>
+                  Todos los niveles
+                </option>
+                {safeNiveles.map((n) => (
+                  <option key={`nivel-${n.id}`} value={n.id} style={{ color: '#111827' }}>
+                    {n.nombre}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
             </div>
           </div>
         </div>
-      </section>
-    </div>
+
+        {/* Sección acción */}
+        <section className="bg-white rounded-lg shadow">
+          <header className="px-6 pt-6">
+            <h2 className="text-base md:text-lg font-semibold text-gray-900">Formato para Ceremonia</h2>
+            <p className="text-gray-500 text-sm">
+              Listas especialmente formateadas para la ceremonia de premiación
+            </p>
+          </header>
+
+          <div className="px-6">
+            <hr className="mt-4 border-gray-200" />
+          </div>
+
+          <div className="p-6">
+            <div className="border border-gray-200 rounded-lg p-8 flex flex-col items-center justify-center text-center bg-gray-50">
+              <div className="flex flex-col items-center justify-center space-y-2">
+                <Award className="w-10 h-10 text-blue-600" strokeWidth={2.2} />
+                <div className="text-sm font-semibold text-gray-800">Lista para Ceremonia</div>
+                <div className="text-sm text-gray-500">Formato especial ordenado por medallas y áreas</div>
+
+                <button
+                  onClick={handleClickExport}
+                  disabled={checkingExport}
+                  className="mt-3 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {checkingExport ? 'Verificando…' : 'Exportar .xlsx'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      {/* Modal */}
+      <CeremoniaExportModal
+        open={openModal}
+        onClose={() => setOpenModal(false)}
+        filters={filters}
+        areaNombre={areaNombre}
+        nivelNombre={nivelNombre}
+      />
+    </>
   );
 }
