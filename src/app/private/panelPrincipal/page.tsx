@@ -1,36 +1,36 @@
-// src/app/private/panelPrincipal/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
 import { api } from '@/libs/api';
 import { AxiosError } from 'axios'; // <- Importar AxiosError
 import { usePageHeader } from '@/contexts/pageHeader';
-type Nivel = {
-  id_nivel: number;
-  nombre_nivel: string;
-  inscritos: number;
-};
 
-type Area = {
+// Tipos ajustados para reflejar la combinación de Área y Nivel (una tarjeta por combinación)
+type AreaNivelStats = {
   id_area: number;
   nombre_area: string;
   estado: string;
-  niveles: Nivel[];
+  id_nivel: number; // Identificador del nivel
+  nombre_nivel: string; // Nombre del nivel
+  total_inscritos: number;
 };
 
 export default function PanelPrincipalPage() {
-  const [areas, setAreas] = useState<Area[]>([]);
+  const [areasStats, setAreasStats] = useState<AreaNivelStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { setTitle } = usePageHeader();
+  
   useEffect(() => {
     setTitle('Panel Principal');
   }, [setTitle]);
+
   useEffect(() => {
     async function fetchAreas() {
       try {
-        const { data } = await api.get<Area[]>('/areas');
-        setAreas(data);
+        // Ahora esperamos el array de combinaciones (Área/Nivel)
+        const { data } = await api.get<AreaNivelStats[]>('/areas'); 
+        setAreasStats(data);
       } catch (err: unknown) {
         if (err instanceof AxiosError) {
           // Tipado seguro de AxiosError
@@ -63,34 +63,38 @@ export default function PanelPrincipalPage() {
         </p>
 
         <div className="space-y-4">
-          {areas.map((area) => {
-            const nivel = area.niveles[0];
+          {/* Mapeamos el array plano, cada entrada es una tarjeta de (Área + Nivel) */}
+          {areasStats.map((stats) => {
+            const total = stats.total_inscritos;
+            const key = `${stats.id_area}-${stats.id_nivel}`; // Clave única: AreaID-NivelID
+            
             return (
               <div
-                key={area.id_area}
+                key={key}
                 className="flex items-center justify-between bg-[#f7f9fb] rounded-xl border border-gray-200 p-5 hover:shadow-md transition"
               >
                 <div>
                   <h2 className="text-lg font-bold text-gray-900 uppercase">
-                    {area.nombre_area}
+                    {stats.nombre_area}
                   </h2>
 
+                  {/* Mostramos el nivel específico de la tarjeta */}
                   <span className="inline-block bg-gray-300 text-gray-800 text-xs font-semibold px-3 py-1 rounded-full mt-1">
-                    {nivel ? nivel.nombre_nivel : 'N/A'}
+                    {stats.nombre_nivel}
                   </span>
 
                   <p className="text-sm text-gray-600 mt-2">
-                    {nivel ? nivel.inscritos : 0} participantes registrados
+                    {total} participante{total !== 1 ? 's' : ''} registrado{total !== 1 ? 's' : ''}
                   </p>
                 </div>
 
                 <div>
                   <span
                     className={`text-sm font-medium px-4 py-1 rounded-full ${getEstadoBadgeColor(
-                      area.estado
+                      stats.estado
                     )}`}
                   >
-                    {formatEstado(area.estado)}
+                    {formatEstado(stats.estado)}
                   </span>
                 </div>
               </div>
