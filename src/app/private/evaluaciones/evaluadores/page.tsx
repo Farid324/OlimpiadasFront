@@ -77,7 +77,7 @@ export default function EvaluacionesEvaluadoresPage() {
 
   const [activeTab, setActiveTab] = useState<'CLASIFICACION' | 'FASE_FINAL'>('CLASIFICACION');
 
-  const [modalOpen, setModalOpen] = useState(false);
+  //const [modalOpen, setModalOpen] = useState(false);
 
 
   /* ===== Cargar catálogos (área y nivel) ===== */
@@ -200,25 +200,6 @@ export default function EvaluacionesEvaluadoresPage() {
     ? filteredCompetidores
     : filteredCompetidoresClasificados;
   
-  // const handleOpenModal = async (competidor: CompetidorInscripcion) => {
-  //   try {
-  //     const evaluacionExistente = competidor.evaluaciones?.[0];
-  //     console.log('Evaluaciones del competidor:', competidor.evaluaciones);
-
-  //     if (evaluacionExistente && evaluacionExistente.id_evaluacion) {
-  //       const detalle = await evaluacionesService.getDetalleEvaluacion(
-  //         evaluacionExistente.id_evaluacion
-  //       );
-  //       setModalCompetidor({ ...competidor, evaluaciones: [detalle] });
-  //     } else {
-  //       console.warn('⚠️ Competidor sin id_evaluacion, no se cargó detalle');
-  //       setModalCompetidor(competidor);
-  //     }
-  //   } catch (err) {
-  //     console.error('Error al cargar la evaluación completa', err);
-  //     setModalCompetidor(competidor);
-  //   }
-  // };
 
   const handleOpenModal = async (competidor: CompetidorInscripcion) => {
   try {
@@ -227,7 +208,6 @@ export default function EvaluacionesEvaluadoresPage() {
 
     console.log('🟡 Evaluaciones del competidor:', competidor.evaluaciones);
 
-    // Si tiene evaluación previa -> cargar detalle desde backend
     if (evaluacionExistente?.id_evaluacion) {
       console.log(`🔹 Obteniendo detalle de evaluación (fase ${idFase})...`);
       const detalle = await evaluacionesService.getEvaluacion(
@@ -237,22 +217,20 @@ export default function EvaluacionesEvaluadoresPage() {
 
       console.log('✅ Detalle obtenido:', detalle);
 
-      // Fusiona los datos del competidor con el detalle
       setModalCompetidor({
         ...competidor,
         evaluaciones: [detalle],
       });
     } else {
-      // No tiene evaluación aún → abrir modal vacío
       console.warn('⚠️ Competidor sin evaluación previa, abriendo modal vacío');
       setModalCompetidor(competidor);
     }
 
-    setModalOpen(true);
+    //setModalOpen(true);
   } catch (err) {
     console.error('❌ Error al cargar detalle de evaluación:', err);
     setModalCompetidor(competidor);
-    setModalOpen(true);
+    //setModalOpen(true);
   }
 };
 
