@@ -97,51 +97,60 @@ export default function EvaluacionesPage() {
   // 🖥️ Render principal
   // ======================
   return (
-    <div className="flex flex-col h-auto bg-gray-50 p-6 space-y-4">
-      <h1 className="text-lg font-semibold mb-1">Sistema de Evaluaciones</h1>
-      <p className="text-sm text-gray-500 mb-4">
-        Registro y seguimiento de evaluaciones por área y nivel
-      </p>
-
-      <div className="mt-2 mb-4">
-        <TabsView onChange={setActiveTab} />
+    <div className="p-6 space-y-6">
+      {/* Encabezado (mismo estilo que Responsables) */}
+      <div>
+        <h1 className="text-2xl font-bold text-black">Sistema de Evaluaciones</h1>
+        <p className="text-gray-500 text-sm">
+          Registro y seguimiento de evaluaciones por área y nivel
+        </p>
       </div>
 
-      {loading && (
-        <div className="text-center text-gray-500 py-10">
-          Cargando información...
+      {/* Tabs dentro de tarjeta blanca, como el buscador del otro módulo */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div className="mt-1">
+          <TabsView onChange={setActiveTab} />
         </div>
-      )}
+      </div>
 
-      {!loading && activeTab === 'clasificar' && (
-        <ClasificarView
-          areas={areas}
-          niveles={niveles}
-          selectedArea={selectedArea}
-          selectedNivel={selectedNivel}
-          stats={stats}
-          competidores={competidores}
-          modalCompetidor={modalCompetidor}
-          onChangeFilters={handleFilters}
-          onViewCompetidor={setModalCompetidor}
-          onCloseModal={() => setModalCompetidor(null)}
-        />
-      )}
+      {/* Contenido principal en tarjeta blanca, similar a la tabla de responsables */}
+      <div className="bg-white rounded-lg shadow p-4">
+        {loading && (
+          <div className="text-center text-gray-500 py-10">
+            Cargando información...
+          </div>
+        )}
 
-      {!loading && activeTab === 'premiacion' && (
-        <PremiacionView
-          areas={areas}
-          niveles={niveles}
-          selectedArea={selectedArea}
-          selectedNivel={selectedNivel}
-          stats={statsFinales}
-          competidores={competidoresFinales}
-          modalCompetidor={modalCompetidorFinal}
-          onChangeFilters={handleFilters}
-          onViewCompetidor={setModalCompetidorFinal}
-          onCloseModal={() => setModalCompetidorFinal(null)}
-        />
-      )}
+        {!loading && activeTab === 'clasificar' && (
+          <ClasificarView
+            areas={areas}
+            niveles={niveles}
+            selectedArea={selectedArea}
+            selectedNivel={selectedNivel}
+            stats={stats}
+            competidores={competidores}
+            modalCompetidor={modalCompetidor}
+            onChangeFilters={handleFilters}
+            onViewCompetidor={setModalCompetidor}
+            onCloseModal={() => setModalCompetidor(null)}
+          />
+        )}
+
+        {!loading && activeTab === 'premiacion' && (
+          <PremiacionView
+            areas={areas}
+            niveles={niveles}
+            selectedArea={selectedArea}
+            selectedNivel={selectedNivel}
+            stats={statsFinales}
+            competidores={competidoresFinales}
+            modalCompetidor={modalCompetidorFinal}
+            onChangeFilters={handleFilters}
+            onViewCompetidor={setModalCompetidorFinal}
+            onCloseModal={() => setModalCompetidorFinal(null)}
+          />
+        )}
+      </div>
     </div>
   );
 }

@@ -56,7 +56,7 @@ export default function LogsPage() {
 
   // 🔹 Render
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+    <div className="p-6 space-y-6 text-gray-900">
       {/* Encabezado */}
       <div>
         <h1 className="text-2xl font-bold text-black">Registro de Actividades</h1>
@@ -71,31 +71,56 @@ export default function LogsPage() {
       </div>
 
       {/* Filtros */}
-      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
-        {/* Buscar */}
-        <div className="relative w-full sm:w-1/2">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <Input
-            placeholder="Buscar por usuario..."
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            className="pl-9 w-full rounded-md border-gray-300 text-gray-900"
-          />
-        </div>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
+          {/* Buscar */}
+          <div className="relative w-full sm:w-1/2">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
 
-        {/* Filtro acción */}
-        <div className="relative w-full sm:w-1/4">
-          <select
-            className="w-full border rounded-md p-2 text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            value={accion}
-            onChange={(e) => setAccion(e.target.value as 'REGISTRO' | 'MODIFICACION' | '')}
-          >
-            <option value="">Todas las acciones</option>
-            <option value="REGISTRO">Registro</option>
-            <option value="MODIFICACION">Modificación</option>
-          </select>
+            <Input
+              placeholder="Buscar por usuario..."
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              className="
+          w-full h-12 pl-12 pr-10 rounded-lg bg-gray-50 border border-gray-200
+          text-gray-800 placeholder:text-gray-400
+          focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600
+          transition
+        "
+            />
+
+            {q && (
+              <button
+                type="button"
+                onClick={() => setQ('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xl leading-none
+                     text-gray-400 hover:text-gray-600"
+                aria-label="Limpiar búsqueda"
+              >
+                ×
+              </button>
+            )}
+          </div>
+
+          {/* Filtro acción */}
+          <div className="relative w-full sm:w-1/4">
+            <select
+              className="
+          w-full h-12 rounded-lg bg-gray-50 border border-gray-200 px-3
+          text-gray-900 text-sm
+          focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600
+        "
+              value={accion}
+              onChange={(e) => setAccion(e.target.value as 'REGISTRO' | 'MODIFICACION' | '')}
+            >
+              <option value="">Todas las acciones</option>
+              <option value="REGISTRO">Registro</option>
+              <option value="MODIFICACION">Modificación</option>
+            </select>
+          </div>
         </div>
       </div>
+
 
       {/* Tabla */}
       <div className="bg-white rounded-lg shadow p-4">
@@ -136,11 +161,11 @@ export default function LogsPage() {
                   {logs.map((l) => {
                     const initials = l.usuario
                       ? l.usuario
-                          .split(' ')
-                          .map((n) => n[0])
-                          .join('')
-                          .toUpperCase()
-                          .slice(0, 2)
+                        .split(' ')
+                        .map((n) => n[0])
+                        .join('')
+                        .toUpperCase()
+                        .slice(0, 2)
                       : '??';
 
                     return (

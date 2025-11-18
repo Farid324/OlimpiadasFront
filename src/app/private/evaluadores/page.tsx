@@ -3,21 +3,23 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '@/libs/api';
-import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { LuUsers, LuUserCog, LuLayers, LuAward } from 'react-icons/lu';
-import { Mail, Phone, Search, MoreVertical, Pencil, Trash2, X } from 'lucide-react';
+import { Mail, Phone, MoreVertical, Pencil, Trash2, X, CheckCircle2 } from 'lucide-react';
+import { FiSearch } from 'react-icons/fi';
 import AddEvaluatorModal from '@/components/features/RegistroEva/AddEvaluatorModal';
 import { usePageHeader } from '@/contexts/pageHeader';
+
 type Area = { id_area: number; nombre_area: string };
+
 type Evaluador = {
   id_usuario: number;
   nombre: string;
-  apellido: string;             // si en tu DB es 'apellidos', cámbialo aquí
+  apellido: string;
   correo: string;
   telefono?: string | null;
   institucion?: string | null;
-  especialidad?: string | null; // si es 'especializacion', cámbialo aquí
+  especialidad?: string | null;
   experiencia?: number | null;
   activo?: boolean | null;
   evaluadores_area?: { area: Area }[];
@@ -31,10 +33,10 @@ export default function EvaluadoresPage() {
   const [showModal, setShowModal] = useState(false);
   const { setTitle } = usePageHeader();
 
-  // --- nuevo: soporte edición & menú por fila ---
   const [editData, setEditData] = useState<Evaluador | null>(null);
   const [menuOpenId, setMenuOpenId] = useState<number | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ id: number; nombre: string } | null>(null);
+  const [deleteSuccess, setDeleteSuccess] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   async function load(query?: string) {
@@ -51,7 +53,9 @@ export default function EvaluadoresPage() {
     }
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -64,13 +68,15 @@ export default function EvaluadoresPage() {
   useEffect(() => {
     setTitle('Evaluadores');
   }, [setTitle]);
-  
+
   // cerrar menú al hacer click fuera o con Escape
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
       if (!menuRef.current) return;
       const target = e.target as Node;
-      if (menuRef.current && !menuRef.current.contains(target)) setMenuOpenId(null);
+      if (menuRef.current && !menuRef.current.contains(target)) {
+        setMenuOpenId(null);
+      }
     }
     function onEsc(e: KeyboardEvent) {
       if (e.key === 'Escape') setMenuOpenId(null);
@@ -82,6 +88,13 @@ export default function EvaluadoresPage() {
       document.removeEventListener('keydown', onEsc);
     };
   }, []);
+
+  // Ocultar mensaje de éxito después de 3 segundos
+  useEffect(() => {
+    if (!deleteSuccess) return;
+    const t = setTimeout(() => setDeleteSuccess(null), 3000);
+    return () => clearTimeout(t);
+  }, [deleteSuccess]);
 
   const metrics = useMemo(() => {
     const total = evaluadores.length;
@@ -103,7 +116,6 @@ export default function EvaluadoresPage() {
   const refetch = () => load(q.trim() || undefined);
   const filtered = q ? evaluadores.filter(filtra(q)) : evaluadores;
 
-  // --- handlers de acciones ---
   const openCreate = () => {
     setEditData(null);
     setShowModal(true);
@@ -123,26 +135,40 @@ export default function EvaluadoresPage() {
       await api.delete(`/evaluadores/${confirmDelete.id}`);
       setConfirmDelete(null);
       refetch();
+      setDeleteSuccess('Evaluador eliminado con éxito');
     } catch {
-      // opcional: podrías mostrar un toast
       setConfirmDelete(null);
     }
   };
 
   return (
-    <div className="p-6 space-y-6 overflow-hidden">
+    <div className="p-6 space-y-6" ref={menuRef}>
       {/* Encabezado */}
       <div>
         <h1 className="text-2xl font-bold text-black">Gestión de Evaluadores</h1>
-        <p className="text-gray-500 text-sm">Administración de Evaluadores por Área de competencia</p>
+        <p className="text-gray-500 text-sm">
+          Administración de Evaluadores por Área de competencia
+        </p>
       </div>
 
-      {/* Cards */}
+      {/* Mensaje de éxito al eliminar */}
+      {deleteSuccess && (
+        <div className="bg-green-50 border border-green-200 text-green-800 text-sm px-4 py-2 rounded-lg flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4" />
+          <span>{deleteSuccess}</span>
+        </div>
+      )}
+
+      {/* Cards (mismo tamaño que Responsables) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <CardMetric label="Total Evaluadores" value={metrics.total} icon={<LuUsers />} />
         <CardMetric label="Evaluadores Activos" value={metrics.activos} icon={<LuUserCog />} />
         <CardMetric label="Áreas Cubiertas" value={metrics.areasCubiertas} icon={<LuLayers />} />
-        <CardMetric label="Promedio Experiencia" value={`${metrics.promExp} años`} icon={<LuAward />} />
+        <CardMetric
+          label="Promedio Experiencia"
+          value={`${metrics.promExp} años`}
+          icon={<LuAward />}
+        />
       </div>
 
       {/* Botón */}
@@ -152,22 +178,43 @@ export default function EvaluadoresPage() {
         </Button>
       </div>
 
-      {/* Buscador (debajo del botón) con lupa */}
-      <div className="relative max-w-full">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
-        <Input
-          className="w-full pl-9 text-gray-900 placeholder:text-gray-400"
-          placeholder="Buscar por nombre, apellido, correo o institución…"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          aria-label="Buscar evaluadores"
-        />
+      {/* Buscador (estilo tarjeta grande, igual que Responsables) */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div className="relative">
+          <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Buscar por nombre, apellido, correo o institución…"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            className="w-full h-12 pl-12 pr-10 rounded-lg bg-gray-50 border border-gray-200
+                       text-gray-800 placeholder:text-gray-400
+                       focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600
+                       transition"
+            aria-label="Buscar evaluadores"
+          />
+          {q && (
+            <button
+              type="button"
+              onClick={() => setQ('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-xl leading-none
+                         text-gray-400 hover:text-gray-600"
+              aria-label="Limpiar búsqueda"
+            >
+              ×
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Tabla con scroll vertical y HORIZONTAL (en pantallas pequeñas) */}
+      {/* Tabla */}
       <div className="bg-white rounded-lg shadow p-4">
-        <h2 className="font-semibold text-gray-700 mb-2">Evaluadores Registrados ({filtered.length})</h2>
-        <p className="text-sm text-gray-500 mb-4">Lista completa de evaluadores por área de competencia</p>
+        <h2 className="font-semibold text-gray-700 mb-2">
+          Evaluadores Registrados ({filtered.length})
+        </h2>
+        <p className="text-sm text-gray-500 mb-4">
+          Lista completa de evaluadores por área de competencia
+        </p>
 
         {loading ? (
           <p className="text-gray-500 text-center">Cargando...</p>
@@ -195,7 +242,7 @@ export default function EvaluadoresPage() {
                     <th className="py-3 px-4 text-left font-semibold">Experiencia</th>
                     <th className="py-3 px-4 text-center font-semibold">Rol</th>
                     <th className="py-3 px-4 text-center font-semibold">Activo</th>
-                    <th className="py-3 px-2 text-right font-semibold"> {/* Acciones */}</th>
+                    <th className="py-3 px-2 text-right font-semibold" />
                   </tr>
                 </thead>
 
@@ -206,7 +253,7 @@ export default function EvaluadoresPage() {
                     const isMenuOpen = menuOpenId === e.id_usuario;
 
                     return (
-                      <tr key={e.id_usuario} className="border-b border-gray-200">
+                      <tr key={e.id_usuario} className="border-b border-gray-200 hover:bg-gray-50">
                         {/* Evaluador */}
                         <td className="py-4 px-4">
                           <div className="flex items-center gap-3 min-w-0">
@@ -301,28 +348,27 @@ export default function EvaluadoresPage() {
                             <MoreVertical className="w-5 h-5 text-gray-700" />
                           </button>
 
-                          {/* Menú contextual */}
-                          {isMenuOpen && (
-                            <div
-                              role="menu"
-                              className="absolute right-2 top-10 z-20 w-40 rounded-md border bg-white shadow-lg overflow-hidden"
+                        {isMenuOpen && (
+                          <div
+                            role="menu"
+                            className="absolute right-2 bottom-10 z-20 w-40 rounded-md border-gray-300 bg-white shadow-lg overflow-hidden"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => openEdit(e)}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-gray-50 text-gray-700"
                             >
-                              <button
-                                type="button"
-                                onClick={() => openEdit(e)}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-gray-50"
-                              >
-                                <Pencil className="w-4 h-4" /> Editar
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => askDelete(e)}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
-                              >
-                                <Trash2 className="w-4 h-4" /> Eliminar
-                              </button>
-                            </div>
-                          )}
+                              <Pencil className="w-4 h-4" /> Editar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => askDelete(e)}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4" /> Eliminar
+                            </button>
+                          </div>
+                        )}
                         </td>
                       </tr>
                     );
@@ -355,7 +401,9 @@ export default function EvaluadoresPage() {
                   institucion: editData.institucion ?? '',
                   especialidad: editData.especialidad ?? '',
                   experiencia: editData.experiencia ?? undefined,
-                  id_areas: editData.evaluadores_area?.map((ea) => ea.area?.id_area).filter(Boolean) as number[],
+                  id_areas: editData.evaluadores_area
+                    ?.map((ea) => ea.area?.id_area)
+                    .filter(Boolean) as number[],
                 }
               : undefined
           }
@@ -377,11 +425,17 @@ export default function EvaluadoresPage() {
               </button>
             </div>
             <div className="px-4 py-4 text-sm">
-              ¿Seguro que deseas eliminar a <span className="font-semibold">{confirmDelete.nombre}</span>? Esta acción no se puede deshacer.
+              ¿Seguro que deseas eliminar a{' '}
+              <span className="font-semibold">{confirmDelete.nombre}</span>? Esta acción no se puede
+              deshacer.
             </div>
             <div className="px-4 py-3 border-t flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setConfirmDelete(null)}>Cancelar</Button>
-              <Button className="bg-red-600 hover:bg-red-700" onClick={doDelete}>Eliminar</Button>
+              <Button variant="outline" onClick={() => setConfirmDelete(null)}>
+                Cancelar
+              </Button>
+              <Button className="bg-red-600 hover:bg-red-700" onClick={doDelete}>
+                Eliminar
+              </Button>
             </div>
           </div>
         </div>
@@ -400,15 +454,23 @@ function filtra(q: string) {
     e.institucion?.toLowerCase().includes(s);
 }
 
-/* Cards métricas */
-function CardMetric({ label, value, icon }: { label: string; value: React.ReactNode; icon: React.ReactNode }) {
+/* Cards métricas: mismo tamaño que Responsables */
+function CardMetric({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value: React.ReactNode;
+  icon: React.ReactNode;
+}) {
   return (
-    <div className="bg-white p-4 rounded-lg shadow relative h-28">
-      <div className="absolute top-4 right-4 text-black text-3xl">
-        <div className="[&>*]:w-6 [&>*]:h-6">{icon}</div>
+    <div className="bg-white p-4 rounded-lg shadow h-28 flex flex-col justify-between relative">
+      <div className="flex justify-between items-start">
+        <p className="text-sm text-gray-500">{label}</p>
+        <div className="text-black text-2xl [&>*]:w-6 [&>*]:h-6">{icon}</div>
       </div>
-      <p className="text-sm text-gray-500">{label}</p>
-      <p className="text-2xl font-bold text-black mt-2">{value}</p>
+      <p className="text-2xl font-bold text-black">{value}</p>
     </div>
   );
 }
