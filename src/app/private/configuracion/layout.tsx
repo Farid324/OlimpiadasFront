@@ -1,3 +1,4 @@
+// src/app/private/configuracion/layout.tsx
 'use client';
 
 export default function PrivateLayout({ children }: { children: React.ReactNode }) {
