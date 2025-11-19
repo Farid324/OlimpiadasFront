@@ -27,6 +27,7 @@ type Props = {
 
 type Area = { id_area: number; nombre_area: string };
 type ConstraintItem = { constraints?: Record<string, string> };
+
 type BackendErrorResponse =
   | {
       message?: string | string[];
@@ -36,6 +37,19 @@ type BackendErrorResponse =
   | string
   | null
   | undefined;
+
+type EvaluadorPayload = {
+  nombreCompleto: string;
+  nombre: string;
+  apellido: string;
+  correo: string;
+  telefono: string;
+  ci: string;
+  institucion: string;
+  especialidad: string;
+  id_areas: number[];
+  experiencia?: number;
+};
 
 /** Type guards mínimos y seguros */
 function isRecord(x: unknown): x is Record<string, unknown> {
@@ -170,8 +184,7 @@ export default function AddEvaluatorModal({
 
       // 1) longitud / solo dígitos
       if (!/^\d+$/.test(tel) || tel.length !== 8) {
-        newErrors.telefono =
-          'El teléfono debe tener exactamente 8 dígitos numéricos';
+        newErrors.telefono = 'El teléfono debe tener exactamente 8 dígitos numéricos';
       }
       // 2) empieza en 6 o 7
       else if (!/^[67]/.test(tel)) {
@@ -233,7 +246,7 @@ export default function AddEvaluatorModal({
     const experienciaFinal =
       experiencia.trim() !== '' ? Number(experiencia.trim()) : undefined;
 
-    const payload: any = {
+    const payload: EvaluadorPayload = {
       nombreCompleto: nombreCompleto.trim(),
       nombre,
       apellido,

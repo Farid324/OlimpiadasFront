@@ -111,6 +111,18 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
+type ResponsablePayload = {
+  nombre: string;
+  apellido: string;
+  correo: string;
+  telefono: string;
+  ci: string;
+  institucion: string;
+  especialidad: string;
+  id_area: number;
+  experiencia?: number;
+};
+
 export default function RegisterResponsableModal({
   onClose,
   onSuccess,
@@ -221,8 +233,9 @@ export default function RegisterResponsableModal({
 
       // Nombre y apellido
       const partes = data.nombre.trim().split(/\s+/);
-      let nombre = '',
-        apellido = '';
+      let nombre = '';
+      let apellido = '';
+
       if (partes.length === 4) {
         nombre = partes.slice(0, 2).join(' ');
         apellido = partes.slice(2).join(' ');
@@ -245,18 +258,19 @@ export default function RegisterResponsableModal({
           ? Number(data.experiencia.trim())
           : undefined;
 
-      const payload: any = {
-        ...data,
+      const payload: ResponsablePayload = {
         nombre,
         apellido,
+        correo: data.correo,
+        telefono: data.telefono,
+        ci: data.ci,
+        institucion: data.institucion,
+        especialidad: data.especialidad,
         id_area: Number(data.id_area),
       };
 
       if (experienciaNum !== undefined) {
         payload.experiencia = experienciaNum;
-      } else {
-        // si está vacía, evitamos mandar experiencia para que el back use su valor por defecto
-        delete payload.experiencia;
       }
 
       if (mode === 'edit' && initial?.id_usuario) {

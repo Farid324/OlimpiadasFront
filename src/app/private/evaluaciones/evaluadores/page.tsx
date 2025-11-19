@@ -14,12 +14,12 @@ import { ChevronDown } from 'lucide-react';
 import { api } from '@/libs/api';
 
 /* ===== Tipos de catálogos ===== */
-type AreaDTO  = { id: number; nombre: string };
+type AreaDTO = { id: number; nombre: string };
 type NivelDTO = { id: number; nombre: string };
 
 /* ===== Helpers de catálogos ===== */
 const pick = (o: Record<string, unknown> | null | undefined, keys: string[]) =>
-  keys.map(k => o?.[k]).find(v => v !== undefined && v !== null);
+  keys.map((k) => o?.[k]).find((v) => v !== undefined && v !== null);
 
 function mapCatalog<T extends { id: number; nombre: string }>(
   data: unknown,
@@ -28,11 +28,12 @@ function mapCatalog<T extends { id: number; nombre: string }>(
 ): T[] {
   const arr = (Array.isArray(data) ? data : []) as ReadonlyArray<Record<string, unknown>>;
   return arr
-    .map((r) =>
-      ({
-        id: Number(pick(r, idKeys)),
-        nombre: String(pick(r, nameKeys) ?? '').trim(),
-      } as T),
+    .map(
+      (r) =>
+        ({
+          id: Number(pick(r, idKeys)),
+          nombre: String(pick(r, nameKeys) ?? '').trim(),
+        } as T),
     )
     .filter((x): x is T => !Number.isNaN(x.id) && x.nombre.length > 0);
 }
@@ -66,19 +67,18 @@ export default function EvaluacionesEvaluadoresPage() {
   const { user } = useAuth();
   const [reloadStats, setReloadStats] = useState(false);
 
-  useEffect(() => { setTitle('Evaluaciones'); }, [setTitle]);
+  useEffect(() => {
+    setTitle('Evaluaciones');
+  }, [setTitle]);
 
   /* ===== Estado de filtros y catálogos ===== */
-  const [idArea, setIdArea]   = useState<number | null>(null);
+  const [idArea, setIdArea] = useState<number | null>(null);
   const [idNivel, setIdNivel] = useState<number | null>(null);
   const [areas, setAreas] = useState<AreaDTO[]>([]);
   const [niveles, setNiveles] = useState<NivelDTO[]>([]);
   const [loadingCatalogs, setLoadingCatalogs] = useState(true);
 
   const [activeTab, setActiveTab] = useState<'CLASIFICACION' | 'FASE_FINAL'>('CLASIFICACION');
-
-  //const [modalOpen, setModalOpen] = useState(false);
-
 
   /* ===== Cargar catálogos (área y nivel) ===== */
   useEffect(() => {
@@ -87,12 +87,17 @@ export default function EvaluacionesEvaluadoresPage() {
       try {
         setLoadingCatalogs(true);
         const [a, n] = await Promise.all([getAreas(), getNiveles()]);
-        if (!cancel) { setAreas(a); setNiveles(n); }
+        if (!cancel) {
+          setAreas(a);
+          setNiveles(n);
+        }
       } finally {
         if (!cancel) setLoadingCatalogs(false);
       }
     })();
-    return () => { cancel = true; };
+    return () => {
+      cancel = true;
+    };
   }, []);
 
   /* ===== Fetch competidores asignados ===== */
@@ -108,7 +113,7 @@ export default function EvaluacionesEvaluadoresPage() {
             ? 'EVALUADO'
             : 'TODOS',
         // NO enviar 0 ni null al API
-        id_area:  idArea  != null && idArea  !== 0 ? idArea  : undefined,
+        id_area: idArea != null && idArea !== 0 ? idArea : undefined,
         id_nivel: idNivel != null && idNivel !== 0 ? idNivel : undefined,
       });
       setCompetidores(data);
@@ -145,7 +150,7 @@ export default function EvaluacionesEvaluadoresPage() {
     try {
       const data = await evaluacionesService.getListarCompetidoresClasificados({
         search: searchQuery || undefined,
-        id_area:  idArea  != null && idArea  !== 0 ? idArea  : undefined,
+        id_area: idArea != null && idArea !== 0 ? idArea : undefined,
         id_nivel: idNivel != null && idNivel !== 0 ? idNivel : undefined,
       });
       setCompetidores(data);
@@ -176,14 +181,12 @@ export default function EvaluacionesEvaluadoresPage() {
         );
       });
   }, [competidores, searchQuery, activeFilter]);
+
   useEffect(() => {
     const fetchFn =
-      activeTab === 'CLASIFICACION'
-        ? fetchCompetidores
-        : fetchCompetidoresClasificados;
+      activeTab === 'CLASIFICACION' ? fetchCompetidores : fetchCompetidoresClasificados;
 
     fetchFn();
-
   }, [
     activeTab,
     fetchCompetidores,
@@ -194,46 +197,32 @@ export default function EvaluacionesEvaluadoresPage() {
     idNivel,
   ]);
 
-
   const dataToRender =
-  activeTab === 'CLASIFICACION'
-    ? filteredCompetidores
-    : filteredCompetidoresClasificados;
-  
+    activeTab === 'CLASIFICACION' ? filteredCompetidores : filteredCompetidoresClasificados;
 
   const handleOpenModal = async (competidor: CompetidorInscripcion) => {
-  try {
-    const evaluacionExistente = competidor.evaluaciones?.[0];
-    const idFase = activeTab === 'CLASIFICACION' ? 1 : 2;
+    try {
+      const evaluacionExistente = competidor.evaluaciones?.[0];
+      const idFase = activeTab === 'CLASIFICACION' ? 1 : 2;
 
-    console.log('🟡 Evaluaciones del competidor:', competidor.evaluaciones);
+      if (evaluacionExistente?.id_evaluacion) {
+        const detalle = await evaluacionesService.getEvaluacion(
+          evaluacionExistente.id_evaluacion,
+          idFase,
+        );
 
-    if (evaluacionExistente?.id_evaluacion) {
-      console.log(`🔹 Obteniendo detalle de evaluación (fase ${idFase})...`);
-      const detalle = await evaluacionesService.getEvaluacion(
-        evaluacionExistente.id_evaluacion,
-        idFase
-      );
-
-      console.log('✅ Detalle obtenido:', detalle);
-
-      setModalCompetidor({
-        ...competidor,
-        evaluaciones: [detalle],
-      });
-    } else {
-      console.warn('⚠️ Competidor sin evaluación previa, abriendo modal vacío');
+        setModalCompetidor({
+          ...competidor,
+          evaluaciones: [detalle],
+        });
+      } else {
+        setModalCompetidor(competidor);
+      }
+    } catch (err) {
+      console.error('❌ Error al cargar detalle de evaluación:', err);
       setModalCompetidor(competidor);
     }
-
-    //setModalOpen(true);
-  } catch (err) {
-    console.error('❌ Error al cargar detalle de evaluación:', err);
-    setModalCompetidor(competidor);
-    //setModalOpen(true);
-  }
-};
-
+  };
 
   /* ===== Registrar / editar nota ===== */
   const handleSubmitNota = async (data: {
@@ -265,7 +254,6 @@ export default function EvaluacionesEvaluadoresPage() {
           await fetchCompetidoresClasificados();
         }
       } else {
-        console.warn("No hay id_evaluacion disponible, registrando como nueva nota");
         const nuevaEvaluacion = await evaluacionesService.registrarNota({
           idInscripcion: modalCompetidor.id_inscripcion,
           idUsuario,
@@ -281,10 +269,8 @@ export default function EvaluacionesEvaluadoresPage() {
           await fetchCompetidoresClasificados();
         }
 
-        console.log('Respuesta registrarNota:', nuevaEvaluacion);
-
-        setCompetidores(prev =>
-          prev.map(c =>
+        setCompetidores((prev) =>
+          prev.map((c) =>
             c.id_inscripcion === modalCompetidor.id_inscripcion
               ? {
                   ...c,
@@ -296,13 +282,13 @@ export default function EvaluacionesEvaluadoresPage() {
                     },
                   ],
                 }
-              : c
-          )
+              : c,
+          ),
         );
       }
 
       setModalCompetidor(null);
-      setReloadStats(prev => !prev);
+      setReloadStats((prev) => !prev);
     } catch (err) {
       console.error('❌ Error al registrar/editar nota:', err);
       if (hasResponseData(err) && err.response.data) {
@@ -311,41 +297,53 @@ export default function EvaluacionesEvaluadoresPage() {
     }
   };
 
-
   /* ===== Render ===== */
   return (
     <div className="p-6 space-y-6 bg-transparent">
-      <h1 className="text-2xl text-black font-bold">Sistema de evaluaciones</h1>
+      {/* Encabezado + tabs con separación ajustada */}
+      <div className="space-y-1 mb-4">
+        <h1 className="text-2xl text-black font-bold">Sistema de evaluaciones</h1>
+        <p className="text-gray-500 text-sm">
+          Registro y seguimiento de evaluaciones por área y nivel
+        </p>
 
-      <div className="flex border-b border-gray-200 bg-white rounded-t-2xl shadow-sm mb-6">
-        <button
-          onClick={() => setActiveTab('CLASIFICACION')}
-          className={`flex-1 px-4 py-3 text-center font-medium text-sm rounded-t-2xl transition-colors ${
-            activeTab === 'CLASIFICACION'
-              ? 'bg-blue-600 text-white shadow'
-              : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-          }`}
-        >
-          Clasificación
-        </button>
-        <button
-          onClick={() => setActiveTab('FASE_FINAL')}
-          className={`flex-1 px-4 py-3 text-center font-medium text-sm rounded-t-2xl transition-colors ${
-            activeTab === 'FASE_FINAL'
-              ? 'bg-blue-600 text-white shadow'
-              : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-          }`}
-        >
-          Fase Final
-        </button>
+        {/* Tabs tipo “pill” */}
+        <div className="flex justify-start mt-3 mb-4">
+          <div className="inline-flex items-center rounded-full bg-gray-100 p-1 shadow-sm">
+            <button
+              type="button"
+              onClick={() => setActiveTab('CLASIFICACION')}
+              className={`px-5 py-1.5 text-sm font-medium rounded-full transition-colors duration-150 ${
+                activeTab === 'CLASIFICACION'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'bg-transparent text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              Clasificación
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('FASE_FINAL')}
+              className={`px-5 py-1.5 text-sm font-medium rounded-full transition-colors duration-150 ${
+                activeTab === 'FASE_FINAL'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'bg-transparent text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              Fase Final
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Cards summary (usa /admin/evaluaciones/resumen) */}
+      {/* Cards summary */}
       <CardsSummary
         key={`${activeTab}-${reloadStats ? 'reload' : 'static'}`}
         idFase={activeTab === 'CLASIFICACION' ? 1 : 2}
         refreshToken={reloadStats}
       />
+
       <div className="flex flex-col gap-3">
         {/* Buscador + Filtros Área/Nivel */}
         <div className="bg-white rounded-lg shadow p-4 flex flex-col sm:flex-row w-full items-center gap-3">
@@ -355,7 +353,6 @@ export default function EvaluacionesEvaluadoresPage() {
 
           {/* Select Área */}
           <div className="relative w-full sm:w-48">
-            {/* ◼ wrapper con borde negro */}
             <div className="relative rounded-lg ring-1 ring-black focus-within:ring-1">
               <select
                 className={`h-9 w-full appearance-none rounded-lg bg-transparent px-3 pr-10 text-sm
@@ -364,16 +361,22 @@ export default function EvaluacionesEvaluadoresPage() {
                 value={idArea ?? ''}
                 onChange={(e) => {
                   const v = e.target.value;
-                  if (v === '') setIdArea(null);         // placeholder
-                  else setIdArea(Number(v));             // incluye 0 (todas) o un id
+                  if (v === '') setIdArea(null);
+                  else setIdArea(Number(v));
                 }}
                 aria-label="Filtrar por área"
                 disabled={loadingCatalogs}
               >
-                <option value="" disabled hidden>Filtrar por área</option>
-                <option value={0} style={{ color: '#111827' }}>Todas las áreas</option>
-                {areas.map(a => (
-                  <option key={`area-${a.id}`} value={a.id} style={{ color: '#111827' }}>{a.nombre}</option>
+                <option value="" disabled hidden>
+                  Filtrar por área
+                </option>
+                <option value={0} style={{ color: '#111827' }}>
+                  Todas las áreas
+                </option>
+                {areas.map((a) => (
+                  <option key={`area-${a.id}`} value={a.id} style={{ color: '#111827' }}>
+                    {a.nombre}
+                  </option>
                 ))}
               </select>
               <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
@@ -382,7 +385,6 @@ export default function EvaluacionesEvaluadoresPage() {
 
           {/* Select Nivel */}
           <div className="relative w-full sm:w-48">
-            {/* ◼ wrapper con borde negro */}
             <div className="relative rounded-lg ring-1 ring-black focus-within:ring-1">
               <select
                 className={`h-9 w-full appearance-none rounded-lg bg-transparent px-3 pr-10 text-sm
@@ -391,16 +393,22 @@ export default function EvaluacionesEvaluadoresPage() {
                 value={idNivel ?? ''}
                 onChange={(e) => {
                   const v = e.target.value;
-                  if (v === '') setIdNivel(null);         // placeholder
-                  else setIdNivel(Number(v));             // incluye 0 (todos) o un id
+                  if (v === '') setIdNivel(null);
+                  else setIdNivel(Number(v));
                 }}
                 aria-label="Filtrar por nivel"
                 disabled={loadingCatalogs}
               >
-                <option value="" disabled hidden>Filtrar por nivel</option>
-                <option value={0} style={{ color: '#111827' }}>Todos los niveles</option>
-                {niveles.map(n => (
-                  <option key={`nivel-${n.id}`} value={n.id} style={{ color: '#111827' }}>{n.nombre}</option>
+                <option value="" disabled hidden>
+                  Filtrar por nivel
+                </option>
+                <option value={0} style={{ color: '#111827' }}>
+                  Todos los niveles
+                </option>
+                {niveles.map((n) => (
+                  <option key={`nivel-${n.id}`} value={n.id} style={{ color: '#111827' }}>
+                    {n.nombre}
+                  </option>
                 ))}
               </select>
               <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
@@ -441,7 +449,9 @@ export default function EvaluacionesEvaluadoresPage() {
           isOpen={!!modalCompetidor}
           onClose={() => setModalCompetidor(null)}
           onSubmit={handleSubmitNota}
-          onSaved={() => { fetchCompetidoresClasificados(); }}
+          onSaved={() => {
+            fetchCompetidoresClasificados();
+          }}
           title={`${
             modalCompetidor.evaluaciones?.length > 0
               ? `Editar nota de ${modalCompetidor.competidor.nombres} ${modalCompetidor.competidor.apellidos}`
@@ -461,8 +471,6 @@ export default function EvaluacionesEvaluadoresPage() {
                 }
               : undefined
           }
-
-
           competidor={{
             nombres: modalCompetidor.competidor.nombres,
             apellidos: modalCompetidor.competidor.apellidos,
