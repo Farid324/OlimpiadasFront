@@ -476,10 +476,10 @@ export default function AddEvaluatorModal({
                       key={a.id_area}
                       type="button"
                       onClick={() => toggleArea(a.id_area)}
-                      className={`px-3 py-1 rounded-md border text-sm transition ${
+                      className={`px-3 py-1 rounded-md border text-sm transition font-bold ${
                         active
-                          ? 'bg-gray-900 text-white border-gray-900'
-                          : 'bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200'
+                          ? 'bg-gray-900 text-white border-gray-900 font-bold'
+                          : 'bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200 font-bold'
                       }`}
                       title={a.nombre_area}
                     >

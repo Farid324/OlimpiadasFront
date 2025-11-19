@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '@/libs/api';
-import { AxiosError } from 'axios'; // <- Importar AxiosError
+import { AxiosError } from 'axios';
 import { usePageHeader } from '@/contexts/pageHeader';
 
 // Tipos ajustados para reflejar la combinación de Área y Nivel (una tarjeta por combinación)
@@ -10,8 +10,8 @@ type AreaNivelStats = {
   id_area: number;
   nombre_area: string;
   estado: string;
-  id_nivel: number; // Identificador del nivel
-  nombre_nivel: string; // Nombre del nivel
+  id_nivel: number;      // Identificador del nivel
+  nombre_nivel: string;  // Nombre del nivel
   total_inscritos: number;
 };
 
@@ -20,7 +20,7 @@ export default function PanelPrincipalPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { setTitle } = usePageHeader();
-  
+
   useEffect(() => {
     setTitle('Panel Principal');
   }, [setTitle]);
@@ -28,15 +28,15 @@ export default function PanelPrincipalPage() {
   useEffect(() => {
     async function fetchAreas() {
       try {
-        // Ahora esperamos el array de combinaciones (Área/Nivel)
-        const { data } = await api.get<AreaNivelStats[]>('/areas'); 
+        // ✅ Ahora llamamos al endpoint especial para el Panel Principal
+        const { data } = await api.get<AreaNivelStats[]>(
+          '/areas/panel-principal',
+        );
         setAreasStats(data);
       } catch (err: unknown) {
         if (err instanceof AxiosError) {
-          // Tipado seguro de AxiosError
           setError(err.response?.data?.message || 'Error al cargar áreas');
         } else if (err instanceof Error) {
-          // Otros errores normales
           setError(err.message);
         } else {
           setError('Error desconocido al cargar áreas');
@@ -63,11 +63,11 @@ export default function PanelPrincipalPage() {
         </p>
 
         <div className="space-y-4">
-          {/* Mapeamos el array plano, cada entrada es una tarjeta de (Área + Nivel) */}
+          {/* Cada entrada es una tarjeta de (Área + Nivel) */}
           {areasStats.map((stats) => {
             const total = stats.total_inscritos;
-            const key = `${stats.id_area}-${stats.id_nivel}`; // Clave única: AreaID-NivelID
-            
+            const key = `${stats.id_area}-${stats.id_nivel}`;
+
             return (
               <div
                 key={key}
@@ -78,20 +78,21 @@ export default function PanelPrincipalPage() {
                     {stats.nombre_area}
                   </h2>
 
-                  {/* Mostramos el nivel específico de la tarjeta */}
+                  {/* Nivel de la tarjeta */}
                   <span className="inline-block bg-gray-300 text-gray-800 text-xs font-semibold px-3 py-1 rounded-full mt-1">
                     {stats.nombre_nivel}
                   </span>
 
                   <p className="text-sm text-gray-600 mt-2">
-                    {total} participante{total !== 1 ? 's' : ''} registrado{total !== 1 ? 's' : ''}
+                    {total} participante{total !== 1 ? 's' : ''} registrado
+                    {total !== 1 ? 's' : ''}
                   </p>
                 </div>
 
                 <div>
                   <span
                     className={`text-sm font-medium px-4 py-1 rounded-full ${getEstadoBadgeColor(
-                      stats.estado
+                      stats.estado,
                     )}`}
                   >
                     {formatEstado(stats.estado)}
