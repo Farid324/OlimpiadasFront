@@ -1,3 +1,4 @@
+// src/app/private/configuracion/tabs/MedalleroTab.tsx
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';

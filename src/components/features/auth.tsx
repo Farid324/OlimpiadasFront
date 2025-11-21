@@ -72,12 +72,7 @@ export default function LoginForm() {
       <Navbar
         title="Oh! SanSi 2025"
         tittleButton='Inicio'
-        links={[
-          { label: 'Inicio', href: '/' },
-          { label: 'Áreas', href: '/areas' },
-          { label: 'Inscritos', href: '/inscritos' },
-          { label: 'Resultados', href: '/resultados' },
-        ]}
+
         onLogout={() => {
           localStorage.removeItem('user');
           window.location.href = '/login';

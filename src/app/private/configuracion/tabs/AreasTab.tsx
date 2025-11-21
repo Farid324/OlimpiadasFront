@@ -1,3 +1,4 @@
+// src/app/private/configuracion/tabs/AreasTab.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -39,7 +40,7 @@ export default function AreasTab() {
 
   // Formulario: Nota inicial se basa en la que se edita o 51
   const [formNombre, setFormNombre] = useState('');
-  const [formNota, setFormNota] = useState<number>(51);
+  const [formNota, setFormNota] = useState<number | string>(51);
   const [formTipo, setFormTipo] = useState<'INDIVIDUAL' | 'GRUPAL'>('INDIVIDUAL');
   const [formNiveles, setFormNiveles] = useState<string[]>([]); 
 
@@ -106,12 +107,17 @@ export default function AreasTab() {
 
   const handleSave = async () => {
     if (!formNombre.trim()) return alert('El nombre es obligatorio');
-    if (formNota < 51 || formNota > 100) return alert('La nota debe estar entre 51 y 100');
+    
+    // Conversión segura: si está vacío (''), lo tratamos como 0 para que falle la validación
+    const notaFinal = formNota === '' ? 0 : Number(formNota);
+
+    // Validamos usand la variable convertida
+    if (notaFinal < 51 || notaFinal > 100) return alert('La nota debe estar entre 51 y 100');
     if (formNiveles.length === 0) return alert('Seleccione al menos un nivel');
 
     const payload = {
       nombre_area: formNombre,
-      nota_aprobacion: formNota,
+      nota_aprobacion: notaFinal, // Usamos notaFinal aquí
       tipo: formTipo,
       niveles_target: formNiveles.join(', '),
     };
@@ -310,15 +316,27 @@ export default function AreasTab() {
                     type="number"
                     min="51"
                     max="100"
-                    value={formNota}
-                    onChange={e => {
-                        const val = parseInt(e.target.value);
-                        setFormNota(isNaN(val) ? 0 : val);
+                    // El value lo pasamos tal cual (puede ser número o string vacío)
+                    value={formNota} 
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      // Si está vacío, permitimos que se quede vacío
+                      if (val === '') {
+                          setFormNota('');
+                      } else {
+                          // Si hay texto, intentamos convertir a entero
+                          const parsed = parseInt(val);
+                          // Si es un número válido, lo guardamos (esto quita ceros a la izquierda: "07" -> 7)
+                          if (!isNaN(parsed)) {
+                              setFormNota(parsed);
+                          }
+                      }
                     }}
                     onKeyDown={(e) => {
-                        if (!/[0-9]/.test(e.key) && !['Backspace', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.key)) {
-                            e.preventDefault();
-                        }
+                      // Tu validación actual está bien, consérvala
+                      if (!/[0-9]/.test(e.key) && !['Backspace', 'ArrowLeft', 'ArrowRight', 'Tab', 'Delete'].includes(e.key)) {
+                          e.preventDefault();
+                      }
                     }}
                     className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-gray-900 text-sm transition"
                   />
