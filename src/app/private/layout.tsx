@@ -1,4 +1,4 @@
-//src/app/private/layout.tsx
+// src/app/private/layout.tsx
 'use client';
 
 import { useState } from 'react';
@@ -19,13 +19,24 @@ function HeaderFromContext({ onToggle }: { onToggle: () => void }) {
 }
 
 export default function PrivateLayout({ children }: { children: React.ReactNode }) {
-  const [open, setOpen] = useState(true);
+  // Iniciamos en false para que en Móvil no aparezca tapando la pantalla al cargar.
+  const [open, setOpen] = useState(false);
 
   return (
     <PageHeaderProvider>
-      <SideMenu open={open} />
-      <div className={['min-h-screen flex flex-col transition-[padding] duration-300 ease-out', open ? 'pl-[var(--sidebar-w)]' : 'pl-0'].join(' ')}>
+      {/* Pasamos onClose para que funcione la X y los links en móvil */}
+      <SideMenu open={open} onClose={() => setOpen(false)} />
+
+      <div
+        className={[
+          'min-h-screen flex flex-col transition-[padding] duration-300 ease-out',
+          // MÓVIL: El padding es siempre 0 (el menú es overlay/encima).
+          // ESCRITORIO (lg): Si está abierto, aplicamos el padding de la variable sidebar-w.
+          open ? 'lg:pl-[var(--sidebar-w)]' : 'lg:pl-0'
+        ].join(' ')}
+      >
         <HeaderFromContext onToggle={() => setOpen(v => !v)} />
+        
         <main className="flex-1 overflow-auto bg-[var(--fondoAzulGris)]">
           <div className="max-w-7xl mx-auto py-6 px-4">{children}</div>
         </main>
