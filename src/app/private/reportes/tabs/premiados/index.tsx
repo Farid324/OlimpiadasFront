@@ -41,6 +41,12 @@ const DEFAULT_FILTERS: ReportFilters = {
 };
 
 const NIVEL_ORDER: Record<string, number> = { Secundaria: 0, Primaria: 1 };
+const MEDAL_ORDER: Record<PremiadoItemDTO["estadoPremio"], number> = {
+  ORO: 1,
+  PLATA: 2,
+  BRONCE: 3,
+  MENCION: 4,
+};
 
 const pick = (o: Record<string, unknown> | null | undefined, keys: string[]) =>
   keys.map((k) => o?.[k]).find((v) => v !== undefined && v !== null);
@@ -102,6 +108,10 @@ function sortRows(rows: PremiadoItemDTO[], asc: boolean): PremiadoItemDTO[] {
     const na = NIVEL_ORDER[a.nivel] ?? 99;
     const nb = NIVEL_ORDER[b.nivel] ?? 99;
     if (na !== nb) return na - nb;
+
+    const ma = MEDAL_ORDER[a.estadoPremio] ?? 99;
+    const mb = MEDAL_ORDER[b.estadoPremio] ?? 99;
+    if (ma !== mb) return ma - mb;
 
     const pa = a.posicion ?? Number.POSITIVE_INFINITY;
     const pb = b.posicion ?? Number.POSITIVE_INFINITY;
@@ -250,8 +260,17 @@ export default function PremiadosTab({
     () => niveles.filter((n) => !!n && typeof n.id === "number"),
     [niveles]
   );
-  const sortedRows = useMemo(() => sortRows(rows, orderAsc), [rows, orderAsc]);
 
+  const filteredRows = useMemo(() => {
+    if (!filters.estado || filters.estado === "TODOS") return rows;
+    return rows.filter((r) => r.estadoPremio === filters.estado);
+  }, [rows, filters.estado]);
+
+  const sortedRows = useMemo(
+    () => sortRows(filteredRows, orderAsc),
+    [filteredRows, orderAsc]
+  );
+  
   const total = sortedRows.length;
   const orderLabel = orderAsc
     ? "Posición (ascendente)"
