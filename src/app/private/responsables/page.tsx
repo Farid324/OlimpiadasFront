@@ -1,3 +1,4 @@
+//src/app/private/responsables/page.tsx
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -131,7 +132,8 @@ export default function ResponsablesPage() {
   };
 
   return (
-    <div className="p-6 space-y-6" ref={menuRef}>
+    // ✅ móvil sin padding grande, desktop igual que antes
+    <div className="p-0 sm:p-6 space-y-6" ref={menuRef}>
       {/* Encabezado */}
       <div>
         <h1 className="text-2xl font-bold text-black">Gestión de Responsables</h1>
@@ -139,7 +141,7 @@ export default function ResponsablesPage() {
       </div>
 
       {/* Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-6">
         <CardMetric label="Total Responsables" value={metrics.total} icon={<LuUsers />} />
         <CardMetric label="Responsables Activos" value={metrics.activos} icon={<LuUserCog />} />
         <CardMetric label="Áreas Cubiertas" value={metrics.areasCubiertas} icon={<LuBookOpenCheck />} />
@@ -147,11 +149,15 @@ export default function ResponsablesPage() {
       </div>
 
       {/* Botón */}
-      <div>
-        <Button onClick={() => { setEditData(null); setShowModal(true); }} className="bg-blue-600 hover:bg-blue-700">
+      <div className="flex justify-start">
+        <Button
+          onClick={() => { setEditData(null); setShowModal(true); }}
+          className="bg-blue-600 hover:bg-blue-700"
+        >
           + Agregar Responsable
         </Button>
       </div>
+
 
       {/* Buscador (estilo tarjeta grande) */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
@@ -182,7 +188,7 @@ export default function ResponsablesPage() {
       </div>
 
       {/* Tabla */}
-      <div className="bg-white rounded-lg shadow p-4">
+      <div className="bg-white rounded-lg shadow p-3 sm:p-4">
         <h2 className="font-semibold text-gray-700 mb-2">
           Responsables Registrados ({filtered.length})
         </h2>
@@ -408,7 +414,7 @@ function CardMetric({
   icon: React.ReactNode;
 }) {
   return (
-    <div className="bg-white p-4 rounded-lg shadow h-28 flex flex-col justify-between relative">
+    <div className="bg-white p-3 sm:p-4 rounded-lg shadow h-28 flex flex-col justify-between relative">
       <div className="flex justify-between items-start">
         <p className="text-sm text-gray-500">{label}</p>
         <div className="text-black text-2xl">{icon}</div>
