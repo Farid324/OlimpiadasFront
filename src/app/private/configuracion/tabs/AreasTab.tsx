@@ -192,7 +192,7 @@ export default function AreasTab() {
     <div className="space-y-6">
       
       {/* Toolbar: Buscador + Botón Agregar (Unificados) */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
+      <div className=" bg-white p-3 flex flex-col sm:flex-row gap-4 justify-between items-center rounded-lg">
         <div className="relative w-full sm:max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input

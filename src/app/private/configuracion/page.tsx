@@ -50,9 +50,9 @@ export default function ConfiguracionPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 text-gray-900">
+    <div className="p-1 space-y-6 text-gray-900">
       
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 min-h-[600px] p-6 flex flex-col gap-6">
+      <div className="bg-[var(--fondoAzulGris)] rounded-xl shadow-sm border border-gray-100 min-h-[600px] p-4 flex flex-col gap-6">
         
         <div>
           <h2 className="text-xl font-bold text-gray-900">
