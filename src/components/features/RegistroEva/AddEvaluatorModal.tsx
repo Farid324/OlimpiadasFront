@@ -264,7 +264,7 @@ export default function AddEvaluatorModal({
         setSuccessMsg(null);
         onSuccess();
         onClose();
-      }, 1000);
+      }, 5000);
     } catch (err: unknown) {
       const backendMsg = getBackendError(err);
       setMsgType('err');
