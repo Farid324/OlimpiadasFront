@@ -198,7 +198,7 @@ export default function ControlFasesPage() {
         </div>
 
         {/* Tabla */}
-        <div className="bg-white rounded-lg shadow p-4">
+        <div className="">
           <PhaseTable
             title={title}
             subtitle={subtitle}

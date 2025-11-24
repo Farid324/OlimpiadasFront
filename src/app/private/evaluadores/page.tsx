@@ -142,7 +142,8 @@ export default function EvaluadoresPage() {
   };
 
   return (
-    <div className="p-6 space-y-6" ref={menuRef}>
+    // ✅ Móvil sin padding grande, desktop intacto
+    <div className="p-0 sm:p-6 space-y-6" ref={menuRef}>
       {/* Encabezado */}
       <div>
         <h1 className="text-2xl font-bold text-black">Gestión de Evaluadores</h1>
@@ -160,7 +161,7 @@ export default function EvaluadoresPage() {
       )}
 
       {/* Cards (mismo tamaño que Responsables) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-6">
         <CardMetric label="Total Evaluadores" value={metrics.total} icon={<LuUsers />} />
         <CardMetric label="Evaluadores Activos" value={metrics.activos} icon={<LuUserCog />} />
         <CardMetric label="Áreas Cubiertas" value={metrics.areasCubiertas} icon={<LuLayers />} />
@@ -172,7 +173,7 @@ export default function EvaluadoresPage() {
       </div>
 
       {/* Botón */}
-      <div>
+      <div className="flex justify-start">
         <Button onClick={openCreate} className="bg-blue-600 hover:bg-blue-700">
           + Agregar Evaluador
         </Button>
@@ -208,7 +209,7 @@ export default function EvaluadoresPage() {
       </div>
 
       {/* Tabla */}
-      <div className="bg-white rounded-lg shadow p-4">
+      <div className="bg-white rounded-lg shadow p-3 sm:p-4">
         <h2 className="font-semibold text-gray-700 mb-2">
           Evaluadores Registrados ({filtered.length})
         </h2>
@@ -465,7 +466,7 @@ function CardMetric({
   icon: React.ReactNode;
 }) {
   return (
-    <div className="bg-white p-4 rounded-lg shadow h-28 flex flex-col justify-between relative">
+    <div className="bg-white p-3 sm:p-4 rounded-lg shadow h-28 flex flex-col justify-between relative">
       <div className="flex justify-between items-start">
         <p className="text-sm text-gray-500">{label}</p>
         <div className="text-black text-2xl [&>*]:w-6 [&>*]:h-6">{icon}</div>
