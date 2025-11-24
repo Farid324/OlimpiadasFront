@@ -1,4 +1,3 @@
-// src/app/private/evaluaciones/evaluadores/page.tsx
 'use client';
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { usePageHeader } from '@/contexts/pageHeader';
@@ -13,13 +12,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { ChevronDown } from 'lucide-react';
 import { api } from '@/libs/api';
 
-/* ===== Tipos de catálogos ===== */
 type AreaDTO = { id: number; nombre: string };
 type NivelDTO = { id: number; nombre: string };
 
-/* ===== Helpers de catálogos ===== */
 const pick = (o: Record<string, unknown> | null | undefined, keys: string[]) =>
-  keys.map((k) => o?.[k]).find((v) => v !== undefined && v !== null);
+  keys.map(k => o?.[k]).find(v => v !== undefined && v !== null);
 
 function mapCatalog<T extends { id: number; nombre: string }>(
   data: unknown,
@@ -28,27 +25,22 @@ function mapCatalog<T extends { id: number; nombre: string }>(
 ): T[] {
   const arr = (Array.isArray(data) ? data : []) as ReadonlyArray<Record<string, unknown>>;
   return arr
-    .map(
-      (r) =>
-        ({
-          id: Number(pick(r, idKeys)),
-          nombre: String(pick(r, nameKeys) ?? '').trim(),
-        } as T),
-    )
+    .map((r) => ({
+      id: Number(pick(r, idKeys)),
+      nombre: String(pick(r, nameKeys) ?? '').trim(),
+    } as T))
     .filter((x): x is T => !Number.isNaN(x.id) && x.nombre.length > 0);
 }
 
-/** 🔁 RUTAS CORRECTAS A CATALOGOS */
 async function getAreas(): Promise<AreaDTO[]> {
   const { data } = await api.get('/admin/evaluaciones/mis-areas');
-  return mapCatalog<AreaDTO>(data, ['id_area', 'id', 'value'], ['nombre_area', 'nombre', 'label']);
+  return mapCatalog<AreaDTO>(data, ['id_area', 'id'], ['nombre_area', 'nombre']);
 }
 async function getNiveles(): Promise<NivelDTO[]> {
   const { data } = await api.get('/admin/evaluaciones/niveles');
-  return mapCatalog<NivelDTO>(data, ['id_nivel', 'id', 'value'], ['nombre_nivel', 'nombre', 'label']);
+  return mapCatalog<NivelDTO>(data, ['id_nivel', 'id'], ['nombre_nivel', 'nombre']);
 }
 
-/* ===== Utilidades error ===== */
 function isRecord(x: unknown): x is Record<string, unknown> {
   return typeof x === 'object' && x !== null;
 }
@@ -56,10 +48,12 @@ function hasResponseData(x: unknown): x is { response: { data?: unknown } } {
   return isRecord(x) && isRecord(x.response);
 }
 
-/* ===== Componente principal ===== */
 export default function EvaluacionesEvaluadoresPage() {
   const { setTitle } = usePageHeader();
-  const [competidores, setCompetidores] = useState<CompetidorInscripcion[]>([]);
+
+  const [competidoresFase1, setCompetidoresFase1] = useState<CompetidorInscripcion[]>([]);
+  const [competidoresFase2, setCompetidoresFase2] = useState<CompetidorInscripcion[]>([]);
+
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<'Todos' | 'Pendientes' | 'Evaluados'>('Todos');
@@ -67,11 +61,6 @@ export default function EvaluacionesEvaluadoresPage() {
   const { user } = useAuth();
   const [reloadStats, setReloadStats] = useState(false);
 
-  useEffect(() => {
-    setTitle('Evaluaciones');
-  }, [setTitle]);
-
-  /* ===== Estado de filtros y catálogos ===== */
   const [idArea, setIdArea] = useState<number | null>(null);
   const [idNivel, setIdNivel] = useState<number | null>(null);
   const [areas, setAreas] = useState<AreaDTO[]>([]);
@@ -80,270 +69,196 @@ export default function EvaluacionesEvaluadoresPage() {
 
   const [activeTab, setActiveTab] = useState<'CLASIFICACION' | 'FASE_FINAL'>('CLASIFICACION');
 
-  /* ===== Cargar catálogos (área y nivel) ===== */
+  /* ===== Título ===== */
+  useEffect(() => { setTitle('Evaluaciones'); }, [setTitle]);
+
   useEffect(() => {
     let cancel = false;
     (async () => {
       try {
         setLoadingCatalogs(true);
         const [a, n] = await Promise.all([getAreas(), getNiveles()]);
-        if (!cancel) {
-          setAreas(a);
-          setNiveles(n);
-        }
+        if (!cancel) { setAreas(a); setNiveles(n); }
       } finally {
         if (!cancel) setLoadingCatalogs(false);
       }
     })();
-    return () => {
-      cancel = true;
-    };
+    return () => { cancel = true; };
   }, []);
 
-  /* ===== Fetch competidores asignados ===== */
   const fetchCompetidores = useCallback(async () => {
     setLoading(true);
     try {
       const data = await evaluacionesService.listarCompetidores({
         search: searchQuery || undefined,
         filtro:
-          activeFilter === 'Pendientes'
-            ? 'PENDIENTE'
-            : activeFilter === 'Evaluados'
-            ? 'EVALUADO'
-            : 'TODOS',
-        // NO enviar 0 ni null al API
-        id_area: idArea != null && idArea !== 0 ? idArea : undefined,
-        id_nivel: idNivel != null && idNivel !== 0 ? idNivel : undefined,
+          activeFilter === 'Pendientes' ? 'PENDIENTE' :
+          activeFilter === 'Evaluados' ? 'EVALUADO' : 'TODOS',
+        id_area: idArea ?? undefined,
+        id_nivel: idNivel ?? undefined,
       });
-      setCompetidores(data);
-    } catch (err) {
-      console.error('Error al cargar competidores:', err);
+      setCompetidoresFase1(data);
     } finally {
       setLoading(false);
     }
   }, [searchQuery, activeFilter, idArea, idNivel]);
-
-  const filteredCompetidores = useMemo(() => {
-    const term = searchQuery.trim().toLowerCase();
-    return competidores
-      .filter((c) => {
-        const nota = c.evaluaciones?.[0]?.nota ?? null;
-        if (activeFilter === 'Pendientes') return nota === null;
-        if (activeFilter === 'Evaluados') return nota !== null;
-        return true;
-      })
-      .filter((c) => {
-        if (!term) return true;
-        const comp = c.competidor;
-        return (
-          comp.nombres?.toLowerCase().includes(term) ||
-          comp.apellidos?.toLowerCase().includes(term) ||
-          comp.ci?.toLowerCase().includes(term) ||
-          comp.escuela?.toLowerCase().includes(term)
-        );
-      });
-  }, [competidores, searchQuery, activeFilter]);
 
   const fetchCompetidoresClasificados = useCallback(async () => {
     setLoading(true);
     try {
       const data = await evaluacionesService.getListarCompetidoresClasificados({
         search: searchQuery || undefined,
-        id_area: idArea != null && idArea !== 0 ? idArea : undefined,
-        id_nivel: idNivel != null && idNivel !== 0 ? idNivel : undefined,
+        id_area: idArea ?? undefined,
+        id_nivel: idNivel ?? undefined,
       });
-      setCompetidores(data);
-    } catch (err) {
-      console.error('Error al cargar competidores:', err);
+      setCompetidoresFase2(data);
     } finally {
       setLoading(false);
     }
   }, [searchQuery, idArea, idNivel]);
 
-  const filteredCompetidoresClasificados = useMemo(() => {
-    const term = searchQuery.trim().toLowerCase();
-    return competidores
-      .filter((c) => {
-        const nota = c.evaluaciones?.[0]?.nota ?? null;
-        if (activeFilter === 'Pendientes') return nota === null;
-        if (activeFilter === 'Evaluados') return nota !== null;
-        return true;
-      })
-      .filter((c) => {
-        if (!term) return true;
-        const comp = c.competidor;
-        return (
-          comp.nombres?.toLowerCase().includes(term) ||
-          comp.apellidos?.toLowerCase().includes(term) ||
-          comp.ci?.toLowerCase().includes(term) ||
-          comp.escuela?.toLowerCase().includes(term)
-        );
-      });
-  }, [competidores, searchQuery, activeFilter]);
-
+  /* ===== Ejecutar fetch según tab activo ===== */
   useEffect(() => {
-    const fetchFn =
-      activeTab === 'CLASIFICACION' ? fetchCompetidores : fetchCompetidoresClasificados;
+    const fn = activeTab === 'CLASIFICACION' ? fetchCompetidores : fetchCompetidoresClasificados;
+    fn();
+  }, [activeTab, fetchCompetidores, fetchCompetidoresClasificados, searchQuery, activeFilter, idArea, idNivel]);
 
-    fetchFn();
-  }, [
-    activeTab,
-    fetchCompetidores,
-    fetchCompetidoresClasificados,
-    searchQuery,
-    activeFilter,
-    idArea,
-    idNivel,
-  ]);
+  const doFilter = useCallback((list: CompetidorInscripcion[]) => {
+      const term = searchQuery.trim().toLowerCase();
+      return list
+        .filter(c => {
+          const nota = c.evaluaciones?.[0]?.nota ?? null;
+          if (activeFilter === 'Pendientes') return nota === null;
+          if (activeFilter === 'Evaluados') return nota !== null;
+          return true;
+        })
+        .filter(c => {
+          if (!term) return true;
+          const comp = c.competidor;
+          return (
+            comp.nombres?.toLowerCase().includes(term) ||
+            comp.apellidos?.toLowerCase().includes(term) ||
+            comp.ci?.toLowerCase().includes(term) ||
+            comp.escuela?.toLowerCase().includes(term)
+          );
+        });
+  }, [searchQuery, activeFilter]);
 
-  const dataToRender =
-    activeTab === 'CLASIFICACION' ? filteredCompetidores : filteredCompetidoresClasificados;
+  const filteredCompetidores = useMemo(() => doFilter(competidoresFase1), [competidoresFase1, doFilter]);
+  const filteredCompetidoresClasificados = useMemo(() => doFilter(competidoresFase2), [competidoresFase2, doFilter]);
 
-  const handleOpenModal = async (competidor: CompetidorInscripcion) => {
-    try {
-      const evaluacionExistente = competidor.evaluaciones?.[0];
-      const idFase = activeTab === 'CLASIFICACION' ? 1 : 2;
+  const dataToRender = activeTab === 'CLASIFICACION' ? filteredCompetidores : filteredCompetidoresClasificados;
 
+  const handleOpenModal = async (competidor: CompetidorInscripcion) => {
+    try {
+      const evaluacionExistente = competidor.evaluaciones?.[0];
+      const idFase = activeTab === 'CLASIFICACION' ? 1 : 2;
+      if (activeTab === 'CLASIFICACION' && evaluacionExistente?.estado_registro === 'FIRMADA') {
+          console.log('Evaluación FIRMADA. No se puede editar.');
+          return;
+      }
+      
       if (evaluacionExistente?.id_evaluacion) {
         const detalle = await evaluacionesService.getEvaluacion(
           evaluacionExistente.id_evaluacion,
-          idFase,
+          idFase
         );
-
-        setModalCompetidor({
-          ...competidor,
-          evaluaciones: [detalle],
-        });
+        setModalCompetidor({ ...competidor, evaluaciones: [detalle] });
       } else {
         setModalCompetidor(competidor);
       }
-    } catch (err) {
-      console.error('❌ Error al cargar detalle de evaluación:', err);
+    } catch {
       setModalCompetidor(competidor);
     }
   };
 
-  /* ===== Registrar / editar nota ===== */
   const handleSubmitNota = async (data: {
-    nota: number;
-    descripcionConceptual?: string;
-    etica?: string;
-    comentario?: string;
+      nota: number;
+      descripcionConceptual?: string;
+      etica?: string;
+      comentario?: string;
   }) => {
-    if (!modalCompetidor) return;
+      if (!modalCompetidor) return;
 
-    try {
-      const idUsuario = Number(user?.id);
-      const evaluacionExistente = modalCompetidor.evaluaciones?.[0];
+      try {
+          const idUsuario = Number(user?.id);
+          const evaluacionExistente = modalCompetidor.evaluaciones?.[0];
+          const idFase = activeTab === 'CLASIFICACION' ? 1 : 2;
 
-      const idFase = activeTab === 'CLASIFICACION' ? 1 : 2;
+          if (evaluacionExistente?.id_evaluacion) {
+              await evaluacionesService.editarNota({
+                  idEvaluacion: evaluacionExistente.id_evaluacion,
+                  idUsuario,
+                  nuevaNota: data.nota,
+                  comentario: data.comentario,
+                  idFase,
+              });
+          } 
+          else { 
+              await evaluacionesService.registrarNota({
+                  idInscripcion: modalCompetidor.id_inscripcion,
+                  idUsuario,
+                  nota: data.nota,
+                  idFase,
+                  descripcionConceptual: data.descripcionConceptual,
+                  etica: data.etica,
+                  comentario: data.comentario,
+              });
+          }
 
-      if (evaluacionExistente && evaluacionExistente.id_evaluacion) {
-        const idEvaluacion = evaluacionExistente.id_evaluacion;
-        await evaluacionesService.editarNota({
-          idEvaluacion,
-          idUsuario,
-          nuevaNota: data.nota,
-          comentario: data.comentario,
-          idFase,
-        });
-        if (activeTab === 'CLASIFICACION') {
-          await fetchCompetidores();
-        } else {
-          await fetchCompetidoresClasificados();
-        }
-      } else {
-        const nuevaEvaluacion = await evaluacionesService.registrarNota({
-          idInscripcion: modalCompetidor.id_inscripcion,
-          idUsuario,
-          nota: data.nota,
-          idFase,
-          descripcionConceptual: data.descripcionConceptual,
-          etica: data.etica,
-          comentario: data.comentario,
-        });
-        if (activeTab === 'CLASIFICACION') {
-          await fetchCompetidores();
-        } else {
-          await fetchCompetidoresClasificados();
-        }
+          if (activeTab === 'CLASIFICACION') {
+              await fetchCompetidores(); 
+          } else {
+              await fetchCompetidoresClasificados(); 
+          }
 
-        setCompetidores((prev) =>
-          prev.map((c) =>
-            c.id_inscripcion === modalCompetidor.id_inscripcion
-              ? {
-                  ...c,
-                  evaluaciones: [
-                    {
-                      ...(c.evaluaciones?.[0] ?? {}),
-                      id_evaluacion: nuevaEvaluacion.id_evaluacion,
-                      nota: data.nota,
-                    },
-                  ],
-                }
-              : c,
-          ),
-        );
+          setModalCompetidor(null);
+          setReloadStats(p => !p);
+      } catch (err) {
+          if (hasResponseData(err)) console.error(err.response.data);
       }
-
-      setModalCompetidor(null);
-      setReloadStats((prev) => !prev);
-    } catch (err) {
-      console.error('❌ Error al registrar/editar nota:', err);
-      if (hasResponseData(err) && err.response.data) {
-        console.error('Backend response:', err.response.data);
-      }
-    }
   };
 
   /* ===== Render ===== */
   return (
     <div className="p-6 space-y-6 bg-transparent">
-      {/* Encabezado + tabs con separación ajustada */}
-      <div className="space-y-1 mb-4">
-        <h1 className="text-2xl text-black font-bold">Sistema de evaluaciones</h1>
-        <p className="text-gray-500 text-sm">
-          Registro y seguimiento de evaluaciones por área y nivel
-        </p>
+      <h1 className="text-2xl text-black font-bold">Sistema de evaluaciones</h1>
 
-        {/* Tabs tipo “pill” */}
-        <div className="flex justify-start mt-3 mb-4">
-          <div className="inline-flex items-center rounded-full bg-gray-100 p-1 shadow-sm">
-            <button
-              type="button"
-              onClick={() => setActiveTab('CLASIFICACION')}
-              className={`px-5 py-1.5 text-sm font-medium rounded-full transition-colors duration-150 ${
-                activeTab === 'CLASIFICACION'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'bg-transparent text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              Clasificación
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('FASE_FINAL')}
-              className={`px-5 py-1.5 text-sm font-medium rounded-full transition-colors duration-150 ${
-                activeTab === 'FASE_FINAL'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'bg-transparent text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              Fase Final
-            </button>
-          </div>
-        </div>
+      <div className="flex p-1 bg-gray-100 rounded-full w-full shadow-inner mb-6">
+        <button
+          onClick={() => setActiveTab('CLASIFICACION')}
+          className={`
+            flex-1 px-4 py-2 text-center font-medium text-sm rounded-full transition-all duration-200
+            ${
+              activeTab === 'CLASIFICACION'
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'bg-transparent text-gray-700 hover:bg-white'
+            }
+          `}
+        >
+          Clasificación
+        </button>
+        <button
+          onClick={() => setActiveTab('FASE_FINAL')}
+          className={`
+            flex-1 px-4 py-2 text-center font-medium text-sm rounded-full transition-all duration-200
+            ${
+              activeTab === 'FASE_FINAL'
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'bg-transparent text-gray-700 hover:bg-white'
+            }
+          `}
+        >
+          Fase Final
+        </button>
       </div>
 
-      {/* Cards summary */}
+      {/* Cards summary (usa /admin/evaluaciones/resumen) */}
       <CardsSummary
         key={`${activeTab}-${reloadStats ? 'reload' : 'static'}`}
         idFase={activeTab === 'CLASIFICACION' ? 1 : 2}
         refreshToken={reloadStats}
       />
-
       <div className="flex flex-col gap-3">
         {/* Buscador + Filtros Área/Nivel */}
         <div className="bg-white rounded-lg shadow p-4 flex flex-col sm:flex-row w-full items-center gap-3">
@@ -353,6 +268,7 @@ export default function EvaluacionesEvaluadoresPage() {
 
           {/* Select Área */}
           <div className="relative w-full sm:w-48">
+            {/* ◼ wrapper con borde negro */}
             <div className="relative rounded-lg ring-1 ring-black focus-within:ring-1">
               <select
                 className={`h-9 w-full appearance-none rounded-lg bg-transparent px-3 pr-10 text-sm
@@ -361,22 +277,16 @@ export default function EvaluacionesEvaluadoresPage() {
                 value={idArea ?? ''}
                 onChange={(e) => {
                   const v = e.target.value;
-                  if (v === '') setIdArea(null);
-                  else setIdArea(Number(v));
+                  if (v === '') setIdArea(null);         // placeholder
+                  else setIdArea(Number(v));             // incluye 0 (todas) o un id
                 }}
                 aria-label="Filtrar por área"
                 disabled={loadingCatalogs}
               >
-                <option value="" disabled hidden>
-                  Filtrar por área
-                </option>
-                <option value={0} style={{ color: '#111827' }}>
-                  Todas las áreas
-                </option>
-                {areas.map((a) => (
-                  <option key={`area-${a.id}`} value={a.id} style={{ color: '#111827' }}>
-                    {a.nombre}
-                  </option>
+                <option value="" disabled hidden>Filtrar por área</option>
+                <option value={0} style={{ color: '#111827' }}>Todas las áreas</option>
+                {areas.map(a => (
+                  <option key={`area-${a.id}`} value={a.id} style={{ color: '#111827' }}>{a.nombre}</option>
                 ))}
               </select>
               <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
@@ -385,6 +295,7 @@ export default function EvaluacionesEvaluadoresPage() {
 
           {/* Select Nivel */}
           <div className="relative w-full sm:w-48">
+            {/* ◼ wrapper con borde negro */}
             <div className="relative rounded-lg ring-1 ring-black focus-within:ring-1">
               <select
                 className={`h-9 w-full appearance-none rounded-lg bg-transparent px-3 pr-10 text-sm
@@ -393,22 +304,16 @@ export default function EvaluacionesEvaluadoresPage() {
                 value={idNivel ?? ''}
                 onChange={(e) => {
                   const v = e.target.value;
-                  if (v === '') setIdNivel(null);
-                  else setIdNivel(Number(v));
+                  if (v === '') setIdNivel(null);         // placeholder
+                  else setIdNivel(Number(v));             // incluye 0 (todos) o un id
                 }}
                 aria-label="Filtrar por nivel"
                 disabled={loadingCatalogs}
               >
-                <option value="" disabled hidden>
-                  Filtrar por nivel
-                </option>
-                <option value={0} style={{ color: '#111827' }}>
-                  Todos los niveles
-                </option>
-                {niveles.map((n) => (
-                  <option key={`nivel-${n.id}`} value={n.id} style={{ color: '#111827' }}>
-                    {n.nombre}
-                  </option>
+                <option value="" disabled hidden>Filtrar por nivel</option>
+                <option value={0} style={{ color: '#111827' }}>Todos los niveles</option>
+                {niveles.map(n => (
+                  <option key={`nivel-${n.id}`} value={n.id} style={{ color: '#111827' }}>{n.nombre}</option>
                 ))}
               </select>
               <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
@@ -437,6 +342,7 @@ export default function EvaluacionesEvaluadoresPage() {
                 onEditar={handleOpenModal}
                 mostrarNivel
                 mostrarEstado
+                fase={activeTab}
               />
             )}
           </div>
@@ -449,9 +355,7 @@ export default function EvaluacionesEvaluadoresPage() {
           isOpen={!!modalCompetidor}
           onClose={() => setModalCompetidor(null)}
           onSubmit={handleSubmitNota}
-          onSaved={() => {
-            fetchCompetidoresClasificados();
-          }}
+          onSaved={() => { fetchCompetidoresClasificados(); }}
           title={`${
             modalCompetidor.evaluaciones?.length > 0
               ? `Editar nota de ${modalCompetidor.competidor.nombres} ${modalCompetidor.competidor.apellidos}`
@@ -471,6 +375,8 @@ export default function EvaluacionesEvaluadoresPage() {
                 }
               : undefined
           }
+
+
           competidor={{
             nombres: modalCompetidor.competidor.nombres,
             apellidos: modalCompetidor.competidor.apellidos,
