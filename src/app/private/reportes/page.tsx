@@ -405,7 +405,8 @@ export default function ReportesPage() {
 
   return (
     <RoleGate allow={["ADMINISTRADOR"]}>
-      <div className="p-6 space-y-6">
+      {/* ✅ móvil sin padding extra, desktop igual que antes */}
+      <div className="p-0 sm:p-6 space-y-6">
         {/* Encabezado + Chips */}
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
@@ -434,7 +435,8 @@ export default function ReportesPage() {
         <div
           className={locked ? "opacity-50 pointer-events-none select-none" : ""}
         >
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6">
+          {/* ✅ 2 cards por fila en móvil, desktop intacto */}
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-6 gap-2 sm:gap-6">
             {cards.map((c) => (
               <CardMetric
                 key={c.key}
