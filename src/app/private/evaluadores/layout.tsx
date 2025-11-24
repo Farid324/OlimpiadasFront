@@ -1,10 +1,9 @@
-// src/app/private/evaluadores/layout.tsx
 'use client';
 
-export default function EvaluadoresLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return <div className="p-6">{children}</div>;
+export default function ResponsablesLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="w-full max-w-none px-1 sm:px-6 py-4 sm:py-6">
+      {children}
+    </div>
+  );
 }

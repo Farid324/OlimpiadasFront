@@ -70,11 +70,11 @@ export default function LogsPage() {
         <CardMetric label="Modificaciones" value={metrics.modificaciones} icon={<Edit />} />
       </div>
 
-      {/* Filtros */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-        <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
-          {/* Buscar */}
-          <div className="relative w-full sm:w-1/2">
+
+      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
+        {/* ===== Buscar (tabla/caja 1) ===== */}
+        <div className="w-full sm:w-1/2 bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-3">
+          <div className="relative w-full">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
 
             <Input
@@ -101,9 +101,11 @@ export default function LogsPage() {
               </button>
             )}
           </div>
+        </div>
 
-          {/* Filtro acción */}
-          <div className="relative w-full sm:w-1/4">
+        {/* ===== Filtro acción (tabla/caja 2) ===== */}
+        <div className="w-full sm:w-1/4 bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-3">
+          <div className="relative w-full">
             <select
               className="
           w-full h-12 rounded-lg bg-gray-50 border border-gray-200 px-3
@@ -120,6 +122,8 @@ export default function LogsPage() {
           </div>
         </div>
       </div>
+
+
 
 
       {/* Tabla */}
