@@ -19,7 +19,9 @@ function PillFilled({
     emerald: "bg-emerald-100 text-emerald-700 ring-emerald-200",
   };
   return (
-    <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ${map[color]}`}>
+    <span
+      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ${map[color]}`}
+    >
       {children}
     </span>
   );
@@ -39,7 +41,9 @@ function EstadoChip({ estado }: { estado: EstadoUI }) {
       ? "text-amber-600"
       : "text-slate-600";
   return (
-    <span className={`inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold ${text}`}>
+    <span
+      className={`inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold ${text}`}
+    >
       {estado}
     </span>
   );
@@ -73,7 +77,8 @@ export default function PhaseRowResp({
     accionDisabled,
   } = fila;
 
-  const porcentaje = progresoTotal > 0 ? Math.round((progresoHecho / progresoTotal) * 100) : 0;
+  const porcentaje =
+    progresoTotal > 0 ? Math.round((progresoHecho / progresoTotal) * 100) : 0;
 
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -143,17 +148,21 @@ export default function PhaseRowResp({
 
         {/* Responsable */}
         <td className="px-4 py-4 align-middle">
-          <div className="text-slate-900 font-semibold">{responsable || "—"}</div>
-          {fechaHora && <div className="text-[11px] text-slate-400">{fechaHora}</div>}
+          <div className="text-slate-900 font-semibold">
+            {responsable || "—"}
+          </div>
+          {fechaHora && (
+            <div className="text-[11px] text-slate-400">{fechaHora}</div>
+          )}
         </td>
 
-        {/* Estado */}
-        <td className="px-4 py-4 align-middle">
+        {/* Estado 👉 centrado */}
+        <td className="px-4 py-4 align-middle text-center">
           <EstadoChip estado={estado} />
         </td>
 
-        {/* Acciones */}
-        <td className="px-4 py-4 align-middle text-right">
+        {/* Acciones 👉 centrado */}
+        <td className="px-4 py-4 align-middle text-center">
           {accionLabel && (
             <button
               className={`inline-flex items-center rounded-lg px-3.5 py-2 text-xs font-medium shadow-sm focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${btnMap[accionColor]}`}

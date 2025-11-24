@@ -1,30 +1,20 @@
-//src/components/controlFases/StatCard.tsx
-import React from 'react';
-
-export default function StatCard({
-  title,
-  value,
-  subtitle,
-}: {
+// src/components/controlFases/StatCard.tsx
+interface StatCardProps {
   title: string;
   value: string | number;
   subtitle?: string;
-}) {
+}
+
+export default function StatCard({ title, value, subtitle }: StatCardProps) {
   return (
-    <div className="rounded-xl border bg-white p-5 shadow-sm">
-      {/* Título: primera letra de cada palabra en mayúscula */}
-      <div className="text-[11px] capitalize tracking-wide text-slate-500">
-        {title}
+    <div className="bg-white p-3 sm:p-4 rounded-lg shadow h-28 flex flex-col justify-between">
+      <div>
+        <p className="text-sm text-gray-500">{title}</p>
+        <p className="text-2xl font-bold text-black mt-1">{value}</p>
       </div>
 
-      {/* Valor principal */}
-      <div className="mt-1 text-3xl font-semibold text-slate-900">{value}</div>
-
-      {/* Subtítulo: también primera letra de cada palabra en mayúscula */}
       {subtitle && (
-        <div className="mt-1 text-xs text-slate-500 capitalize">
-          {subtitle}
-        </div>
+        <p className="text-xs text-gray-400">{subtitle}</p>
       )}
     </div>
   );
