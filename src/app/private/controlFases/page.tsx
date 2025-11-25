@@ -62,8 +62,7 @@ export default function ControlFasesPage() {
   const { setTitle } = usePageHeader();
   const { user } = useAuth();
 
-  const canApprove =
-    user?.role === "RESPONSABLE_DE_AREA";
+  const canApprove = user?.role === "RESPONSABLE_DE_AREA";
 
   const [activePhase, setActivePhase] = useState<PhaseTab>("CLASIFICACION");
 
@@ -153,13 +152,14 @@ export default function ControlFasesPage() {
 
         {/* Header + Tabs */}
         <div className="flex items-start justify-between gap-3 flex-wrap">
-          <div>
-            <h1 className="text-2xl font-bold text-black">Control de Fases</h1>
-            <p className="text-gray-500 text-sm">
-              Gestión y aprobación de fases de evaluación por área
-            </p>
-          </div>
+          <h1 className="text-2xl font-bold text-black">Control de Fases</h1>
+          <p className="text-gray-500 text-sm">
+            Gestión y aprobación de fases de evaluación por área
+          </p>
+        </div>
 
+        {/* Tabs de fase — justo debajo del header, antes de los KPIs */}
+        <div>
           <PhaseTabsCF
             active={activePhase}
             onChange={(p) => {

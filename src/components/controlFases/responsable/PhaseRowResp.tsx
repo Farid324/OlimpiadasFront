@@ -2,9 +2,19 @@
 import React, { useState } from "react";
 import ProgressBar from "./ProgressBarResp";
 import type { FilaFaseResp, FaseActual, EstadoUI, AccionColor } from "./types";
-import { aprobarFaseResp } from "./service";
 // reutilizamos el modal común
 import ApprovePhaseModal from "../ApprovePhaseModal";
+import type { PhaseType } from "../phaseApi";
+import { closePhase, validatePhase } from "../phaseApi";
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "object" && error !== null && "message" in error) {
+    const maybe = (error as { message?: unknown }).message;
+    if (typeof maybe === "string") return maybe;
+  }
+  return "No se pudo aprobar la fase.";
+}
 
 function PillFilled({
   children,
@@ -19,7 +29,9 @@ function PillFilled({
     emerald: "bg-emerald-100 text-emerald-700 ring-emerald-200",
   };
   return (
-    <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ${map[color]}`}>
+    <span
+      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ${map[color]}`}
+    >
       {children}
     </span>
   );
@@ -39,7 +51,9 @@ function EstadoChip({ estado }: { estado: EstadoUI }) {
       ? "text-amber-600"
       : "text-slate-600";
   return (
-    <span className={`inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold ${text}`}>
+    <span
+      className={`inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold ${text}`}
+    >
       {estado}
     </span>
   );
@@ -54,9 +68,11 @@ const btnMap: Record<AccionColor, string> = {
 export default function PhaseRowResp({
   fila,
   onRefresh,
+  phaseType,
 }: {
   fila: FilaFaseResp;
   onRefresh: () => void | Promise<void>;
+  phaseType: PhaseType;
 }) {
   const {
     area,
@@ -71,19 +87,44 @@ export default function PhaseRowResp({
     accionLabel,
     accionColor = "primary",
     accionDisabled,
+    idArea,
+    idNivel,
   } = fila;
 
-  const porcentaje = progresoTotal > 0 ? Math.round((progresoHecho / progresoTotal) * 100) : 0;
+  const porcentaje =
+    progresoTotal > 0 ? Math.round((progresoHecho / progresoTotal) * 100) : 0;
 
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  async function confirmApprove() {
+  async function confirmApprove(): Promise<void> {
+    if (!idArea || !idNivel) {
+      setErrorMsg("No se pudo identificar el área y nivel de la fila.");
+      return;
+    }
+
     try {
       setLoading(true);
-      await aprobarFaseResp(fila.id);
-      setOpen(false);
+      setErrorMsg(null);
+
+      const idAreaNum = Number(idArea);
+      const idNivelNum = Number(idNivel);
+
+      // Cerrar fase
+      await closePhase(idAreaNum, idNivelNum, {
+        type: phaseType,
+      });
+
+      // Validar fase
+      await validatePhase(idAreaNum, idNivelNum, {
+        type: phaseType,
+      });
+
       await onRefresh();
+      setOpen(false);
+    } catch (error: unknown) {
+      setErrorMsg(getErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -143,8 +184,12 @@ export default function PhaseRowResp({
 
         {/* Responsable */}
         <td className="px-4 py-4 align-middle">
-          <div className="text-slate-900 font-semibold">{responsable || "—"}</div>
-          {fechaHora && <div className="text-[11px] text-slate-400">{fechaHora}</div>}
+          <div className="text-slate-900 font-semibold">
+            {responsable || "—"}
+          </div>
+          {fechaHora && (
+            <div className="text-[11px] text-slate-400">{fechaHora}</div>
+          )}
         </td>
 
         {/* Estado */}
@@ -174,6 +219,13 @@ export default function PhaseRowResp({
         onConfirm={confirmApprove}
         loading={loading}
       />
+      {errorMsg && (
+        <tr>
+          <td colSpan={7} className="px-4 pb-3 text-xs text-red-500">
+            {errorMsg}
+          </td>
+        </tr>
+      )}
     </>
   );
 }

@@ -36,10 +36,10 @@ function readCurrentUserFullName(): string | null {
 }
 
 export async function fetchControlFasesResp(
-  type: PhaseTypeResp = "CLASIFICACION",
+  type: PhaseTypeResp = "CLASIFICACION"
 ): Promise<ControlFasesRespPayload> {
   const data = await getFromAPI<ControlFasesRespPayload>(
-    `${ENDPOINT}?type=${type}`,
+    `${ENDPOINT}?type=${type}`
   );
   const meName = readCurrentUserFullName();
 
@@ -51,7 +51,9 @@ export async function fetchControlFasesResp(
       typeof f.accionLabel === "string" && f.accionLabel.trim() !== ""
         ? f.accionLabel
         : f.estado === "Listo para aprobar"
-        ? "Aprobar Clasificación"
+        ? type === "FINAL"
+          ? "Aprobar Fase Final"
+          : "Aprobar Clasificación"
         : undefined;
 
     const accionColor = f.accionColor ?? "primary";
@@ -72,9 +74,4 @@ export async function fetchControlFasesResp(
   });
 
   return { ...data, filas };
-}
-
-// --------- acción ---------
-export async function aprobarFaseResp(id: number | string): Promise<void> {
-  await postToAPI(`${ENDPOINT}/${id}/approve`, {});
 }
