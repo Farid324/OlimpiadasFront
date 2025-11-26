@@ -56,7 +56,9 @@ export default function LogsPage() {
 
   // 🔹 Render
   return (
-    <div className="p-6 space-y-6 text-gray-900">
+    // MODIFICACIÓN CLAVE: Cambiamos 'p-6' por 'py-6' para mantener el espacio vertical
+    // y dejar que el layout padre maneje el padding horizontal (evitando el margen doble).
+    <div className="py-6 space-y-6 text-gray-900">
       {/* Encabezado */}
       <div>
         <h1 className="text-2xl font-bold text-black">Registro de Actividades</h1>
@@ -103,7 +105,6 @@ export default function LogsPage() {
           </div>
         </div>
 
-        {/* ===== Filtro acción (tabla/caja 2) ===== */}
         {/* ===== Filtro acción (tabla/caja 2) ===== */}
         <div className="w-full sm:w-1/4 bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4">
           <div className="relative w-full">
