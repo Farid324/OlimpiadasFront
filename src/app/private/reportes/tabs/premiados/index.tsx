@@ -1,7 +1,7 @@
 //src/app/private/reportes/tabs/premiados/index.tsx
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { api } from "@/libs/api";
 import { Download, ChevronDown } from "lucide-react";
@@ -231,22 +231,25 @@ export default function PremiadosTab({
     };
   }, []);
 
-  const fetchRows = async (f: ReportFilters) => {
-    setLoadingRows(true);
-    try {
-      const data = await getListaPremiados(f);
-      setRows(Array.isArray(data) ? data : []);
-    } catch {
-      setRows([]);
-    } finally {
-      setLoadingRows(false);
-    }
-  };
+  const fetchRows = useCallback(
+    async (f: ReportFilters) => {
+      setLoadingRows(true);
+      try {
+        const data = await getListaPremiados(f);
+        setRows(Array.isArray(data) ? data : []);
+      } catch {
+        setRows([]);
+      } finally {
+        setLoadingRows(false);
+      }
+    },
+    [setLoadingRows, setRows]
+  );
 
   useEffect(() => {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(filters));
-    fetchRows(filters);
-  }, [filters]);
+    void fetchRows(filters);
+  }, [filters, fetchRows]);
 
   useEffect(() => {
     console.log("premiados FE:", rows);
@@ -270,7 +273,7 @@ export default function PremiadosTab({
     () => sortRows(filteredRows, orderAsc),
     [filteredRows, orderAsc]
   );
-  
+
   const total = sortedRows.length;
   const orderLabel = orderAsc
     ? "Posición (ascendente)"

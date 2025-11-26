@@ -1,6 +1,5 @@
 // src/components/controlFases/responsable/service.ts
 import { getFromAPI } from "../apiClient";
-import { postToAPI } from "../apiClient";
 import type { ControlFasesRespPayload, FilaFaseResp } from "./types";
 
 const ENDPOINT = "control-fases/responsables";
