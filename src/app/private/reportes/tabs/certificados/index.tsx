@@ -150,9 +150,17 @@ export default function CertificadosTab() {
       }.xlsx`;
       a.click();
       window.URL.revokeObjectURL(url);
-    } catch (e) {
-      console.error("Error al exportar premiados:", e);
-      alert("No se pudo exportar los certificados de premiación.");
+    } catch (error) {
+      const err = error as ExportError;
+      const msg = err?.message ?? "No se pudo exportar.";
+
+      if (msg.startsWith("LOCKED::")) {
+        alert(msg.replace("LOCKED::", ""));
+      } else if (msg !== "No se pudo exportar.") {
+        alert(msg);
+      } else {
+        alert("No se pudo exportar los certificados de premiación.");
+      }
     } finally {
       setLoadingExport(false);
     }
