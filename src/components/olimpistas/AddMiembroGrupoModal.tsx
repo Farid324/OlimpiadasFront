@@ -43,7 +43,11 @@ const schema = z.object({
     ])
     .optional(),
   /* Con valueAsNumber ya llega como number: validamos entero 1..6 */
-  grado: z.number().int("El grado debe ser un número entero.").min(1, "El grado debe estar entre 1 y 6.").max(6, "El grado debe estar entre 1 y 6."),
+  grado: z
+    .number()
+    .int("El grado debe ser un número entero.")
+    .min(1, "El grado debe estar entre 1 y 6.")
+    .max(6, "El grado debe estar entre 1 y 6."),
 });
 
 /* Tipamos FormData desde el schema para alinear exactamente con el resolver */
@@ -91,7 +95,8 @@ export default function AddMiembroGrupoModal({
         ci: f.ci,
         tutorContacto: f.tutorContacto || undefined,
         // "" (usar del grupo) -> undefined
-        departamento: f.departamento && f.departamento !== "" ? f.departamento : undefined,
+        departamento:
+          f.departamento && f.departamento !== "" ? f.departamento : undefined,
         grado: f.grado,
       });
 
@@ -108,8 +113,8 @@ export default function AddMiembroGrupoModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white p-6 rounded-xl w-[560px] relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-2">
+      <div className="bg-white p-4 sm:p-6 rounded-xl w-full max-w-[560px] relative">
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
@@ -126,7 +131,7 @@ export default function AddMiembroGrupoModal({
         </p>
 
         <form onSubmit={handleSubmit(submit)} className="space-y-4" noValidate>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Nombre completo */}
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">
@@ -227,7 +232,7 @@ export default function AddMiembroGrupoModal({
             </div>
           </div>
 
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-col sm:flex-row justify-end gap-2">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
