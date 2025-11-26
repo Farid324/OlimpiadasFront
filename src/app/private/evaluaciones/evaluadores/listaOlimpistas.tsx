@@ -63,6 +63,7 @@ interface Props {
   onEditar: (c: CompetidorInscripcion) => void;
   mostrarNivel?: boolean;
   mostrarEstado?: boolean;
+  fase: 'CLASIFICACION' | 'FASE_FINAL'; 
 }
 
 /** Fallback por si algún día traes posición persistida desde BE */
@@ -132,6 +133,7 @@ export default function CompetidorList({
   onEditar,
   mostrarNivel,
   mostrarEstado,
+  fase,
 }: Props) {
   const [orderAsc, setOrderAsc] = useState<boolean>(true);
 
@@ -191,7 +193,11 @@ export default function CompetidorList({
                 const nota = c.evaluaciones?.[0]?.nota ?? null;
                 const nivel = c.nivel?.nombre_nivel ?? '—';
                 const clasificacion = c.clasificacion ?? '—';
-                const firmada = c.evaluaciones?.[0]?.estado_registro === 'FIRMADA';
+                //const firmada = c.evaluaciones?.[0]?.estado_registro === 'FIRMADA';
+                const firmada =
+                  fase === 'CLASIFICACION' &&
+                  c.evaluaciones?.[0]?.estado_registro === 'FIRMADA';
+
 
                 const chipClasificacionStyle =
                   clasificacion === 'CLASIFICADO'

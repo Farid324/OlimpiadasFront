@@ -21,11 +21,16 @@ export default function PhaseTable({
 }) {
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+      {/* 🔽 Aquí bajamos el tamaño para que se vea como en Responsables */}
       <div className="px-6 pt-6 pb-3 flex items-baseline justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-semibold text-slate-800">{title}</h2>
+          <h2 className="font-semibold text-gray-800 text-base">
+            {title}
+          </h2>
           {subtitle && (
-            <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
+            <p className="text-sm text-gray-500">
+              {subtitle}
+            </p>
           )}
         </div>
       </div>

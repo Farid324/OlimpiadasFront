@@ -56,7 +56,9 @@ export default function LogsPage() {
 
   // 🔹 Render
   return (
-    <div className="p-6 space-y-6 text-gray-900">
+    // MODIFICACIÓN CLAVE: Cambiamos 'p-6' por 'py-6' para mantener el espacio vertical
+    // y dejar que el layout padre maneje el padding horizontal (evitando el margen doble).
+    <div className="py-6 space-y-6 text-gray-900">
       {/* Encabezado */}
       <div>
         <h1 className="text-2xl font-bold text-black">Registro de Actividades</h1>
@@ -70,11 +72,11 @@ export default function LogsPage() {
         <CardMetric label="Modificaciones" value={metrics.modificaciones} icon={<Edit />} />
       </div>
 
-      {/* Filtros */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-        <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
-          {/* Buscar */}
-          <div className="relative w-full sm:w-1/2">
+
+      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
+        {/* ===== Buscar (tabla/caja 1) ===== */}
+        <div className="w-full sm:w-1/2 bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-3">
+          <div className="relative w-full">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
 
             <Input
@@ -101,15 +103,17 @@ export default function LogsPage() {
               </button>
             )}
           </div>
+        </div>
 
-          {/* Filtro acción */}
-          <div className="relative w-full sm:w-1/4">
+        {/* ===== Filtro acción (tabla/caja 2) ===== */}
+        <div className="w-full sm:w-1/4 bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4">
+          <div className="relative w-full">
             <select
               className="
-          w-full h-12 rounded-lg bg-gray-50 border border-gray-200 px-3
-          text-gray-900 text-sm
-          focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600
-        "
+        w-full h-12 rounded-lg bg-gray-50 border border-gray-200 px-3 pr-10
+        text-gray-900 text-sm appearance-none
+        focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600
+      "
               value={accion}
               onChange={(e) => setAccion(e.target.value as 'REGISTRO' | 'MODIFICACION' | '')}
             >
@@ -117,9 +121,25 @@ export default function LogsPage() {
               <option value="REGISTRO">Registro</option>
               <option value="MODIFICACION">Modificación</option>
             </select>
+
+            {/* Flecha alineada a la derecha */}
+            <svg
+              className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                fillRule="evenodd"
+                d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
+                clipRule="evenodd"
+              />
+            </svg>
           </div>
         </div>
       </div>
+
+
 
 
       {/* Tabla */}

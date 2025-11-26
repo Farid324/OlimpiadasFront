@@ -74,7 +74,7 @@ const Card = ({
   value: React.ReactNode;
   icon: React.ReactNode;
 }) => (
-  <div className="bg-white p-4 rounded-lg shadow h-28 flex flex-col justify-between relative">
+  <div className="bg-white p-3 sm:p-4 rounded-lg shadow h-28 flex flex-col justify-between relative">
     <div className="flex justify-between items-start">
       <p className="text-sm text-gray-500">{label}</p>
       <div className="text-black text-2xl">{icon}</div>
@@ -166,8 +166,8 @@ const ApprovedBanner = ({ type }: { type: PhaseType }) => {
 
 /** Titulo de sección alineada a la izquierda (titulo “Clasificados”). */
 const SectionPillLeft = ({ children }: { children: React.ReactNode }) => (
-  <div className="flex justify-start">
-    <div className="inline-flex h-8 w-[260px] items-center justify-center rounded-full border border-gray-200 bg-white px-6 text-sm font-normal text-gray-800 shadow-sm">
+  <div className="flex justify-start mb-3 sm:mb-4">
+    <div className="inline-flex h-8 w-full sm:w-[260px] items-center justify-center rounded-full border border-gray-200 bg-white px-6 text-sm font-normal text-gray-800 shadow-sm">
       {children}
     </div>
   </div>
@@ -288,7 +288,8 @@ export default function ReportesResponsablePage() {
   const clasifUnlocked = availability.CLASIFICACION.unlocked;
 
   return (
-    <div className="p-6 space-y-6">
+    // ✅ sin padding grande acá: lo maneja el layout/parent
+    <div className="w-full max-w-none space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-black">Sistema de Reportes</h1>
         <p className="text-gray-500 text-sm">
@@ -319,7 +320,8 @@ export default function ReportesResponsablePage() {
       <div
         className={locked ? "opacity-50 pointer-events-none select-none" : ""}
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6">
+        {/* ✅ 2 por fila en móvil + gap compacto */}
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-6 gap-2 sm:gap-6">
           {cards.map((c) => (
             <Card
               key={c.k}

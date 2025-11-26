@@ -58,44 +58,44 @@ export default function CardsSummary({ refreshToken, idFase }: CardsSummaryProps
     return () => {
       alive = false;
     };
-  }, [refreshToken, idFase]); // ✅ recarga al cambiar tab o refreshToken
+  }, [refreshToken, idFase]); 
 
   if (loading) {
-    return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-pulse">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="h-28 bg-gray-100 rounded-2xl" />
-        ))}
-      </div>
-    );
-  }
-
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <Card
-        title="Total competidores"
-        value={stats.total}
-        icon={<Users className="text-black" />}
-        className="bg-blue-50"
-      />
-      <Card
-        title="Pendientes"
-        value={stats.pendientes}
-        icon={<ClipboardList className="text-yellow-500" />}
-        className="bg-blue-50"
-      />
-      <Card
-        title="Evaluados"
-        value={stats.evaluados}
-        icon={<CheckCircle className="text-green-500" />}
-        className="bg-green-50"
-      />
-      <Card
-        title="Clasificados"
-        value={stats.clasificados}
-        icon={<Award className="text-purple-500" />}
-        className="bg-purple-50"
-      />
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-pulse">
+      {[...Array(4)].map((_, i) => (
+        <div key={i} className="h-28 bg-gray-100 rounded-2xl" />
+      ))}
     </div>
   );
+}
+
+return (
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <Card
+      title="Total competidores"
+      value={stats.total}
+      icon={<Users className="text-black" />}
+      className="bg-blue-50"
+    />
+    <Card
+      title="Pendientes"
+      value={stats.pendientes}
+      icon={<ClipboardList className="text-yellow-500" />}
+      className="bg-blue-50"
+    />
+    <Card
+      title="Evaluados"
+      value={stats.evaluados}
+      icon={<CheckCircle className="text-green-500" />}
+      className="bg-green-50"
+    />
+    <Card
+      title="Clasificados"
+      value={stats.clasificados}
+      icon={<Award className="text-purple-500" />}
+      className="bg-purple-50"
+    />
+  </div>
+);
 }

@@ -20,8 +20,14 @@ export default function PhaseTableResp({
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="px-6 pt-6 pb-3">
-        <h2 className="text-2xl font-semibold text-slate-800">{title}</h2>
-        {subtitle && <p className="mt-1 text-sm text-slate-500">{subtitle}</p>}
+        <h2 className="font-semibold text-gray-800 text-base">
+          {title}
+        </h2>
+        {subtitle && (
+          <p className="text-sm text-gray-500">
+            {subtitle}
+          </p>
+        )}
       </div>
 
       <div className="overflow-x-auto">

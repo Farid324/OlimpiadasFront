@@ -100,11 +100,12 @@ export default function ControlFasesPage() {
 
   const data = dataByPhase[activePhase];
 
+  // Vista de carga inicial
   if (loading && !data) {
     return (
       <RoleGate allow={["ADMINISTRADOR", "RESPONSABLE_DE_AREA"]}>
-        <div className="p-6">
-          <div className="bg-white rounded-lg shadow p-4 text-gray-600">
+        <div className="p-0 sm:p-6">
+          <div className="bg-white rounded-lg shadow p-3 sm:p-4 text-gray-600">
             Cargando…
           </div>
         </div>
@@ -112,16 +113,17 @@ export default function ControlFasesPage() {
     );
   }
 
+  // Vista cuando no hay datos
   if (!data) {
     return (
       <RoleGate allow={["ADMINISTRADOR", "RESPONSABLE_DE_AREA"]}>
-        <div className="p-6 space-y-4">
+        <div className="p-0 sm:p-6 space-y-4">
           {error && (
             <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-amber-700 text-sm">
               {error}
             </div>
           )}
-          <div className="bg-white rounded-lg shadow p-4 text-gray-600">
+          <div className="bg-white rounded-lg shadow p-3 sm:p-4 text-gray-600">
             No hay datos para mostrar.
           </div>
         </div>
@@ -143,7 +145,8 @@ export default function ControlFasesPage() {
 
   return (
     <RoleGate allow={["ADMINISTRADOR", "RESPONSABLE_DE_AREA"]}>
-      <div className="p-6 space-y-6">
+      {/* Igual que la vista de Responsables: sin padding en móvil, con padding en desktop */}
+      <div className="p-0 sm:p-6 space-y-6">
         {error && (
           <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-amber-700 text-sm">
             {error}
@@ -175,8 +178,8 @@ export default function ControlFasesPage() {
           />
         </div>
 
-        {/* KPIs */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* KPIs – mismas columnas que en Responsables (2 en móvil, 4 en desktop) */}
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-6">
           <StatCard
             title="Evaluaciones Completadas"
             value={kpis.evaluacionesCompletadas.valor}
@@ -199,8 +202,8 @@ export default function ControlFasesPage() {
           />
         </div>
 
-        {/* Tabla */}
-        <div className="bg-white rounded-lg shadow p-4">
+        {/* Tabla – SIN card extra, PhaseTable se encarga del fondo blanco */}
+        <div className="max-h-[500px] overflow-y-auto overflow-x-auto">
           <PhaseTable
             title={title}
             subtitle={subtitle}

@@ -164,33 +164,86 @@ function SegmentedTabs({
     "Ceremonia",
     "Publicación",
   ];
+
+  // Partir tabs en filas de 2 para móvil
+  const rows: TabKey[][] = [];
+  for (let i = 0; i < tabs.length; i += 2) {
+    rows.push(tabs.slice(i, i + 2));
+  }
+
   return (
-    <div
-      role="tablist"
-      aria-label="Secciones de reportes"
-      className="inline-flex items-center gap-1 rounded-full bg-gray-100 p-1"
-    >
-      {tabs.map((t) => {
-        const isActive = t === active;
-        return (
-          <button
-            key={t}
-            type="button"
-            role="tab"
-            aria-selected={isActive}
-            className={[
-              "px-3 py-1 text-sm rounded-full transition",
-              isActive
-                ? "bg-white text-black shadow"
-                : "text-gray-600 hover:bg-white hover:text-black",
-            ].join(" ")}
-            onClick={() => onChange?.(t)}
-          >
-            {t}
-          </button>
-        );
-      })}
-    </div>
+    <>
+      {/* ===== MÓVIL: filas tipo segmented (2 tabs por fila) ===== */}
+      <div className="grid gap-2 w-full sm:hidden">
+        {rows.map((row, idx) => {
+          const single = row.length === 1;
+
+          return (
+            <div
+              key={idx}
+              role="tablist"
+              aria-label="Secciones de reportes"
+              className={[
+                "flex items-center gap-1 rounded-full bg-gray-100 p-1",
+                single ? "w-fit mr-auto" : "w-full",
+              ].join(" ")}
+            >
+              {row.map((t) => {
+                const isActive = t === active;
+
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    onClick={() => onChange?.(t)}
+                    className={[
+                      // 👇 mismo grosor que desktop
+                      "px-3 py-1 text-sm leading-none rounded-full transition whitespace-nowrap text-center",
+                      single ? "" : "flex-1",
+                      isActive
+                        ? "bg-white text-black shadow"
+                        : "text-gray-600 hover:bg-white hover:text-black",
+                    ].join(" ")}
+                  >
+                    {t}
+                  </button>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ===== DESKTOP: segmented original intacto ===== */}
+      <div
+        role="tablist"
+        aria-label="Secciones de reportes"
+        className="hidden sm:inline-flex items-center gap-1 rounded-full bg-gray-100 p-1"
+      >
+        {tabs.map((t) => {
+          const isActive = t === active;
+          return (
+            <button
+              key={t}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              className={[
+                "px-3 py-1 text-sm rounded-full transition",
+                isActive
+                  ? "bg-white text-black shadow"
+                  : "text-gray-600 hover:bg-white hover:text-black",
+              ].join(" ")}
+              onClick={() => onChange?.(t)}
+            >
+              {t}
+            </button>
+          );
+        })}
+      </div>
+    </>
   );
 }
 
@@ -352,7 +405,8 @@ export default function ReportesPage() {
 
   return (
     <RoleGate allow={["ADMINISTRADOR"]}>
-      <div className="p-6 space-y-6">
+      {/* ✅ móvil sin padding extra, desktop igual que antes */}
+      <div className="p-0 sm:p-6 space-y-6">
         {/* Encabezado + Chips */}
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
@@ -381,7 +435,8 @@ export default function ReportesPage() {
         <div
           className={locked ? "opacity-50 pointer-events-none select-none" : ""}
         >
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6">
+          {/* ✅ 2 cards por fila en móvil, desktop intacto */}
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-6 gap-2 sm:gap-6">
             {cards.map((c) => (
               <CardMetric
                 key={c.key}

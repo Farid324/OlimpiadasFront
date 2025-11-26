@@ -107,14 +107,14 @@ export default function EvaluacionesPage() {
       </div>
 
       {/* Tabs dentro de tarjeta blanca, como el buscador del otro módulo */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+      
         <div className="mt-1">
           <TabsView onChange={setActiveTab} />
         </div>
-      </div>
+     
 
       {/* Contenido principal en tarjeta blanca, similar a la tabla de responsables */}
-      <div className="bg-white rounded-lg shadow p-4">
+      
         {loading && (
           <div className="text-center text-gray-500 py-10">
             Cargando información...
@@ -150,7 +150,7 @@ export default function EvaluacionesPage() {
             onCloseModal={() => setModalCompetidorFinal(null)}
           />
         )}
-      </div>
+      
     </div>
   );
 }

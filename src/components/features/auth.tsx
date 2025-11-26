@@ -32,8 +32,8 @@ export default function LoginForm() {
       setLoading(false);
       return;
     }*/
-    if (password.length < 8 || password.length > 30) {
-      setError('La contraseña debe tener entre 8 y 30 caracteres.');
+    if (password.length < 7 || password.length > 30) {
+      setError('La contraseña debe tener entre 7 y 30 caracteres.');
       setLoading(false);
       return;
     }

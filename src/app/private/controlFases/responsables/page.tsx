@@ -85,23 +85,27 @@ export default function ControlFasesResponsablePage() {
 
   const data = dataByPhase[activePhase];
 
+  // 👉 Vista de carga inicial, con padding responsivo igual que en admin
   if (loading && !data) {
     return (
-      <div className="rounded-xl border bg-white p-6 text-slate-600">
-        Cargando…
+      <div className="p-0 sm:p-6">
+        <div className="bg-white rounded-lg shadow p-3 sm:p-4 text-slate-600">
+          Cargando…
+        </div>
       </div>
     );
   }
 
+  // 👉 Vista cuando no hay datos
   if (!data) {
     return (
-      <div className="space-y-4">
+      <div className="p-0 sm:p-6 space-y-4">
         {error && (
           <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-amber-700 text-sm">
             {error}
           </div>
         )}
-        <div className="rounded-xl border bg-white p-6 text-slate-600">
+        <div className="bg-white rounded-lg shadow p-3 sm:p-4 text-slate-600">
           No hay datos para mostrar.
         </div>
       </div>
@@ -129,18 +133,19 @@ export default function ControlFasesResponsablePage() {
       : "Fases de evaluación final de las áreas a tu cargo";
 
   return (
-    <div className="space-y-6">
+    // 👉 Igual que la vista de admin: sin padding en móvil, padding en desktop
+    <div className="p-0 sm:p-6 space-y-6">
       {error && (
         <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-amber-700 text-sm">
           {error}
         </div>
       )}
 
-      {/* Header de página (igual al mockup + tabs) */}
+      {/* Header de página + tabs */}
       <section className="mb-2 flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-black">Control de Fases</h1>
-          <p className="mt-1 text-slate-500">
+          <p className="text-gray-500 text-sm">
             Gestión y aprobación de fases de evaluación por área
           </p>
         </div>
@@ -168,7 +173,7 @@ export default function ControlFasesResponsablePage() {
         </div>
       )}
 
-      {/* Contenido (KPIs + Tabla), con lock visual si todo está completado */}
+      {/* Contenido (KPIs + Tabla) */}
       <div
         className={
           locked
@@ -176,8 +181,8 @@ export default function ControlFasesResponsablePage() {
             : "space-y-6"
         }
       >
-        {/* KPIs */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* KPIs – mismas columnas que en la vista admin */}
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-6">
           <StatCardResp
             title="Evaluaciones Completadas"
             value={kpis.evaluacionesCompletadas.valor}
@@ -200,13 +205,16 @@ export default function ControlFasesResponsablePage() {
           />
         </div>
 
-        <PhaseTableResp
-          title={title}
-          subtitle={subtitle}
-          filas={filas}
-          onRefresh={() => load(activePhase)}
-          phaseType={activePhase}
+        {/* Tabla – PhaseTableResp se encarga del fondo blanco y títulos de columnas */}
+        <div className="max-h-[500px] overflow-y-auto overflow-x-auto">
+          <PhaseTableResp
+            title={title}
+            subtitle={subtitle}
+            filas={filas}
+            onRefresh={() => load(activePhase)}
+            phaseType={activePhase}
         />
+        </div>
       </div>
     </div>
   );
