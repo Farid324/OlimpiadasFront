@@ -2,12 +2,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  fetchControlFasesResp,
-} from "@/components/controlFases/responsable/service";
-import type {
-  ControlFasesRespPayload,
-} from "@/components/controlFases/responsable/types";
+import { fetchControlFasesResp } from "@/components/controlFases/responsable/service";
+import type { ControlFasesRespPayload } from "@/components/controlFases/responsable/types";
 import StatCardResp from "@/components/controlFases/responsable/StatCardResp";
 import PhaseTableResp from "@/components/controlFases/responsable/PhaseTableResp";
 
@@ -153,7 +149,10 @@ export default function ControlFasesResponsablePage() {
             Gestión y aprobación de fases de evaluación por área
           </p>
         </div>
+      </section>
 
+      {/* Tabs de fase — justo debajo del header, antes de los KPIs */}
+      <div className="mb-2">
         <PhaseTabsResp
           active={activePhase}
           onChange={(p) => {
@@ -165,7 +164,7 @@ export default function ControlFasesResponsablePage() {
             }
           }}
         />
-      </section>
+      </div>
 
       {/* Banner de bloqueo cuando ya no hay nada por hacer */}
       {locked && (
@@ -213,7 +212,8 @@ export default function ControlFasesResponsablePage() {
             subtitle={subtitle}
             filas={filas}
             onRefresh={() => load(activePhase)}
-          />
+            phaseType={activePhase}
+        />
         </div>
       </div>
     </div>

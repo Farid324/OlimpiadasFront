@@ -2,17 +2,20 @@
 import React from "react";
 import PhaseRowResp from "./PhaseRowResp";
 import type { FilaFaseResp } from "./types";
+import type { PhaseType } from "../phaseApi";
 
 export default function PhaseTableResp({
   title,
   subtitle,
   filas,
   onRefresh,
+  phaseType,
 }: {
   title: string;
   subtitle?: string;
   filas: FilaFaseResp[];
   onRefresh: () => void | Promise<void>;
+  phaseType: PhaseType;
 }) {
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -67,7 +70,12 @@ export default function PhaseTableResp({
 
           <tbody className="divide-y divide-slate-200">
             {filas.map((f) => (
-              <PhaseRowResp key={f.id} fila={f} onRefresh={onRefresh} />
+              <PhaseRowResp
+                key={f.id}
+                fila={f}
+                onRefresh={onRefresh}
+                phaseType={phaseType}
+              />
             ))}
           </tbody>
         </table>

@@ -25,6 +25,7 @@ type Resumen = {
 
 type Phase = "CLASIF" | "FINAL";
 type PhaseType = "CLASIFICACION" | "FINAL";
+type TabProps = { disabled?: boolean };
 
 type PhaseAvailability = {
   unlocked: boolean;
@@ -42,7 +43,12 @@ const phaseMap: Record<Phase, PhaseType> = {
 };
 
 /* Carga perezosa del tab reutilizado de Clasificados (mismo que Admin) */
-const ClasificadosTab = dynamic(() => import("../tabs/clasificados"), {
+const ClasificadosTab = dynamic<TabProps>(
+  () => import("../tabs/clasificados"),
+  { ssr: false }
+);
+//Carga del tab de premiados
+const PremiadosTab = dynamic<TabProps>(() => import("../tabs/premiados"), {
   ssr: false,
 });
 
@@ -133,22 +139,30 @@ const PhaseTabs = ({
 );
 
 /** Banner de “Fase Aprobada” */
-const ApprovedBanner = () => (
-  <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3">
-    <div className="flex items-start gap-2">
-      <CircleCheck className="h-4 w-4 text-black mt-[2px]" strokeWidth={2.25} />
-      <div>
-        <p className="text-[14px] font-semibold text-black leading-5">
-          Fase Aprobada
-        </p>
-        <p className="text-[13px] text-gray-700 leading-5">
-          La fase de clasificación ha sido aprobada. Todos los reportes están
-          disponibles para descarga.
-        </p>
+const ApprovedBanner = ({ type }: { type: PhaseType }) => {
+  const isClasif = type === "CLASIFICACION";
+
+  const subtitle = isClasif
+    ? "La fase de clasificación ha sido aprobada. Todos los reportes están disponibles para descarga."
+    : "La fase final ha sido aprobada. Todos los reportes están disponibles para descarga.";
+
+  return (
+    <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3">
+      <div className="flex items-start gap-2">
+        <CircleCheck
+          className="h-4 w-4 text-black mt-[2px]"
+          strokeWidth={2.25}
+        />
+        <div>
+          <p className="text-[14px] font-semibold text-black leading-5">
+            Fase Aprobada
+          </p>
+          <p className="text-[13px] text-gray-700 leading-5">{subtitle}</p>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 /** Titulo de sección alineada a la izquierda (titulo “Clasificados”). */
 const SectionPillLeft = ({ children }: { children: React.ReactNode }) => (
@@ -287,7 +301,13 @@ export default function ReportesResponsablePage() {
       <PhaseTabs active={phase} onChange={setPhase} finalLocked={finalLocked} />
 
       {/* Banner de fase aprobada SOLO cuando la de clasificación está aprobada y activa */}
-      {phase === "CLASIF" && clasifUnlocked && <ApprovedBanner />}
+      {phase === "CLASIF" && clasifUnlocked && (
+        <ApprovedBanner type="CLASIFICACION" />
+      )}
+
+      {phase === "FINAL" && availability.FINAL.unlocked && (
+        <ApprovedBanner type="FINAL" />
+      )}
 
       {/* Banner de bloqueo si la fase seleccionada está bloqueada */}
       {locked && (
@@ -317,8 +337,16 @@ export default function ReportesResponsablePage() {
       <div
         className={locked ? "opacity-50 pointer-events-none select-none" : ""}
       >
-        <SectionPillLeft>Clasificados</SectionPillLeft>
-        <ClasificadosTab />
+        <SectionPillLeft>
+          {phase === "CLASIF" ? "Clasificados" : "Premiados"}
+        </SectionPillLeft>
+        {phase === "CLASIF" ? (
+          // Fase de Clasificación → mismo tab que ya usabas
+          <ClasificadosTab disabled={locked} />
+        ) : (
+          // Fase Final → tab de premiados
+          <PremiadosTab disabled={locked} />
+        )}
       </div>
     </div>
   );
