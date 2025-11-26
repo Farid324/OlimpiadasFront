@@ -11,6 +11,7 @@ export type Competidor = {
   evaluaciones: Evaluacion[];
 };
 export interface Evaluacion {
+  descripConceptual: string;
   observaciones: string;
   etica: string;
   descripcionConceptual: string;
@@ -44,6 +45,7 @@ export type EvaluacionMini = {
   nota?: number | null;
   fecha_registro?: string | null;
   estado_registro?: 'BORRADOR' | 'FIRMADA';
+  decripConceptual: string;
   comentario?: string | null;
   evaluador?: { id: number; nombre: string; apellido: string } | null;
 };

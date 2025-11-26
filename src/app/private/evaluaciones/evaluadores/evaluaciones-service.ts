@@ -15,8 +15,7 @@ export const evaluacionesService = {
     idUsuario: number;
     nota: number;
     idFase: 1 | 2,
-    descripcionConceptual?: string;
-    etica?: string;
+    descripConceptual?: string;
     comentario?: string;
   }) {
     console.log(' Registrar nota payload:', payload);
@@ -25,6 +24,7 @@ export const evaluacionesService = {
       idEvaluador: payload.idUsuario,
       nota: payload.nota,
       idFase: payload.idFase,
+      descripConceptual: payload.descripConceptual ?? null,
       comentario: payload.comentario ?? null,
     });
     return data;
@@ -35,8 +35,7 @@ export const evaluacionesService = {
     idUsuario: number;
     nuevaNota: number;
     idFase: 1 | 2,
-    descripcionConceptual?: string;
-    etica?: string;
+    descripConceptual?: string;
     comentario?: string;
   }) {
     console.log(' Editar nota payload:', payload);
@@ -45,6 +44,7 @@ export const evaluacionesService = {
       idUsuario: payload.idUsuario,
       nuevaNota: payload.nuevaNota,
       idFase: payload.idFase,
+      descripConceptual: payload.descripConceptual ?? null,
       comentario: payload.comentario ?? null,
     });
     return data;

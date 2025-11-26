@@ -7,17 +7,16 @@ interface EvaluacionModalProps {
   onClose: () => void;
   onSubmit: (data: {
     nota: number;
-    descripcionConceptual: string;
-    etica: string;
-    observaciones: string;
+    descripConceptual: string;
+    comentario: string;
   }) => void;
   onSaved?: () => void;
   title?: string;
   initialData?: {
     nota?: number;
-    descripcionConceptual?: string;
+    descripConceptual?: string;
     etica?: string;
-    observaciones?: string;
+    comentario?: string;
   };
   competidor?: {
     nombres: string;
@@ -39,14 +38,14 @@ export default function ModalEvaluacion({
   // 🟢 Solo UNA definición del formData
   const [formData, setFormData] = useState({
     nota: "",
-    descripcionConceptual: "",
+    descripConceptual: "",
     etica: "Sí cumple",
-    observaciones: "",
+    comentario: "",
   });
 
   const [errors, setErrors] = useState({
     nota: "",
-    descripcionConceptual: "",
+    descripConceptual: "",
     etica: "",
   });
 
@@ -57,9 +56,9 @@ export default function ModalEvaluacion({
     if (initialData && isOpen) {
       setFormData({
         nota: initialData.nota?.toString() ?? "",
-        descripcionConceptual: initialData.descripcionConceptual ?? "",
+        descripConceptual: initialData.descripConceptual ?? "",
         etica: initialData.etica ?? "Sí cumple",
-        observaciones: initialData.observaciones ?? "",
+        comentario: initialData.comentario ?? "",
       });
     }
   }, [initialData, isOpen, competidor]);
@@ -91,7 +90,7 @@ export default function ModalEvaluacion({
   };
 
   const handleSubmit = async () => {
-    const newErrors = { nota: "", descripcionConceptual: "", etica: "" };
+    const newErrors = { nota: "", descripConceptual: "", etica: "" };
     const notaNum = Number(formData.nota);
 
     if (!formData.nota.trim()) {
@@ -100,8 +99,8 @@ export default function ModalEvaluacion({
       newErrors.nota = "Debe ser un número entre -1 y 100.";
     }
 
-    if (!formData.descripcionConceptual.trim()) {
-      newErrors.descripcionConceptual =
+    if (!formData.descripConceptual.trim()) {
+      newErrors.descripConceptual =
         "La descripción conceptual es obligatoria.";
     }
 
@@ -115,9 +114,8 @@ export default function ModalEvaluacion({
 
     await onSubmit({
       nota: notaNum,
-      descripcionConceptual: formData.descripcionConceptual,
-      etica: formData.etica,
-      observaciones: formData.observaciones,
+      descripConceptual: formData.descripConceptual,
+      comentario: formData.comentario,
     });
     onClose();
   };
@@ -182,18 +180,18 @@ export default function ModalEvaluacion({
               Descripción conceptual del resultado *
             </label>
             <textarea
-              name="descripcionConceptual"
-              value={formData.descripcionConceptual}
+              name="descripConceptual"
+              value={formData.descripConceptual}
               onChange={handleChange}
               className={`w-full rounded-lg border ${
-                errors.descripcionConceptual ? "border-red-400" : "border-gray-300"
+                errors.descripConceptual ? "border-red-400" : "border-gray-300"
               } focus:border-gray-400 focus:ring-0 focus:shadow-sm text-sm placeholder-gray-400 py-2 px-3 transition text-black`}
               rows={2}
               placeholder="Describe el desempeño académico del olimpista..."
             />
-            {errors.descripcionConceptual && (
+            {errors.descripConceptual && (
               <p className="text-red-500 text-xs mt-0">
-                {errors.descripcionConceptual}
+                {errors.descripConceptual}
               </p>
             )}
           </div>
@@ -237,8 +235,8 @@ export default function ModalEvaluacion({
               Observaciones
             </label>
             <textarea
-              name="observaciones"
-              value={formData.observaciones}
+              name="comentario"
+              value={formData.comentario}
               onChange={handleChange}
               className="w-full rounded-lg border border-gray-300 focus:border-gray-400 focus:ring-0 focus:shadow-sm text-sm placeholder-gray-400 py-2 px-3 transition text-black"
               rows={3}

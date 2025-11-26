@@ -174,7 +174,7 @@ export default function EvaluacionesEvaluadoresPage() {
 
   const handleSubmitNota = async (data: {
       nota: number;
-      descripcionConceptual?: string;
+      descripConceptual?: string;
       etica?: string;
       comentario?: string;
   }) => {
@@ -190,6 +190,7 @@ export default function EvaluacionesEvaluadoresPage() {
                   idEvaluacion: evaluacionExistente.id_evaluacion,
                   idUsuario,
                   nuevaNota: data.nota,
+                  descripConceptual: data.descripConceptual,
                   comentario: data.comentario,
                   idFase,
               });
@@ -200,8 +201,7 @@ export default function EvaluacionesEvaluadoresPage() {
                   idUsuario,
                   nota: data.nota,
                   idFase,
-                  descripcionConceptual: data.descripcionConceptual,
-                  etica: data.etica,
+                  descripConceptual: data.descripConceptual,
                   comentario: data.comentario,
               });
           }
@@ -368,10 +368,13 @@ export default function EvaluacionesEvaluadoresPage() {
                     typeof modalCompetidor.evaluaciones[0].nota === 'number'
                       ? modalCompetidor.evaluaciones[0].nota
                       : Number(modalCompetidor.evaluaciones[0].nota) || undefined,
-                  observaciones:
-                    modalCompetidor.evaluaciones[0].observaciones ??
-                    modalCompetidor.evaluaciones[0].comentario ??
+
+                  descripConceptual:
+                    modalCompetidor.evaluaciones[0].descripConceptual ??
                     '',
+
+                  comentario:
+                    modalCompetidor.evaluaciones[0].comentario ?? '',
                 }
               : undefined
           }
