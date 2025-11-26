@@ -27,6 +27,10 @@ interface EvaluacionModalProps {
   };
 }
 
+// Mensaje descriptivo para la exclusión por ética
+const EXCLUSION_MESSAGE =
+  "Este competidor quedará fuera de las olimpiadas. El envío de la evaluación registrará una nota de -1.";
+
 export default function ModalEvaluacion({
   isOpen,
   onClose,
@@ -35,7 +39,6 @@ export default function ModalEvaluacion({
   initialData,
   competidor,
 }: EvaluacionModalProps) {
-  // 🟢 Solo UNA definición del formData
   const [formData, setFormData] = useState({
     nota: "",
     descripConceptual: "",
@@ -49,19 +52,36 @@ export default function ModalEvaluacion({
     etica: "",
   });
 
-  const [eticaDisabled, setEticaDisabled] = useState(false);
+  const [notaDisabled, setNotaDisabled] = useState(false); // Estado para deshabilitar la nota
+  const [exclusionMessage, setExclusionMessage] = useState(""); // Estado para el mensaje descriptivo
 
-  // 🔄 Actualiza el formulario cuando cambia initialData, competidor o se abre el modal
+  // Lógica para sincronizar estados al abrir o al recibir initialData
   useEffect(() => {
     if (initialData && isOpen) {
+      const isNoCumple = initialData.etica === "No cumple" || initialData.nota === -1;
+      const initialEtica = isNoCumple ? "No cumple" : (initialData.etica ?? "Sí cumple");
+      const initialNota = initialData.nota === -1 ? "" : (initialData.nota?.toString() ?? "");
+      
       setFormData({
-        nota: initialData.nota?.toString() ?? "",
+        nota: initialNota,
         descripConceptual: initialData.descripConceptual ?? "",
-        etica: initialData.etica ?? "Sí cumple",
+        etica: initialEtica,
         comentario: initialData.comentario ?? "",
       });
+
+      // Si es "No cumple" (por nota o por estado), actualiza la UI
+      if (isNoCumple) {
+        setNotaDisabled(true);
+        setExclusionMessage(EXCLUSION_MESSAGE);
+      } else {
+        setNotaDisabled(false);
+        setExclusionMessage("");
+      }
     }
-  }, [initialData, isOpen, competidor]);
+    // Limpiar errores al abrir
+    setErrors({ nota: "", descripConceptual: "", etica: "" });
+
+  }, [initialData, isOpen]);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -69,34 +89,69 @@ export default function ModalEvaluacion({
     >
   ) => {
     const { name, value } = e.target;
-    const updated = { ...formData, [name]: value };
+    let updated = { ...formData, [name]: value };
+    let disableNote = notaDisabled;
+    let message = exclusionMessage;
+    let newEtica = formData.etica;
 
-    // Sincroniza automáticamente ética con nota
-    if (name === "nota") {
-      const notaNum = Number(value);
-      if (notaNum === -1) {
-        updated.etica = "No cumple";
-        setEticaDisabled(true);
+    // --- Lógica de Sincronización Ética/Nota ---
+
+    if (name === "etica") {
+      newEtica = value;
+      if (value === "No cumple") {
+        updated.nota = ""; // Limpia la nota
+        message = EXCLUSION_MESSAGE;
+        disableNote = true; // Deshabilita el input de nota
       } else {
-        setEticaDisabled(false);
-        if (formData.etica === "No cumple") {
-          updated.etica = "Sí cumple";
-        }
+        message = "";
+        disableNote = false; // Habilita el input de nota
       }
     }
 
+    if (name === "nota") {
+      const notaNum = Number(value);
+      
+      // Si la nota se borra y estaba deshabilitada por ética, se re-habilita
+      if (value === "" && formData.etica === "Sí cumple") {
+        disableNote = false;
+        message = "";
+      } 
+      
+      // Si la nota es -1 (aunque lo bloqueamos visualmente en el render)
+      if (notaNum === -1) {
+        newEtica = "No cumple";
+        updated.nota = ""; // Limpia la nota en el input visual
+        message = EXCLUSION_MESSAGE;
+        disableNote = true; // Deshabilita el input de nota
+      } 
+      
+      // Validación básica para evitar valores fuera del rango esperado (excluyendo el -1 lógico)
+      if (notaNum < -1 || notaNum > 100) return;
+      
+    }
+    
+    // Si la ética cambia a "No cumple" por un cambio de nota a -1
+    updated = { ...updated, etica: newEtica };
+    
+    // Actualizar estados
+    setExclusionMessage(message);
+    setNotaDisabled(disableNote);
     setFormData(updated);
     setErrors({ ...errors, [name]: "" });
   };
 
   const handleSubmit = async () => {
+    // La nota enviada es -1 si la ética es "No cumple", de lo contrario es el valor ingresado.
+    const notaEnviada =
+      formData.etica === "No cumple" ? -1 : Number(formData.nota);
+    
     const newErrors = { nota: "", descripConceptual: "", etica: "" };
-    const notaNum = Number(formData.nota);
 
-    if (!formData.nota.trim()) {
-      newErrors.nota = "La nota es obligatoria.";
-    } else if (isNaN(notaNum) || notaNum < -1 || notaNum > 100) {
-      newErrors.nota = "Debe ser un número entre -1 y 100.";
+    // Validación de nota solo si no está excluído por ética
+    if (formData.etica !== "No cumple") {
+      if (!formData.nota.trim() || isNaN(notaEnviada) || notaEnviada < 0 || notaEnviada > 100) {
+        newErrors.nota = "La nota es obligatoria y debe estar entre 0 y 100.";
+      }
     }
 
     if (!formData.descripConceptual.trim()) {
@@ -104,16 +159,12 @@ export default function ModalEvaluacion({
         "La descripción conceptual es obligatoria.";
     }
 
-    if (!["Sí cumple", "No cumple"].includes(formData.etica)) {
-      newErrors.etica = "Debe seleccionar una opción válida.";
-    }
-
     setErrors(newErrors);
 
     if (Object.values(newErrors).some((e) => e)) return;
 
     await onSubmit({
-      nota: notaNum,
+      nota: notaEnviada,
       descripConceptual: formData.descripConceptual,
       comentario: formData.comentario,
     });
@@ -154,20 +205,63 @@ export default function ModalEvaluacion({
 
         {/* Inputs */}
         <div className="space-y-6">
+          {/* Ética (Movida arriba para mayor lógica visual) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-800 mb-1">
+              Cumplimiento de normas de ética *
+            </label>
+            <div className="relative">
+              <select
+                name="etica"
+                value={formData.etica}
+                onChange={handleChange}
+                className={`os-select appearance-none w-full rounded-lg border ${
+                  errors.etica ? "border-red-400" : "border-gray-300"
+                } focus:border-gray-400 focus:ring-0 focus:shadow-sm text-sm py-2 px-3 pr-10 transition bg-white text-black`}
+              >
+                <option value="Sí cumple">Sí cumple</option>
+                <option value="No cumple">No cumple</option>
+              </select>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                {formData.etica === "Sí cumple" ? (
+                  <CheckCircle2 size={18} className="text-green-500" />
+                ) : (
+                  <XCircle size={18} className="text-red-500" />
+                )}
+              </div>
+            </div>
+            {errors.etica && (
+              <p className="text-red-500 text-xs mt-0">{errors.etica}</p>
+            )}
+            {/* Mensaje descriptivo para exclusión */}
+            {exclusionMessage && (
+              <div className="mt-2 p-2 text-sm bg-red-50 border border-red-300 text-red-700 rounded-lg flex items-center">
+                <XCircle size={16} className="mr-2 flex-shrink-0" />
+                {exclusionMessage}
+              </div>
+            )}
+          </div>
+
           {/* Nota */}
           <div>
             <label className="block text-sm font-medium text-gray-800 mb-1">
-              Nota obtenida <span className="text-gray-400 text-xs">(-1–100)</span>
+              Nota obtenida <span className="text-gray-400 text-xs"> (0–100)</span>
             </label>
             <input
               type="number"
               name="nota"
               value={formData.nota}
               onChange={handleChange}
+              // Se deshabilita si la ética es "No cumple"
+              disabled={notaDisabled} 
               className={`w-full rounded-lg border ${
                 errors.nota ? "border-red-400" : "border-gray-300"
-              } focus:border-gray-400 focus:ring-0 focus:shadow-sm text-sm placeholder-gray-400 py-2 px-3 transition text-black`}
-              placeholder="Ej: 85.5 o -1 si fue descalificado"
+              } focus:border-gray-400 focus:ring-0 focus:shadow-sm text-sm placeholder-gray-400 py-2 px-3 transition text-black ${
+                notaDisabled ? "bg-gray-100 cursor-not-allowed" : ""
+              }`}
+              placeholder="Ej: 85.5"
+              min="0"
+              max="100"
             />
             {errors.nota && (
               <p className="text-red-500 text-xs mt-0">{errors.nota}</p>
@@ -193,39 +287,6 @@ export default function ModalEvaluacion({
               <p className="text-red-500 text-xs mt-0">
                 {errors.descripConceptual}
               </p>
-            )}
-          </div>
-
-          {/* Ética */}
-          <div>
-            <label className="block text-sm font-medium text-gray-800 mb-1">
-              Cumplimiento de normas de ética *
-            </label>
-            <div className="relative">
-              <select
-                name="etica"
-                value={formData.etica}
-                onChange={handleChange}
-                disabled={eticaDisabled}
-                className={`os-select appearance-none w-full rounded-lg border ${
-                  errors.etica ? "border-red-400" : "border-gray-300"
-                } focus:border-gray-400 focus:ring-0 focus:shadow-sm text-sm py-2 px-3 pr-10 transition bg-white ${
-                  eticaDisabled ? "bg-gray-100 cursor-not-allowed" : ""
-                } text-black`}
-              >
-                <option value="Sí cumple">Sí cumple</option>
-                <option value="No cumple">No cumple</option>
-              </select>
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                {formData.etica === "Sí cumple" ? (
-                  <CheckCircle2 size={18} className="text-green-500" />
-                ) : (
-                  <XCircle size={18} className="text-red-500" />
-                )}
-              </div>
-            </div>
-            {errors.etica && (
-              <p className="text-red-500 text-xs mt-0">{errors.etica}</p>
             )}
           </div>
 
