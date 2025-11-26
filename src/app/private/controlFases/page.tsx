@@ -151,12 +151,14 @@ export default function ControlFasesPage() {
         )}
 
         {/* Header + Tabs */}
-        <div className="flex items-start justify-between gap-3 flex-wrap">
-          <h1 className="text-2xl font-bold text-black">Control de Fases</h1>
-          <p className="text-gray-500 text-sm">
-            Gestión y aprobación de fases de evaluación por área
-          </p>
-        </div>
+        <section className="mb-2 flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h1 className="text-2xl font-bold text-black">Control de Fases</h1>
+            <p className="mt-1 text-slate-500">
+              Gestión y aprobación de fases de evaluación por área
+            </p>
+          </div>
+        </section>
 
         {/* Tabs de fase — justo debajo del header, antes de los KPIs */}
         <div>
