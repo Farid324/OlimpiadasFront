@@ -81,7 +81,6 @@ function getPosicionPersistida(c: CompetidorInscripcion, fallbackIndex: number):
 
 /* ================== Helpers para ranking por NOTA ================== */
 
-/** Id estable del competidor (usa id_competidor, si no CI+índice) */
 function getCompetidorId(c: CompetidorInscripcion, idx: number): string | number {
   const cc = c as CompetidorConId;
   const id = cc.competidor?.id_competidor;
@@ -101,7 +100,6 @@ function getNota(c: CompetidorInscripcion): number | null {
   return n;
 }
 
-/** Mapa id -> posición 1..N calculada por nota desc; sin nota al final */
 function buildDynamicPositionMap(rows: CompetidorInscripcion[]): Map<string | number, number> {
   const enriched = rows.map((item, idx) => ({
     id: getCompetidorId(item, idx),
@@ -109,7 +107,6 @@ function buildDynamicPositionMap(rows: CompetidorInscripcion[]): Map<string | nu
     idx,
   }));
 
-  // Con nota primero, luego por nota desc, desempate por índice
   enriched.sort((a, b) => {
     const aHas = a.nota !== null;
     const bHas = b.nota !== null;
@@ -137,10 +134,8 @@ export default function CompetidorList({
 }: Props) {
   const [orderAsc, setOrderAsc] = useState<boolean>(true);
 
-  // Calcula posiciones por nota cada vez que cambie data
   const posMap = useMemo(() => buildDynamicPositionMap(data), [data]);
 
-  // Proyección ordenable: posición base (=ranking por nota), con fallback a posición persistida
   const rows = useMemo(() => {
     const projected = data.map((item, idx) => {
       const id = getCompetidorId(item, idx);
@@ -154,12 +149,10 @@ export default function CompetidorList({
 
   return (
     <div className="w-full">
-      {/* Si no hay data, solo mostramos el mensaje, pero los hooks ya se llamaron arriba */}
       {data.length === 0 ? (
         <p className="text-gray-400 text-center mt-6">No hay registros.</p>
       ) : (
         <>
-          {/* Toolbar: botón de reordenar por posición */}
           <div className="mb-2 flex items-center justify-end">
             <button
               type="button"
@@ -193,7 +186,6 @@ export default function CompetidorList({
                 const nota = c.evaluaciones?.[0]?.nota ?? null;
                 const nivel = c.nivel?.nombre_nivel ?? '—';
                 const clasificacion = c.clasificacion ?? '—';
-                //const firmada = c.evaluaciones?.[0]?.estado_registro === 'FIRMADA';
                 const firmada =
                   fase === 'CLASIFICACION' &&
                   c.evaluaciones?.[0]?.estado_registro === 'FIRMADA';
@@ -213,7 +205,6 @@ export default function CompetidorList({
                       firmada ? 'opacity-60 hover:bg-gray-100' : 'hover:bg-gray-50'
                     }`}
                   >
-                    {/* Posición dinámica 1..N basada en ranking por nota */}
                     <td className="p-2 text-center text-black">{pos}</td>
 
                     <td className="p-2 text-black font-medium">
@@ -253,8 +244,8 @@ export default function CompetidorList({
                           size="sm"
                           className={`rounded-md shadow-sm transition-colors ${
                             firmada
-                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                              : 'bg-blue-600 hover:bg-indigo-700 text-white'
+                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed border border-gray-300'
+                              : 'bg-blue-800 hover:bg-blue-950 text-white'
                           }`}
                           disabled={firmada}
                         >
@@ -265,10 +256,10 @@ export default function CompetidorList({
                           onClick={() => onEditar(c)}
                           size="sm"
                           variant="outline"
-                          className={`rounded-md shadow-sm transition-colors ${
+                          className={`rounded-md shadow-sm ${
                             firmada
-                              ? 'border-gray-400 text-gray-500 cursor-not-allowed bg-gray-100'
-                              : 'border-gray-500 text-gray-600 hover:bg-indigo-50'
+                              ? 'border-gray-300 text-gray-900 cursor-not-allowed bg-gray-100'
+                              : 'border-gray-400 text-gray-700 hover:bg-gray-300 hover:border-gray-500 hover:text-gray-900'
                           }`}
                           disabled={firmada}
                         >
@@ -276,7 +267,6 @@ export default function CompetidorList({
                         </Button>
                       )}
 
-                      {/* Tooltip nativo */}
                       {firmada && (
                         <div
                           className="absolute bottom-full mb-1 hidden group-hover:block

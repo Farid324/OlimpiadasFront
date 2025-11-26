@@ -258,7 +258,7 @@ export default function ModalEvaluacion({
           </button>
           <button
             onClick={handleSubmit}
-            className="px-4 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-indigo-700 transition"
+            className="px-4 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-900 transition"
           >
             Guardar Evaluación
           </button>

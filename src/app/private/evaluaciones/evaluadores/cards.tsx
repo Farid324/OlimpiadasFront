@@ -73,7 +73,7 @@ export default function CardsSummary({ refreshToken, idFase }: CardsSummaryProps
 return (
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
     <Card
-      title="Total competidores"
+      title="Total asignados"
       value={stats.total}
       icon={<Users className="text-black" />}
       className="bg-blue-50"
