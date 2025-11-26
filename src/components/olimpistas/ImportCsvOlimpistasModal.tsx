@@ -57,7 +57,6 @@ export default function ImportCsvOlimpistasModal({
     }
   };
 
-
   const onImport = async () => {
     if (!file) return;
     setImporting(true);
@@ -82,9 +81,6 @@ export default function ImportCsvOlimpistasModal({
       "departamento",
       "area",
       "nivel",
-      "gradoEscolar",
-      "nivelCompetidor",
-      "grado",
     ].join(",");
 
     const blob = new Blob([headers + "\n"], {
@@ -96,7 +92,6 @@ export default function ImportCsvOlimpistasModal({
     a.download = "plantilla_olimpistas.csv";
     a.click();
     URL.revokeObjectURL(url);
-
   };
 
   return (
@@ -115,7 +110,7 @@ export default function ImportCsvOlimpistasModal({
         </p>
 
         <div className="space-y-4">
-          { }
+          {}
           <div className="border rounded-lg p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <FileUp className="text-blue-600" />
@@ -126,6 +121,10 @@ export default function ImportCsvOlimpistasModal({
                 <p className="text-xs text-gray-500">
                   Campos requeridos: nombreCompleto, ci, tutorContacto,
                   unidadEducativa, departamento, area, nivel
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Ejemplos de nivel válidos: <b>1ºP</b>, <b>2ºS</b>,{" "}
+                  <b>1ro Primaria</b>, <b>3ro Secundaria</b>
                 </p>
               </div>
             </div>
@@ -153,7 +152,7 @@ export default function ImportCsvOlimpistasModal({
             </div>
           </div>
 
-          { }
+          {}
           {!summary && (
             <div className="flex justify-end gap-2">
               <button
@@ -173,7 +172,7 @@ export default function ImportCsvOlimpistasModal({
             </div>
           )}
 
-          { }
+          {}
           {summary && (
             <div className="space-y-3">
               <div className="border rounded-lg p-4">
