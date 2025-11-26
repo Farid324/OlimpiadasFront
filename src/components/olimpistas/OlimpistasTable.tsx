@@ -8,10 +8,10 @@ type Props = {
   loading?: boolean;
 };
 
-const fmtScore = (v: number | null): string => {
+/*const fmtScore = (v: number | null): string => {
   if (v === null || Number.isNaN(v)) return "—";
   return Number(v).toFixed(2);
-};
+};*/
 
 export default function OlimpistasTable({ rows, loading }: Props) {
   return (

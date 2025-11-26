@@ -166,7 +166,9 @@ export default function SideMenu({
               key={it.href}
               href={it.href}
               // En móvil queremos que al dar click se cierre el menú
-              onClick={() => onClose?.()}
+              onClick={() => {
+                if (window.innerWidth < 1024) onClose?.();
+              }}
               aria-current={active ? 'page' : undefined}
               className={linkClass}
             >

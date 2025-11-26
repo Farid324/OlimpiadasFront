@@ -6,7 +6,7 @@ import { AxiosError } from 'axios';
 import { usePageHeader } from '@/contexts/pageHeader';
 // Importamos los íconos necesarios
 import { 
-    FaUsers, FaUserTie, FaClipboardList, FaCheckCircle, FaAward, 
+    FaUserTie, FaClipboardList, FaCheckCircle, FaAward, 
     FaFlask, FaTrophy, FaUserCheck // Usaremos FaUserCheck para Responsables
 } from 'react-icons/fa'; 
 

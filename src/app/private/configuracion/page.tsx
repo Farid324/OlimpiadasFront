@@ -1,14 +1,12 @@
-//src/app/private/configuracion/page.tsx
+// src/app/private/configuracion/page.tsx
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';  // ← Agregar Suspense aquí
 import { usePageHeader } from '@/contexts/pageHeader';
 import dynamic from 'next/dynamic';
 import { Settings, Layers } from 'lucide-react';
-// 1. Importamos los hooks de navegación
 import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 
-// Componentes Tabs
 const MedalleroTab = dynamic(() => import('./tabs/MedalleroTab'), { ssr: false });
 const AreasTab = dynamic(() => import('./tabs/AreasTab'), { ssr: false });
 
@@ -25,15 +23,13 @@ const TAB_CONTENT = {
   }
 };
 
-export default function ConfiguracionPage() {
+// ← Extraer todo el contenido a este componente
+function ConfiguracionContent() {
   const { setTitle } = usePageHeader();
-  
-  // 2. Hooks para manipular la URL
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
 
-  // 3. Leemos el tab desde la URL. Si no existe o es inválido, por defecto es 'Configuracion'
   const tabParam = searchParams.get('tab');
   const activeTab: TabKey = (tabParam === 'Areas') ? 'Areas' : 'Configuracion';
 
@@ -41,17 +37,15 @@ export default function ConfiguracionPage() {
     setTitle('Configuración del Sistema');
   }, [setTitle]);
 
-  // 4. Función para cambiar de pestaña actualizando la URL
   const handleTabChange = (tab: TabKey) => {
     const params = new URLSearchParams(searchParams);
     params.set('tab', tab);
-    // replace: cambia la url sin añadir una entrada al historial (mejor para tabs)
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   return (
     <div className="p-1 space-y-6 text-gray-900">
-      
+      {/* ... todo el JSX que ya tienes, sin cambios ... */}
       <div className="bg-[var(--fondoAzulGris)] border-gray-100 min-h-[600px] p-4 flex flex-col gap-6">
         
         <div>
@@ -65,9 +59,8 @@ export default function ConfiguracionPage() {
 
         <div className="flex justify-center md:justify-start">
            <div className="inline-flex items-center bg-gray-100 p-1 rounded-full shadow-inner">
-             
              <button
-               onClick={() => handleTabChange('Configuracion')} // Usamos la nueva función
+               onClick={() => handleTabChange('Configuracion')}
                className={`
                  flex items-center gap-2 px-6 py-1.5 text-sm font-medium rounded-full transition-all duration-200
                  ${activeTab === 'Configuracion'
@@ -80,7 +73,7 @@ export default function ConfiguracionPage() {
              </button>
 
              <button
-               onClick={() => handleTabChange('Areas')} // Usamos la nueva función
+               onClick={() => handleTabChange('Areas')}
                className={`
                  flex items-center gap-2 px-6 py-1.5 text-sm font-medium rounded-full transition-all duration-200
                  ${activeTab === 'Areas'
@@ -91,7 +84,6 @@ export default function ConfiguracionPage() {
                <Layers className="w-4 h-4" />
                <span>Gestión de Áreas</span>
              </button>
-             
            </div>
         </div>
 
@@ -101,16 +93,22 @@ export default function ConfiguracionPage() {
                <MedalleroTab />
              </div>
           )}
-
           {activeTab === 'Areas' && (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
               <AreasTab />
             </div>
           )}
         </div>
-
       </div>
-
     </div>
+  );
+}
+
+// ← El export default ahora solo envuelve en Suspense
+export default function ConfiguracionPage() {
+  return (
+    <Suspense fallback={<div className="p-4">Cargando...</div>}>
+      <ConfiguracionContent />
+    </Suspense>
   );
 }
