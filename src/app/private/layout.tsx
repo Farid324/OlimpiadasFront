@@ -1,7 +1,7 @@
 // src/app/private/layout.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import SideMenu from '@/components/Menu';
 import Header from '@/components/ui/Header';
 import { PageHeaderProvider, usePageHeader } from '@/contexts/pageHeader';
@@ -21,6 +21,26 @@ function HeaderFromContext({ onToggle }: { onToggle: () => void }) {
 export default function PrivateLayout({ children }: { children: React.ReactNode }) {
   // Iniciamos en false para que en Móvil no aparezca tapando la pantalla al cargar.
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Solo después de montar, leer localStorage o detectar escritorio
+  useEffect(() => {
+    const saved = localStorage.getItem('menuOpen');
+    if (saved !== null) {
+      setOpen(saved === 'true');
+    } else {
+      // Por defecto: abierto en escritorio
+      setOpen(window.innerWidth >= 1024);
+    }
+    setMounted(true);
+  }, []);
+
+  // Guardar estado cuando cambie (solo si ya montó)
+  useEffect(() => {
+    if (mounted) {
+      localStorage.setItem('menuOpen', String(open));
+    }
+  }, [open, mounted]);
 
   return (
     <PageHeaderProvider>

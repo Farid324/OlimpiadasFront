@@ -1,86 +1,87 @@
 // src/components/controlFases/ApprovePhaseModal.tsx
-import React from "react";
-import type { FilaFase as AdminRow } from "./types";
-import type { FilaFaseResp as RespRow } from "./responsable/types";
+"use client";
 
-type RowLike = (AdminRow | RespRow) & {
-  idArea?: number | string;
-  idNivel?: number | string;
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+
+type ApprovePhaseRow = {
+  area: string;
+  nivel: string;
+  faseActual: string;
+};
+
+type ApprovePhaseModalProps = {
+  open: boolean;
+  row: ApprovePhaseRow;
+  onClose: () => void;
+  onConfirm: () => void | Promise<void>;
+  loading?: boolean;
 };
 
 export default function ApprovePhaseModal({
   open,
   row,
-  onConfirm,
   onClose,
+  onConfirm,
   loading = false,
-}: {
-  open: boolean;
-  row: RowLike | null;
-  onConfirm: (row: RowLike) => void | Promise<void>;
-  onClose: () => void;
-  loading?: boolean;
-}) {
-  if (!open || !row) return null;
+}: ApprovePhaseModalProps) {
+  const [mounted, setMounted] = useState(false);
 
-  const clas = row.resumen?.clasificados ?? 0;
-  const noClas = row.resumen?.noClasificados ?? 0;
-  const desc = row.resumen?.descalificados ?? 0;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-  return (
+  if (!open || !mounted) {
+    return null;
+  }
+
+  const modalContent = (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
       <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
         <div className="border-b px-5 py-4">
           <h3 className="text-base font-semibold text-slate-900">
-            Aprobar fase
+            Confirmar aprobación de fase
           </h3>
-        </div>
-
-        <div className="space-y-4 px-5 py-4 text-sm text-slate-700">
-          <div>
-            <div className="text-slate-500">Área / Nivel</div>
-            <div className="font-semibold">
-              {row.area} <span className="text-slate-400">•</span> {row.nivel}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-3">
-            <div className="rounded-lg border px-3 py-2">
-              <div className="text-[11px] text-slate-500">Clasificados</div>
-              <div className="font-semibold text-emerald-600">{clas}</div>
-            </div>
-            <div className="rounded-lg border px-3 py-2">
-              <div className="text-[11px] text-slate-500">No clasificados</div>
-              <div className="font-semibold text-amber-600">{noClas}</div>
-            </div>
-            <div className="rounded-lg border px-3 py-2">
-              <div className="text-[11px] text-slate-500">Descalificados</div>
-              <div className="font-semibold text-rose-600">{desc}</div>
-            </div>
-          </div>
-
-          <p className="text-xs text-slate-500">
-            ¿Confirmas que esta fase está lista para aprobar?
+          <p className="mt-1 text-sm text-slate-600">
+            Estás a punto de cerrar y aprobar la fase{" "}
+            <span className="font-semibold">{row.faseActual}</span> para:
+          </p>
+          <p className="mt-1 text-sm text-slate-900">
+            Área: <span className="font-semibold">{row.area}</span>
+            <br />
+            Nivel: <span className="font-semibold">{row.nivel}</span>
           </p>
         </div>
 
-        <div className="flex items-center justify-end gap-2 border-t px-5 py-3">
+        <div className="px-5 py-4 text-sm text-slate-600">
+          <p>
+            Una vez aprobada la fase, las evaluaciones quedarán bloqueadas y se
+            habilitarán los reportes correspondientes.
+          </p>
+        </div>
+
+        <div className="flex justify-end gap-2 border-t px-5 py-3">
           <button
-            className="rounded-lg px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100"
+            type="button"
             onClick={onClose}
             disabled={loading}
+            className="inline-flex items-center rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
           >
             Cancelar
           </button>
           <button
-            className="rounded-lg bg-blue-600 px-3.5 py-2 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-            onClick={() => onConfirm(row)}
+            type="button"
+            onClick={onConfirm}
             disabled={loading}
+            className="inline-flex items-center rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loading ? "Aprobando…" : "Aprobar fase"}
+            {loading ? "Aprobando..." : "Aprobar fase"}
           </button>
         </div>
       </div>
     </div>
   );
+
+  // Portal al body para que NO quede dentro del <tbody>
+  return createPortal(modalContent, document.body);
 }

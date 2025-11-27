@@ -4,11 +4,10 @@ import { useEffect, useState } from 'react';
 import { api } from '@/libs/api';
 import { AxiosError } from 'axios';
 import { usePageHeader } from '@/contexts/pageHeader';
-// Importamos los íconos necesarios
+// ⚠️ Importamos los íconos de Lucide necesarios para la nueva apariencia
 import { 
-    FaUsers, FaUserTie, FaClipboardList, FaCheckCircle, FaAward, 
-    FaFlask, FaTrophy, FaUserCheck // Usaremos FaUserCheck para Responsables
-} from 'react-icons/fa'; 
+    LuUsers, LuActivity, LuClipboardList, LuAward, LuTrophy, LuEye, LuUserCog 
+} from 'react-icons/lu'; 
 
 // --- Tipos de Datos del Frontend (Actualizados para 7 métricas) ---
 
@@ -50,7 +49,8 @@ const MetricCard = ({ icon: Icon, title, value, subtitle }: {
     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-between h-full">
         <div className="flex items-start justify-between">
             <h3 className="text-sm font-medium text-gray-500">{title}</h3>
-            <Icon className="text-xl text-gray-400" />
+            {/* ⚠️ Ícono ahora es de color negro (text-black) y tamaño ajustado */}
+            <Icon className="w-5 h-5 text-black" /> 
         </div>
         <div className="mt-4">
             <p className="text-3xl font-bold text-gray-900">{value.toLocaleString()}</p>
@@ -66,7 +66,7 @@ export default function PanelPrincipalPage() {
   const [areasStats, setAreasStats] = useState<AreaNivelStats[]>([]);
   const [metrics, setMetrics] = useState<DashboardMetrics>({
         totalOlimpiadas: 0, totalRegistros: 0, totalAreas: 0,
-        totalEvaluadores: 0, totalResponsables: 0, // Inicializar nuevo campo
+        totalEvaluadores: 0, totalResponsables: 0, 
         areasEnEvaluacion: 0, totalClasificados: 0,
         totalPremiados: 0, areasActivas: 0,
   }); 
@@ -112,16 +112,15 @@ export default function PanelPrincipalPage() {
       <div className="max-w-7xl mx-auto">
         
         {/* ======================================================= */}
-        {/* ## 📈 Tarjetas de Métricas Principales (7 tarjetas) */}
+        {/* ## 📈 Tarjetas de Métricas Principales */}
         {/* ======================================================= */}
         <h1 className="sr-only">Métricas Generales</h1>
-        {/* Ajuste de grid para 7 tarjetas: 2 en móvil, 3 en sm, 4 en lg, 4 en xl */}
-        {/* Usa lg:grid-cols-4 para una distribución más limpia en 2 filas */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
+        {/* Ajuste de grid para 6/7 tarjetas, replicando el diseño de 3 columnas */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
             
             {/* 1. Total Olimpistas (Total Registros) */}
             <MetricCard 
-                icon={FaTrophy} 
+                icon={LuUsers} // 👥 Ícono de grupo de usuarios como en la imagen
                 title="Total Olimpistas" 
                 value={metrics.totalRegistros} 
                 subtitle={`Registrados en ${metrics.totalAreas} áreas`}
@@ -129,15 +128,16 @@ export default function PanelPrincipalPage() {
 
             {/* 2. Evaluadores */}
             <MetricCard 
-                icon={FaUserTie} 
+                icon={LuActivity} // 📈 Ícono de gráfico de pulso como en la imagen
                 title="Evaluadores" 
                 value={metrics.totalEvaluadores} 
                 subtitle={`Asignados por área`}
             />
 
-            {/* 3. RESPONSABLES (NUEVA CARD) */}
+            {/* 3. RESPONSABLES (NO ESTÁ EN IMAGEN, MANTENEMOS ESTE PARA CONSISTENCIA) */}
+            {/* Si quieres que sean 6, puedes eliminar esta tarjeta. */}
             <MetricCard 
-                icon={FaUserCheck} // Icono de verificación de usuario
+                icon={LuUserCog} // ⚙️ Mantener usuario con engranaje
                 title="Responsables" 
                 value={metrics.totalResponsables} 
                 subtitle={`Gestores de áreas`}
@@ -145,7 +145,7 @@ export default function PanelPrincipalPage() {
             
             {/* 4. En Proceso (Áreas en Evaluación) */}
             <MetricCard 
-                icon={FaClipboardList} 
+                icon={LuClipboardList} // 📋 Ícono de portapapeles con lista
                 title="En Proceso" 
                 value={metrics.areasEnEvaluacion} 
                 subtitle={`${metrics.areasEnEvaluacion} áreas en evaluación`}
@@ -153,7 +153,7 @@ export default function PanelPrincipalPage() {
             
             {/* 5. Clasificados */}
             <MetricCard 
-                icon={FaCheckCircle} 
+                icon={LuTrophy} // 🏆 Ícono de trofeo como en la imagen
                 title="Clasificados" 
                 value={metrics.totalClasificados} 
                 subtitle={`Para ronda final`}
@@ -161,7 +161,7 @@ export default function PanelPrincipalPage() {
             
             {/* 6. Premiados */}
             <MetricCard 
-                icon={FaAward} 
+                icon={LuAward} // 🥇 Ícono de medalla como en la imagen
                 title="Premiados" 
                 value={metrics.totalPremiados} 
                 subtitle={`Medallas otorgadas`}
@@ -169,14 +169,12 @@ export default function PanelPrincipalPage() {
             
             {/* 7. Áreas Activas (Total Áreas) */}
              <MetricCard 
-                icon={FaFlask} 
+                icon={LuEye} // 👁️ Ícono de ojo como en la imagen
                 title="Áreas Activas" 
                 value={metrics.areasActivas} 
                 subtitle={`Disciplinas disponibles`}
             />
             
-            {/* Si necesitas una tarjeta más para llenar la segunda fila si el diseño es 4x2 */}
-            {/* <div className="hidden lg:block"></div> */}
         </div>
         
         {/* ======================================================= */}

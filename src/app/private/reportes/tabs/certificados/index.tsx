@@ -11,6 +11,10 @@ import {
 import { FiChevronDown, FiDownload } from "react-icons/fi";
 import { FiFileText } from "react-icons/fi";
 
+interface ExportError extends Error {
+  message: string;
+}
+
 type AreaDTO = { id: number; nombre: string };
 type NivelDTO = { id: number; nombre: string };
 
@@ -146,9 +150,17 @@ export default function CertificadosTab() {
       }.xlsx`;
       a.click();
       window.URL.revokeObjectURL(url);
-    } catch (e) {
-      console.error("Error al exportar premiados:", e);
-      alert("No se pudo exportar los certificados de premiación.");
+    } catch (error) {
+      const err = error as ExportError;
+      const msg = err?.message ?? "No se pudo exportar.";
+
+      if (msg.startsWith("LOCKED::")) {
+        alert(msg.replace("LOCKED::", ""));
+      } else if (msg !== "No se pudo exportar.") {
+        alert(msg);
+      } else {
+        alert("No se pudo exportar los certificados de premiación.");
+      }
     } finally {
       setLoadingExport(false);
     }
@@ -169,99 +181,28 @@ export default function CertificadosTab() {
       }.xlsx`;
       a.click();
       window.URL.revokeObjectURL(url);
-    } catch (e) {
-      console.error("Error al exportar participación:", e);
-      alert("No se pudo exportar los certificados de participación.");
+    } catch (error) {
+      const err = error as ExportError;
+      const msg: string = err?.message ?? "Error desconocido";
+
+      // Fase bloqueada
+      if (msg.startsWith("LOCKED::")) {
+        alert(msg.replace("LOCKED::", ""));
+      }
+      // mensaje claro del backend "no hay clasificados que no tengan premio"
+      else if (msg !== "No se pudo exportar.") {
+        alert(msg);
+      }
+      // Fallback
+      else {
+        alert("No se pudo exportar los certificados de participación.");
+      }
     } finally {
       setLoadingExport(false);
     }
   };
 
   const disable = loadingCatalogs;
-
-  {
-    confirmType && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3">
-        {/* Backdrop */}
-        <div
-          className="absolute inset-0 bg-black/40"
-          onClick={() => setConfirmType(null)}
-        />
-
-        {/* Card */}
-        <div className="relative z-10 w-full max-w-sm rounded-2xl bg-white shadow-2xl">
-          {/* Close */}
-          <button
-            onClick={() => setConfirmType(null)}
-            aria-label="Cerrar"
-            className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl leading-none"
-          >
-            ✕
-          </button>
-
-          {/* Header */}
-          <div className="px-5 pt-5 pb-2">
-            <h3 className="text-base font-semibold text-slate-900">
-              Exportar {tipoLabel}
-            </h3>
-            <p className="text-sm text-slate-500 mt-1">
-              Se exportará un Excel con los filtros seleccionados.
-            </p>
-          </div>
-
-          {/* Resumen */}
-          <div className="px-5 mt-3">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50">
-              <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
-                <div>
-                  <div className="text-xs text-gray-400">Área</div>
-                  <div className="mt-1 text-base font-semibold text-slate-900">
-                    {getAreaLabel()}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs text-gray-400">Nivel</div>
-                  <div className="mt-1 text-base font-semibold text-slate-900">
-                    {getNivelLabel()}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs text-gray-400">Tipo de lista</div>
-                  <div className="mt-1 text-base font-semibold text-slate-900">
-                    {tipoLabel}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="px-5 py-4 flex items-center justify-end gap-3">
-            <button
-              onClick={() => setConfirmType(null)}
-              className="rounded-lg border px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={async () => {
-                if (confirmType === "PREMIADOS") {
-                  await handleExportPremiados();
-                } else {
-                  await handleExportParticipacion();
-                }
-                setConfirmType(null);
-              }}
-              disabled={loadingExport}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
-            >
-              {loadingExport ? "Exportando…" : "Exportar .xlsx"}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -397,6 +338,89 @@ export default function CertificadosTab() {
           </div>
         </div>
       </div>
+
+      {/* MODAL DE CONFIRMACIÓN */}
+      {confirmType && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setConfirmType(null)}
+          />
+
+          {/* Card */}
+          <div className="relative z-10 w-full max-w-sm rounded-2xl bg-white shadow-2xl">
+            {/* Close */}
+            <button
+              onClick={() => setConfirmType(null)}
+              aria-label="Cerrar"
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl leading-none"
+            >
+              ✕
+            </button>
+
+            {/* Header */}
+            <div className="px-5 pt-5 pb-2">
+              <h3 className="text-base font-semibold text-slate-900">
+                Exportar {tipoLabel}
+              </h3>
+              <p className="text-sm text-slate-500 mt-1">
+                Se exportará un Excel con los filtros seleccionados.
+              </p>
+            </div>
+
+            {/* Resumen */}
+            <div className="px-5 mt-3">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50">
+                <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
+                  <div>
+                    <div className="text-xs text-gray-400">Área</div>
+                    <div className="mt-1 text-base font-semibold text-slate-900">
+                      {getAreaLabel()}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-400">Nivel</div>
+                    <div className="mt-1 text-base font-semibold text-slate-900">
+                      {getNivelLabel()}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-400">Tipo de lista</div>
+                    <div className="mt-1 text-base font-semibold text-slate-900">
+                      {tipoLabel}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-5 py-4 flex items-center justify-end gap-3">
+              <button
+                onClick={() => setConfirmType(null)}
+                className="rounded-lg border px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={async () => {
+                  if (confirmType === "PREMIADOS") {
+                    await handleExportPremiados();
+                  } else {
+                    await handleExportParticipacion();
+                  }
+                  setConfirmType(null);
+                }}
+                disabled={loadingExport}
+                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+              >
+                {loadingExport ? "Exportando…" : "Exportar .xlsx"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

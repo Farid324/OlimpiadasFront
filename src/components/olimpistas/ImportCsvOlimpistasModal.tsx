@@ -57,7 +57,6 @@ export default function ImportCsvOlimpistasModal({
     }
   };
 
-
   const onImport = async () => {
     if (!file) return;
     setImporting(true);
@@ -82,9 +81,6 @@ export default function ImportCsvOlimpistasModal({
       "departamento",
       "area",
       "nivel",
-      "gradoEscolar",
-      "nivelCompetidor",
-      "grado",
     ].join(",");
 
     const blob = new Blob([headers + "\n"], {
@@ -96,12 +92,11 @@ export default function ImportCsvOlimpistasModal({
     a.download = "plantilla_olimpistas.csv";
     a.click();
     URL.revokeObjectURL(url);
-
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white p-6 rounded-xl w-[680px] relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-2">
+      <div className="bg-white p-4 sm:p-6 rounded-xl w-full max-w-[680px] relative">
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
@@ -115,9 +110,9 @@ export default function ImportCsvOlimpistasModal({
         </p>
 
         <div className="space-y-4">
-          { }
-          <div className="border rounded-lg p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          {/* bloque archivo: stack en ce;, fila en desktop */}
+          <div className="border rounded-lg p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
               <FileUp className="text-blue-600" />
               <div>
                 <p className="font-semibold text-black">
@@ -127,9 +122,13 @@ export default function ImportCsvOlimpistasModal({
                   Campos requeridos: nombreCompleto, ci, tutorContacto,
                   unidadEducativa, departamento, area, nivel
                 </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Ejemplos de nivel válidos: <b>1ºP</b>, <b>2ºS</b>,{" "}
+                  <b>1ro Primaria</b>, <b>3ro Secundaria</b>
+                </p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
               <button
                 onClick={downloadTemplate}
                 className="inline-flex items-center gap-2 px-3 py-2 border rounded-md text-black hover:bg-gray-50"
@@ -153,7 +152,7 @@ export default function ImportCsvOlimpistasModal({
             </div>
           </div>
 
-          { }
+          {}
           {!summary && (
             <div className="flex justify-end gap-2">
               <button
@@ -173,7 +172,7 @@ export default function ImportCsvOlimpistasModal({
             </div>
           )}
 
-          { }
+          {}
           {summary && (
             <div className="space-y-3">
               <div className="border rounded-lg p-4">

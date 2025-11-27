@@ -30,7 +30,10 @@ const schema = z.object({
     .trim()
     .optional()
     .or(z.literal(""))
-    .refine((v) => !v || /^\d{5,12}$/.test(v), "El CI debe tener 5 a 12 dígitos."),
+    .refine(
+      (v) => !v || /^\d{5,12}$/.test(v),
+      "El CI debe tener 5 a 12 dígitos."
+    ),
 
   // Correo opcional: vacío permitido; si viene, formato válido
   correo: z
@@ -38,7 +41,10 @@ const schema = z.object({
     .trim()
     .optional()
     .or(z.literal(""))
-    .refine((v) => !v || z.string().email().safeParse(v).success, "Correo inválido"),
+    .refine(
+      (v) => !v || z.string().email().safeParse(v).success,
+      "Correo inválido"
+    ),
 
   // Teléfono requerido: 7-12 dígitos (sin símbolos)
   telefono: z
@@ -169,12 +175,12 @@ export default function RegisterTutorModal({
     <ModalPortal>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40"
+        className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 px-2"
         onClick={onClose}
       >
         {/* Modal */}
         <div
-          className="bg-white p-6 rounded-xl w-[720px] relative"
+          className="bg-white p-4 sm:p-6 rounded-xl w-full max-w-[720px] relative"
           onClick={(e) => e.stopPropagation()}
         >
           <button
@@ -259,7 +265,11 @@ export default function RegisterTutorModal({
           </div>
 
           {/* Formulario */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="space-y-4"
+            noValidate
+          >
             <div className="grid grid-cols-2 gap-4">
               {/* Nombre */}
               <div>

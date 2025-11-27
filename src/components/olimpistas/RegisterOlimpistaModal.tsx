@@ -139,12 +139,14 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
         setLockAfterSuccess(false);
         setSuccessMsg(null);
         onSuccess(); // el padre refresca la lista
-        onClose();   // cerramos el modal después de 1s
+        onClose(); // cerramos el modal después de 1s
       }, 1000);
     } catch (err: unknown) {
       // CI duplicado -> error bajo el campo CI (sin banner azul)
       if (axios.isAxiosError(err)) {
-        const data = err.response?.data as { message?: string | string[] } | undefined;
+        const data = err.response?.data as
+          | { message?: string | string[] }
+          | undefined;
         const rawMsg = Array.isArray(data?.message)
           ? data?.message.join(" ")
           : typeof data?.message === "string"
@@ -153,7 +155,10 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
 
         const text = rawMsg.toLowerCase();
 
-        if (text.includes("ci ya está registrado") || text.includes("ci ya esta registrado")) {
+        if (
+          text.includes("ci ya está registrado") ||
+          text.includes("ci ya esta registrado")
+        ) {
           setError("ci", {
             type: "server",
             message: "El CI ya se encuentra registrado",
@@ -210,8 +215,8 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white p-6 rounded-xl w-[640px] relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-2">
+      <div className="bg-white p-4 sm:p-6 rounded-xl w-full max-w-[640px] relative">
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
@@ -221,8 +226,12 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
           ✕
         </button>
 
-        <h2 className="text-xl font-bold text-black">Registrar Nuevo Olimpista</h2>
-        <p className="text-gray-500 mb-4">Complete la información del Olimpista</p>
+        <h2 className="text-xl font-bold text-black">
+          Registrar Nuevo Olimpista
+        </h2>
+        <p className="text-gray-500 mb-4">
+          Complete la información del Olimpista
+        </p>
 
         {/* ✅ Banner de éxito, estilo responsables */}
         {successMsg && (
@@ -239,7 +248,7 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
           onSubmit={handleSubmit(onSubmit)}
           className={lockAfterSuccess ? "pointer-events-none opacity-75" : ""}
         >
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Nombre completo */}
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">

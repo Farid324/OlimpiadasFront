@@ -123,7 +123,9 @@ export default function RegisterGrupoModal({
     // 2) Validar miembros
     if (miembros.length < 2) {
       if (miembros.length === 0) {
-        setMembersError("Agregue al menos 2 olimpistas para registrar un grupo.");
+        setMembersError(
+          "Agregue al menos 2 olimpistas para registrar un grupo."
+        );
       } else {
         setMembersError(null); // para el caso de 1 miembro se muestra VM.minGroupMembers
       }
@@ -134,7 +136,9 @@ export default function RegisterGrupoModal({
 
     // 3) Validar tutor
     if (!tutorSeleccionado) {
-      setTutorError("Debe registrar o seleccionar un tutor responsable para el grupo.");
+      setTutorError(
+        "Debe registrar o seleccionar un tutor responsable para el grupo."
+      );
       hasError = true;
     } else {
       setTutorError(null);
@@ -198,8 +202,8 @@ export default function RegisterGrupoModal({
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white p-6 rounded-xl w-[780px] relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-2">
+      <div className="bg-white p-4 sm:p-6 rounded-xl w-full max-w-[780px] relative">
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
@@ -221,7 +225,7 @@ export default function RegisterGrupoModal({
         )}
 
         {/*FormularioPrincipal*/}
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-1">
               Nombre del Equipo
@@ -240,9 +244,7 @@ export default function RegisterGrupoModal({
               placeholder="Team Robotics"
             />
             {errors.nombreEquipo && (
-              <p className="text-red-600 text-sm mt-1">
-                {errors.nombreEquipo}
-              </p>
+              <p className="text-red-600 text-sm mt-1">{errors.nombreEquipo}</p>
             )}
           </div>
 
@@ -286,9 +288,7 @@ export default function RegisterGrupoModal({
               ))}
             </select>
             {errors.departamento && (
-              <p className="text-red-600 text-sm mt-1">
-                {errors.departamento}
-              </p>
+              <p className="text-red-600 text-sm mt-1">{errors.departamento}</p>
             )}
           </div>
 
