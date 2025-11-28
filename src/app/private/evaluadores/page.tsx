@@ -9,6 +9,8 @@ import { Mail, Phone, MoreVertical, Pencil, Trash2, X, CheckCircle2 } from 'luci
 import { FiSearch } from 'react-icons/fi';
 import AddEvaluatorModal from '@/components/features/RegistroEva/AddEvaluatorModal';
 import { usePageHeader } from '@/contexts/pageHeader';
+import AssignOlimpistasModal from '@/components/features/RegistroEva/AssignOlimpistasModal';
+
 
 type Area = { id_area: number; nombre_area: string };
 
@@ -37,6 +39,11 @@ export default function EvaluadoresPage() {
   const [menuOpenId, setMenuOpenId] = useState<number | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ id: number; nombre: string } | null>(null);
   const [deleteSuccess, setDeleteSuccess] = useState<string | null>(null);
+  const [assignContext, setAssignContext] = useState<{
+    areaOptions: Area[];
+    initialAreaId?: number;
+    evaluadoresArea: Evaluador[];
+  } | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   async function load(query?: string) {
@@ -125,6 +132,29 @@ export default function EvaluadoresPage() {
     setShowModal(true);
     setMenuOpenId(null);
   };
+
+  const openAssign = (row: Evaluador) => {
+    const areas = row.evaluadores_area?.map((ea) => ea.area) ?? [];
+    if (!areas.length) {
+      alert('Este evaluador no tiene áreas asociadas.');
+      return;
+    }
+
+    // Todos los evaluadores que pertenezcan a cualquiera de las áreas del evaluador actual
+    const areaIds = new Set(areas.map((a) => a.id_area));
+    const evaluadoresArea = evaluadores.filter((ev) =>
+      ev.evaluadores_area?.some((ea) => areaIds.has(ea.area.id_area)),
+    );
+
+    setAssignContext({
+      areaOptions: areas,
+      initialAreaId: areas[0]?.id_area,
+      evaluadoresArea,
+    });
+    setMenuOpenId(null);
+  };
+
+
   const askDelete = (row: Evaluador) => {
     setConfirmDelete({ id: row.id_usuario, nombre: `${row.nombre} ${row.apellido}` });
     setMenuOpenId(null);
@@ -349,27 +379,38 @@ export default function EvaluadoresPage() {
                             <MoreVertical className="w-5 h-5 text-gray-700" />
                           </button>
 
-                        {isMenuOpen && (
-                          <div
-                            role="menu"
-                            className="absolute right-2 bottom-10 z-20 w-40 rounded-md border-gray-300 bg-white shadow-lg overflow-hidden"
-                          >
-                            <button
-                              type="button"
-                              onClick={() => openEdit(e)}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-gray-50 text-gray-700"
+                          {isMenuOpen && (
+                            <div
+                              role="menu"
+                              className="absolute right-2 bottom-0 rounded-md border border-gray-300 bg-white shadow-lg overflow-hidden"
                             >
-                              <Pencil className="w-4 h-4" /> Editar
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => askDelete(e)}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
-                            >
-                              <Trash2 className="w-4 h-4" /> Eliminar
-                            </button>
-                          </div>
-                        )}
+                              <button
+                                type="button"
+                                onClick={() => openEdit(e)}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-gray-50 text-gray-700"
+                              >
+                                <Pencil className="w-4 h-4" /> Editar
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => openAssign(e)}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-gray-50 text-gray-700"
+                              >
+                                {/* Puedes usar otro icono si quieres, por ahora reutilizo LuLayers */}
+                                <LuLayers className="w-4 h-4" /> Asignar olimpistas
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => askDelete(e)}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-4 h-4" /> Eliminar
+                              </button>
+                            </div>
+                          )}
+
                         </td>
                       </tr>
                     );
@@ -393,23 +434,41 @@ export default function EvaluadoresPage() {
           initial={
             editData
               ? {
-                  id_usuario: editData.id_usuario,
-                  nombre: editData.nombre,
-                  apellido: editData.apellido,
-                  correo: editData.correo,
-                  telefono: editData.telefono ?? '',
-                  ci: editData.ci ?? '',
-                  institucion: editData.institucion ?? '',
-                  especialidad: editData.especialidad ?? '',
-                  experiencia: editData.experiencia ?? undefined,
-                  id_areas: editData.evaluadores_area
-                    ?.map((ea) => ea.area?.id_area)
-                    .filter(Boolean) as number[],
-                }
+                id_usuario: editData.id_usuario,
+                nombre: editData.nombre,
+                apellido: editData.apellido,
+                correo: editData.correo,
+                telefono: editData.telefono ?? '',
+                ci: editData.ci ?? '',
+                institucion: editData.institucion ?? '',
+                especialidad: editData.especialidad ?? '',
+                experiencia: editData.experiencia ?? undefined,
+                id_areas: editData.evaluadores_area
+                  ?.map((ea) => ea.area?.id_area)
+                  .filter(Boolean) as number[],
+              }
               : undefined
           }
         />
       )}
+
+            {assignContext && (
+        <AssignOlimpistasModal
+          onClose={() => setAssignContext(null)}
+          onSuccess={() => {
+            setAssignContext(null);
+            // Si más adelante muestras métricas de asignación, aquí puedes llamar refetch()
+          }}
+          areaOptions={assignContext.areaOptions}
+          initialAreaId={assignContext.initialAreaId}
+          evaluadores={assignContext.evaluadoresArea.map((ev) => ({
+            id_usuario: ev.id_usuario,
+            nombre: ev.nombre,
+            apellido: ev.apellido,
+          }))}
+        />
+      )}
+
 
       {/* Confirmación eliminar */}
       {confirmDelete && (
