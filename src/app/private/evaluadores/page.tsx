@@ -39,11 +39,8 @@ export default function EvaluadoresPage() {
   const [menuOpenId, setMenuOpenId] = useState<number | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ id: number; nombre: string } | null>(null);
   const [deleteSuccess, setDeleteSuccess] = useState<string | null>(null);
-  const [assignContext, setAssignContext] = useState<{
-    areaOptions: Area[];
-    initialAreaId?: number;
-    evaluadoresArea: Evaluador[];
-  } | null>(null);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   async function load(query?: string) {
@@ -133,26 +130,7 @@ export default function EvaluadoresPage() {
     setMenuOpenId(null);
   };
 
-  const openAssign = (row: Evaluador) => {
-    const areas = row.evaluadores_area?.map((ea) => ea.area) ?? [];
-    if (!areas.length) {
-      alert('Este evaluador no tiene áreas asociadas.');
-      return;
-    }
 
-    // Todos los evaluadores que pertenezcan a cualquiera de las áreas del evaluador actual
-    const areaIds = new Set(areas.map((a) => a.id_area));
-    const evaluadoresArea = evaluadores.filter((ev) =>
-      ev.evaluadores_area?.some((ea) => areaIds.has(ea.area.id_area)),
-    );
-
-    setAssignContext({
-      areaOptions: areas,
-      initialAreaId: areas[0]?.id_area,
-      evaluadoresArea,
-    });
-    setMenuOpenId(null);
-  };
 
 
   const askDelete = (row: Evaluador) => {
@@ -202,12 +180,22 @@ export default function EvaluadoresPage() {
         />
       </div>
 
-      {/* Botón */}
-      <div className="flex justify-start">
+      {/* Botones */}
+      <div className="flex flex-wrap gap-2 justify-start">
         <Button onClick={openCreate} className="bg-blue-600 hover:bg-blue-700">
           + Agregar Evaluador
         </Button>
+
+        <Button
+          type="button"
+          variant="outline"
+          className="border-blue-600 text-blue-600 hover:bg-blue-50"
+          onClick={() => setShowAssignModal(true)}
+        >
+          Asignar olimpistas
+        </Button>
       </div>
+
 
       {/* Buscador (estilo tarjeta grande, igual que Responsables) */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
@@ -394,15 +382,6 @@ export default function EvaluadoresPage() {
 
                               <button
                                 type="button"
-                                onClick={() => openAssign(e)}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-gray-50 text-gray-700"
-                              >
-                                {/* Puedes usar otro icono si quieres, por ahora reutilizo LuLayers */}
-                                <LuLayers className="w-4 h-4" /> Asignar olimpistas
-                              </button>
-
-                              <button
-                                type="button"
                                 onClick={() => askDelete(e)}
                                 className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
                               >
@@ -452,22 +431,17 @@ export default function EvaluadoresPage() {
         />
       )}
 
-            {assignContext && (
+      {showAssignModal && (
         <AssignOlimpistasModal
-          onClose={() => setAssignContext(null)}
+          onClose={() => setShowAssignModal(false)}
           onSuccess={() => {
-            setAssignContext(null);
-            // Si más adelante muestras métricas de asignación, aquí puedes llamar refetch()
+            setShowAssignModal(false);
+            // Si más adelante quieres refrescar algo, aquí puedes llamar refetch()
           }}
-          areaOptions={assignContext.areaOptions}
-          initialAreaId={assignContext.initialAreaId}
-          evaluadores={assignContext.evaluadoresArea.map((ev) => ({
-            id_usuario: ev.id_usuario,
-            nombre: ev.nombre,
-            apellido: ev.apellido,
-          }))}
+          evaluadores={evaluadores}
         />
       )}
+
 
 
       {/* Confirmación eliminar */}

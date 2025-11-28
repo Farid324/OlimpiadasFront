@@ -9,10 +9,17 @@ import { CheckCircle2, X } from 'lucide-react';
 
 type Area = { id_area: number; nombre_area: string };
 
-type EvaluadorLite = {
+type EvaluadorConAreas = {
   id_usuario: number;
   nombre: string;
   apellido: string;
+  evaluadores_area?: { area: Area }[];
+};
+
+type Props = {
+  onClose: () => void;
+  onSuccess: () => void;
+  evaluadores: EvaluadorConAreas[];
 };
 
 type Row = {
@@ -22,48 +29,59 @@ type Row = {
   cupoFinal: string;
 };
 
-type Props = {
-  onClose: () => void;
-  onSuccess: () => void;
-  areaOptions: Area[];
-  initialAreaId?: number;
-  evaluadores: EvaluadorLite[];
-};
-
 export default function AssignOlimpistasModal({
   onClose,
   onSuccess,
-  areaOptions,
-  initialAreaId,
   evaluadores,
 }: Props) {
-  const [selectedArea, setSelectedArea] = useState<number | undefined>(
-    initialAreaId,
-  );
+  const [selectedAreaId, setSelectedAreaId] = useState<number | ''>('');
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [msgType, setMsgType] = useState<'ok' | 'err' | null>(null);
 
-  // Por ahora la fase final estará bloqueada siempre.
-  // Luego puedes cambiar esto a un valor dinámico según un endpoint de fases.
+  // Luego esto se puede conectar con un endpoint real de fases
   const faseFinalHabilitada = false;
 
+  // ========================= ÁREAS =========================
+  // Construimos las áreas únicas a partir de los evaluadores
+  const areaOptions = useMemo<Area[]>(() => {
+    const map = new Map<number, Area>();
+
+    evaluadores.forEach((ev) => {
+      ev.evaluadores_area?.forEach((ea) => {
+        const a = ea.area;
+        if (!map.has(a.id_area)) {
+          map.set(a.id_area, a);
+        }
+      });
+    });
+
+    return Array.from(map.values()).sort((a, b) =>
+      a.nombre_area.localeCompare(b.nombre_area),
+    );
+  }, [evaluadores]);
+
+  // Cuando el usuario elige un área, armamos las filas con LOS evaluadores de esa área
   useEffect(() => {
-    const initRows: Row[] = evaluadores.map((e) => ({
+    if (!selectedAreaId) {
+      setRows([]);
+      return;
+    }
+
+    const evalsArea = evaluadores.filter((ev) =>
+      ev.evaluadores_area?.some((ea) => ea.area.id_area === selectedAreaId),
+    );
+
+    const initRows: Row[] = evalsArea.map((e) => ({
       id_usuario: e.id_usuario,
       nombreCompleto: `${e.nombre} ${e.apellido}`,
       cupoClasificacion: '',
       cupoFinal: '',
     }));
-    setRows(initRows);
-  }, [evaluadores]);
 
-  const areaLabel = useMemo(() => {
-    if (!selectedArea) return '';
-    const found = areaOptions.find((a) => a.id_area === selectedArea);
-    return found?.nombre_area ?? '';
-  }, [selectedArea, areaOptions]);
+    setRows(initRows);
+  }, [evaluadores, selectedAreaId]);
 
   const updateRow = (
     id_usuario: number,
@@ -77,10 +95,17 @@ export default function AssignOlimpistasModal({
     );
   };
 
+  // ========================= SUBMIT =========================
   const handleSubmit = async () => {
-    if (!selectedArea) {
+    if (!selectedAreaId) {
       setMsgType('err');
       setMsg('Selecciona un área.');
+      return;
+    }
+
+    if (!rows.length) {
+      setMsgType('err');
+      setMsg('No hay evaluadores para el área seleccionada.');
       return;
     }
 
@@ -100,7 +125,7 @@ export default function AssignOlimpistasModal({
       }));
 
       await api.post('/evaluadores/asignar-olimpistas', {
-        id_area: selectedArea,
+        id_area: selectedAreaId,
         asignaciones,
       });
 
@@ -123,6 +148,7 @@ export default function AssignOlimpistasModal({
     }
   };
 
+  // ========================= UI =========================
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-lg w-full max-w-3xl max-h-[90vh] flex flex-col">
@@ -133,8 +159,9 @@ export default function AssignOlimpistasModal({
               Asignar olimpistas a evaluadores
             </h2>
             <p className="text-xs text-gray-500">
-              Define cuántos olimpistas evaluará cada evaluador en la fase
-              clasificatoria y, más adelante, en la fase final.
+              Selecciona un área y define cuántos olimpistas evaluará cada
+              evaluador en la fase clasificatoria y, más adelante, en la fase
+              final.
             </p>
           </div>
           <button
@@ -148,16 +175,16 @@ export default function AssignOlimpistasModal({
 
         {/* Body */}
         <div className="p-4 space-y-4 overflow-y-auto">
-          {/* Área */}
+          {/* Selector de área */}
           <div className="space-y-1">
             <label className="text-sm font-medium text-gray-700">
               Área
             </label>
             <select
-              value={selectedArea ?? ''}
+              value={selectedAreaId}
               onChange={(e) =>
-                setSelectedArea(
-                  e.target.value ? Number(e.target.value) : undefined,
+                setSelectedAreaId(
+                  e.target.value ? Number(e.target.value) : '',
                 )
               }
               className="w-full h-10 rounded-lg border border-gray-300 text-sm px-3 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-600"
@@ -169,11 +196,6 @@ export default function AssignOlimpistasModal({
                 </option>
               ))}
             </select>
-            {areaLabel && (
-              <p className="text-xs text-gray-500">
-                Asignando para el área: <strong>{areaLabel}</strong>
-              </p>
-            )}
           </div>
 
           {/* Tabla de evaluadores */}
@@ -219,11 +241,7 @@ export default function AssignOlimpistasModal({
                         min={0}
                         value={r.cupoFinal}
                         onChange={(e) =>
-                          updateRow(
-                            r.id_usuario,
-                            'cupoFinal',
-                            e.target.value,
-                          )
+                          updateRow(r.id_usuario, 'cupoFinal', e.target.value)
                         }
                         className="w-24 mx-auto text-center"
                         disabled={!faseFinalHabilitada}
@@ -242,7 +260,7 @@ export default function AssignOlimpistasModal({
                       colSpan={3}
                       className="px-3 py-4 text-center text-gray-400 text-sm"
                     >
-                      No hay evaluadores para esta área.
+                      Selecciona un área para ver sus evaluadores.
                     </td>
                   </tr>
                 )}
