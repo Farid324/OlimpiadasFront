@@ -219,7 +219,7 @@ export default function AreasTab() {
             <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50/50">
                 <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Nombre de Área</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Nombre de Área </th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Niveles</th>
                 <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Tipo</th>
                 <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Nota Aprobación</th>
@@ -298,7 +298,7 @@ export default function AreasTab() {
               
               {/* Nombre */}
               <div className="space-y-1.5">
-                <label className="block text-sm font-semibold text-gray-700">Nombre del Área</label>
+                <label className="block text-sm font-semibold text-gray-700">Nombre del Área <span className="text-red-500">*</span></label>
                 <input
                   type="text"
                   value={formNombre}
@@ -310,7 +310,7 @@ export default function AreasTab() {
 
               {/* Nota */}
               <div className="space-y-1.5">
-                <label className="block text-sm font-semibold text-gray-700">Establecer Nota de Aprobación (51-100)</label>
+                <label className="block text-sm font-semibold text-gray-700">Establecer Nota de Aprobación (51-100) <span className="text-red-500">*</span></label>
                 <div className="relative">
                   <input
                     type="number"
@@ -346,7 +346,7 @@ export default function AreasTab() {
 
               {/* Tipo */}
               <div className="space-y-1.5">
-                <label className="block text-sm font-semibold text-gray-700">Tipo de Participación</label>
+                <label className="block text-sm font-semibold text-gray-700">Tipo de Participación <span className="text-red-500">*</span></label>
                 <div className="grid grid-cols-2 gap-3">
                    <button
                      type="button"

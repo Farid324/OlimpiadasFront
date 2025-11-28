@@ -348,7 +348,7 @@ export default function RegisterResponsableModal({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">
-                Nombre Completo
+                Nombre Completo <span className="text-red-500">*</span>
               </label>
               <Input placeholder="Ej: Juan Pérez" {...register('nombre')} />
               {errors.nombre && (
@@ -358,7 +358,7 @@ export default function RegisterResponsableModal({
 
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">
-                Correo Electrónico
+                Correo Electrónico <span className="text-red-500">*</span>
               </label>
               <Input placeholder="correo@ejemplo.com" {...register('correo')} />
               {errors.correo && (
@@ -439,7 +439,7 @@ export default function RegisterResponsableModal({
 
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">
-                Documento de Identidad (CI)
+                Documento de Identidad (CI) <span className="text-red-500">*</span>
               </label>
               <Input placeholder="Número de CI" {...register('ci')} />
               {errors.ci && (
@@ -449,7 +449,7 @@ export default function RegisterResponsableModal({
 
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">
-                Área Designada
+                Área Designada <span className="text-red-500">*</span>
               </label>
               <select
                 {...register('id_area')}

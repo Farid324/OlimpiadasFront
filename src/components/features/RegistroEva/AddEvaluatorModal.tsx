@@ -347,7 +347,7 @@ export default function AddEvaluatorModal({
           {/* Nombre (span 2) */}
           <div className="sm:col-span-2">
             <label className="block text-sm font-bold text-gray-700 mb-1">
-              Nombre Completo
+              Nombre Completo <span className="text-red-500">*</span>
             </label>
             <Input
               className="text-gray-900 placeholder:text-gray-400"
@@ -366,7 +366,7 @@ export default function AddEvaluatorModal({
           {/* Correo */}
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-1">
-              Correo
+              Correo <span className="text-red-500">*</span>
             </label>
             <Input
               className="text-gray-900 placeholder:text-gray-400"
@@ -401,7 +401,7 @@ export default function AddEvaluatorModal({
           {/* CI */}
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-1">
-              Documento de Identidad (CI)
+              Documento de Identidad (CI) <span className="text-red-500">*</span>
             </label>
             <Input
               className="text-gray-900 placeholder:text-gray-400"
@@ -473,7 +473,7 @@ export default function AddEvaluatorModal({
           {/* Áreas */}
           <div className="sm:col-span-2">
             <label className="block text-sm font-bold mb-2">
-              Áreas de Evaluación
+              Áreas de Evaluación <span className="text-red-500">*</span>
             </label>
             <div className="rounded-md border border-gray-200 p-2 max-h-48 overflow-y-auto">
               <div className="flex flex-wrap gap-2">

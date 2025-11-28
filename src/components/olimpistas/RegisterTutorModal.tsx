@@ -274,7 +274,7 @@ export default function RegisterTutorModal({
               {/* Nombre */}
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1">
-                  Nombre Completo
+                  Nombre Completo <span className="text-red-500">*</span>
                 </label>
                 <Input
                   placeholder="Nombre completo del tutor"
@@ -326,7 +326,7 @@ export default function RegisterTutorModal({
               {/* Teléfono */}
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1">
-                  Teléfono
+                  Teléfono <span className="text-red-500">*</span>
                 </label>
                 <Input
                   placeholder="7xxxxxxx"

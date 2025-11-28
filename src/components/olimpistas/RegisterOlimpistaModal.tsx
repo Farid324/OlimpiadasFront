@@ -252,7 +252,7 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
             {/* Nombre completo */}
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">
-                Nombre Completo
+                Nombre Completo <span className="text-red-500">*</span>
               </label>
               <Input
                 placeholder="Ej: Juan Pérez"
@@ -276,7 +276,7 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
             {/* CI */}
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">
-                Cédula de identidad
+                Cédula de identidad <span className="text-red-500">*</span>
               </label>
               <Input
                 placeholder="0000000"
@@ -295,7 +295,7 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
             {/* Contacto tutor */}
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">
-                Contacto del tutor legal
+                Contacto del tutor legal <span className="text-red-500">*</span>
               </label>
               <div className="flex gap-2">
                 <Input
@@ -369,7 +369,7 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
             {/* Unidad Educativa */}
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">
-                Unidad Educativa
+                Unidad Educativa <span className="text-red-500">*</span>
               </label>
               <Input
                 placeholder="U.E. Santa María"

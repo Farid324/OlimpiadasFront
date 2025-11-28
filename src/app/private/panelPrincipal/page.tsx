@@ -108,7 +108,7 @@ export default function PanelPrincipalPage() {
   if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   return (
-    <div className="bg-[#f9fbfd] min-h-screen py-6 px-4 sm:px-6 lg:px-8">
+    <div className="w-full max-w-none px-1 sm:px-0 py- sm:py-0">
       <div className="max-w-7xl mx-auto">
         
         {/* ======================================================= */}

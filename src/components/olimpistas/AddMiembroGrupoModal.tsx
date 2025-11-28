@@ -135,7 +135,7 @@ export default function AddMiembroGrupoModal({
             {/* Nombre completo */}
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">
-                Nombre completo
+                Nombre completo <span className="text-red-500">*</span>
               </label>
               <Input
                 {...register("nombreCompleto")}
@@ -153,7 +153,7 @@ export default function AddMiembroGrupoModal({
             {/* CI */}
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">
-                Cédula de identidad
+                Cédula de identidad <span className="text-red-500">*</span>
               </label>
               <Input
                 {...register("ci")}

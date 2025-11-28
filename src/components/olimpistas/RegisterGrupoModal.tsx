@@ -228,7 +228,7 @@ export default function RegisterGrupoModal({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-1">
-              Nombre del Equipo
+              Nombre del Equipo <span className="text-red-500">*</span>
             </label>
             <Input
               value={nombreEquipo}
@@ -250,7 +250,7 @@ export default function RegisterGrupoModal({
 
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-1">
-              Unidad Educativa
+              Unidad Educativa <span className="text-red-500">*</span>
             </label>
             <Input
               value={unidadEducativa}
@@ -330,7 +330,7 @@ export default function RegisterGrupoModal({
         {/*tutor responsable GR*/}
         <div className="border rounded-lg mb-4 p-4">
           <h3 className="font-semibold text-gray-700 mb-2">
-            Tutor académico responsable
+            Tutor académico responsable <span className="text-red-500">*</span>
           </h3>
           {tutorSeleccionado ? (
             <div className="flex justify-between items-center">
@@ -367,7 +367,7 @@ export default function RegisterGrupoModal({
         {/*miembros*/}
         <div className="border rounded-lg">
           <div className="flex items-center justify-between p-3">
-            <h3 className="font-semibold text-gray-700">Miembros del equipo</h3>
+            <h3 className="font-semibold text-gray-700">Miembros del equipo <span className="text-red-500">*</span></h3>
             <Button onClick={() => setShowAdd(true)}>Agregar olimpista</Button>
           </div>
 

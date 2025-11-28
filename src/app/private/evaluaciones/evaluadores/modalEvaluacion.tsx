@@ -208,7 +208,7 @@ export default function ModalEvaluacion({
           {/* Ética (Movida arriba para mayor lógica visual) */}
           <div>
             <label className="block text-sm font-medium text-gray-800 mb-1">
-              Cumplimiento de normas de ética *
+              Cumplimiento de normas de ética <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <select
@@ -245,7 +245,7 @@ export default function ModalEvaluacion({
           {/* Nota */}
           <div>
             <label className="block text-sm font-medium text-gray-800 mb-1">
-              Nota obtenida <span className="text-gray-400 text-xs"> (0–100)</span>
+              Nota obtenida <span className="text-gray-400 text-xs"> (0–100) <span className="text-red-500">*</span></span>
             </label>
             <input
               type="number"
@@ -271,7 +271,7 @@ export default function ModalEvaluacion({
           {/* Descripción conceptual */}
           <div>
             <label className="block text-sm font-medium text-gray-800 mb-1">
-              Descripción conceptual del resultado *
+              Descripción conceptual del resultado <span className="text-red-500">*</span>
             </label>
             <textarea
               name="descripConceptual"

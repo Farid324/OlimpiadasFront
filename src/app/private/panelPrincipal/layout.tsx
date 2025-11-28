@@ -3,11 +3,11 @@
 
 export default function PrivateLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-screen bg-[#EEF6FB]">
+    <div className="w-full max-w-none px-1 sm:px-6 py-4 sm:py-6">
       {/* Contenido principal */}
       <div className="flex-1 flex flex-col">
         {/* Topbar */}
-        <div className="flex items-center justify-between py-6 px-8">
+        <div className="w-full max-w-none px-1 sm:px-6 py-4 sm:py-6">
           <div>
             <h1 className="text-2xl font-bold" style={{ color: 'var(--grisOscuro)' }}>
               Panel de Control - Oh! SanSi 2025
