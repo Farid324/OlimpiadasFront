@@ -1,4 +1,3 @@
-// src/components/features/RegistroEva/AssignOlimpistasModal.tsx
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -29,6 +28,14 @@ type Row = {
   cupoFinal: string;
 };
 
+type EstadoAsignacionRespuesta = {
+  id_area: number;
+  totalClasif: number;
+  totalFinal: number;
+  puedeEditarClasificatoria: boolean;
+  puedeEditarFinal: boolean;
+};
+
 export default function AssignOlimpistasModal({
   onClose,
   onSuccess,
@@ -40,11 +47,15 @@ export default function AssignOlimpistasModal({
   const [msg, setMsg] = useState<string | null>(null);
   const [msgType, setMsgType] = useState<'ok' | 'err' | null>(null);
 
-  // Luego esto se puede conectar con un endpoint real de fases
-  const faseFinalHabilitada = false;
+  // ⚙️ Estado de fases
+  const [puedeClasif, setPuedeClasif] = useState(true);
+  const [puedeFinal, setPuedeFinal] = useState(false);
+  const [resumen, setResumen] = useState<{
+    totalClasif: number;
+    totalFinal: number;
+  } | null>(null);
 
   // ========================= ÁREAS =========================
-  // Construimos las áreas únicas a partir de los evaluadores
   const areaOptions = useMemo<Area[]>(() => {
     const map = new Map<number, Area>();
 
@@ -62,13 +73,17 @@ export default function AssignOlimpistasModal({
     );
   }, [evaluadores]);
 
-  // Cuando el usuario elige un área, armamos las filas con LOS evaluadores de esa área
+  // Cuando cambia el área seleccionada:
   useEffect(() => {
     if (!selectedAreaId) {
       setRows([]);
+      setPuedeClasif(true);
+      setPuedeFinal(false);
+      setResumen(null);
       return;
     }
 
+    // 1) Armar filas con evaluadores de esa área
     const evalsArea = evaluadores.filter((ev) =>
       ev.evaluadores_area?.some((ea) => ea.area.id_area === selectedAreaId),
     );
@@ -81,6 +96,28 @@ export default function AssignOlimpistasModal({
     }));
 
     setRows(initRows);
+
+    // 2) Consultar al backend el estado de las fases para esta área
+    (async () => {
+      try {
+        const { data } = await api.get<EstadoAsignacionRespuesta>(
+          '/evaluadores/asignar-olimpistas/estado',
+          { params: { id_area: selectedAreaId } },
+        );
+
+        setPuedeClasif(data.puedeEditarClasificatoria);
+        setPuedeFinal(data.puedeEditarFinal);
+        setResumen({
+          totalClasif: data.totalClasif,
+          totalFinal: data.totalFinal,
+        });
+      } catch (error) {
+        // Si falla, por seguridad dejamos solo clasificatoria editable
+        setPuedeClasif(true);
+        setPuedeFinal(false);
+        setResumen(null);
+      }
+    })();
   }, [evaluadores, selectedAreaId]);
 
   const updateRow = (
@@ -160,9 +197,14 @@ export default function AssignOlimpistasModal({
             </h2>
             <p className="text-xs text-gray-500">
               Selecciona un área y define cuántos olimpistas evaluará cada
-              evaluador en la fase clasificatoria y, más adelante, en la fase
-              final.
+              evaluador en la fase clasificatoria y luego en la fase final.
             </p>
+            {resumen && (
+              <p className="text-xs text-gray-500 mt-1">
+                Total inscripciones: {resumen.totalClasif}. Finalistas:{' '}
+                {resumen.totalFinal}.
+              </p>
+            )}
           </div>
           <button
             type="button"
@@ -177,9 +219,7 @@ export default function AssignOlimpistasModal({
         <div className="p-4 space-y-4 overflow-y-auto">
           {/* Selector de área */}
           <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-700">
-              Área
-            </label>
+            <label className="text-sm font-medium text-gray-700">Área</label>
             <select
               value={selectedAreaId}
               onChange={(e) =>
@@ -233,7 +273,14 @@ export default function AssignOlimpistasModal({
                           )
                         }
                         className="w-24 mx-auto text-center"
+                        disabled={!puedeClasif}
                       />
+                      {!puedeClasif && (
+                        <p className="text-[10px] text-gray-400 mt-1">
+                          La fase final ya está en curso. La asignación de
+                          clasificación está bloqueada.
+                        </p>
+                      )}
                     </td>
                     <td className="px-3 py-2 text-center">
                       <Input
@@ -244,11 +291,12 @@ export default function AssignOlimpistasModal({
                           updateRow(r.id_usuario, 'cupoFinal', e.target.value)
                         }
                         className="w-24 mx-auto text-center"
-                        disabled={!faseFinalHabilitada}
+                        disabled={!puedeFinal}
                       />
-                      {!faseFinalHabilitada && (
+                      {!puedeFinal && (
                         <p className="text-[10px] text-gray-400 mt-1">
-                          Se habilitará cuando inicie la fase final.
+                          Se habilitará cuando existan olimpistas clasificados a
+                          la fase final en esta área.
                         </p>
                       )}
                     </td>
