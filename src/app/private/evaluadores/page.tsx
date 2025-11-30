@@ -11,7 +11,6 @@ import AddEvaluatorModal from '@/components/features/RegistroEva/AddEvaluatorMod
 import { usePageHeader } from '@/contexts/pageHeader';
 import AssignOlimpistasModal from '@/components/features/RegistroEva/AssignOlimpistasModal';
 
-
 type Area = { id_area: number; nombre_area: string };
 
 type Evaluador = {
@@ -130,9 +129,6 @@ export default function EvaluadoresPage() {
     setMenuOpenId(null);
   };
 
-
-
-
   const askDelete = (row: Evaluador) => {
     setConfirmDelete({ id: row.id_usuario, nombre: `${row.nombre} ${row.apellido}` });
     setMenuOpenId(null);
@@ -186,16 +182,15 @@ export default function EvaluadoresPage() {
           + Agregar Evaluador
         </Button>
 
+        {/* 🔹 Mismo estilo que el botón de Agregar Evaluador */}
         <Button
           type="button"
-          variant="outline"
-          className="border-blue-600 text-blue-600 hover:bg-blue-50"
           onClick={() => setShowAssignModal(true)}
+          className="bg-blue-600 hover:bg-blue-700"
         >
           Asignar olimpistas
         </Button>
       </div>
-
 
       {/* Buscador (estilo tarjeta grande, igual que Responsables) */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
@@ -389,7 +384,6 @@ export default function EvaluadoresPage() {
                               </button>
                             </div>
                           )}
-
                         </td>
                       </tr>
                     );
@@ -413,19 +407,20 @@ export default function EvaluadoresPage() {
           initial={
             editData
               ? {
-                id_usuario: editData.id_usuario,
-                nombre: editData.nombre,
-                apellido: editData.apellido,
-                correo: editData.correo,
-                telefono: editData.telefono ?? '',
-                ci: editData.ci ?? '',
-                institucion: editData.institucion ?? '',
-                especialidad: editData.especialidad ?? '',
-                experiencia: editData.experiencia ?? undefined,
-                id_areas: editData.evaluadores_area
-                  ?.map((ea) => ea.area?.id_area)
-                  .filter(Boolean) as number[],
-              }
+                  id_usuario: editData.id_usuario,
+                  nombre: editData.nombre,
+                  apellido: editData.apellido,
+                  correo: editData.correo,
+                  telefono: editData.telefono ?? '',
+                  ci: editData.ci ?? '',
+                  institucion: editData.institucion ?? '',
+                  especialidad: editData.especialidad ?? '',
+                  experiencia: editData.experiencia ?? undefined,
+                  id_areas:
+                    editData.evaluadores_area
+                      ?.map((ea) => ea.area?.id_area)
+                      .filter(Boolean) as number[],
+                }
               : undefined
           }
         />
@@ -441,8 +436,6 @@ export default function EvaluadoresPage() {
           evaluadores={evaluadores}
         />
       )}
-
-
 
       {/* Confirmación eliminar */}
       {confirmDelete && (
