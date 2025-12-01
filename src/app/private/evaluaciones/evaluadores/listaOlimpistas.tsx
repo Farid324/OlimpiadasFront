@@ -174,6 +174,7 @@ export default function CompetidorList({
                 <th className="p-2 text-left">Olimpista</th>
                 <th className="p-2 text-center">CI</th>
                 <th className="p-2 text-center">Colegio</th>
+                <th className="p-2 text-center">Área</th>
                 {mostrarNivel && <th className="p-2 text-center">Nivel</th>}
                 <th className="p-2 text-center">Nota</th>
                 {mostrarEstado && <th className="p-2 text-center">Clasificación</th>}
@@ -181,22 +182,42 @@ export default function CompetidorList({
               </tr>
             </thead>
 
+
             <tbody>
               {rows.map(({ item: c, pos }, i) => {
                 const nota = c.evaluaciones?.[0]?.nota ?? null;
                 const nivel = c.nivel?.nombre_nivel ?? '—';
-                const clasificacion = c.clasificacion ?? '—';
+
+                // ================== NUEVO: ÁREA ==================
+                const area = c.area?.nombre_area || c.area?.nombre || '—';
+
+                // ================== NUEVO: CLASIFICACIÓN ==================
+                let estado: string;
+
+                if (!c.evaluaciones || c.evaluaciones.length === 0) {
+                  estado = 'SIN_EVALUACION';
+                } else if (c.clasificacion === 'CLASIFICADO') {
+                  estado = 'CLASIFICADO';
+                } else if (c.clasificacion === 'NO_CLASIFICADO') {
+                  estado = 'NO_CLASIFICADO';
+                } else if (c.clasificacion === 'DESCALIFICADO') {
+                  estado = 'DESCALIFICADO';
+                } else {
+                  estado = 'SIN_EVALUACION';
+                }
+
+                const chipStyle =
+                  estado === 'CLASIFICADO'
+                    ? 'bg-green-100 text-green-700 border-green-300'
+                    : estado === 'NO_CLASIFICADO'
+                    ? 'bg-gray-100 text-gray-700 border-gray-300'
+                    : estado === 'DESCALIFICADO'
+                    ? 'bg-red-100 text-red-700 border-red-300'
+                    : 'bg-yellow-100 text-yellow-700 border-yellow-300';
+
                 const firmada =
                   fase === 'CLASIFICACION' &&
                   c.evaluaciones?.[0]?.estado_registro === 'FIRMADA';
-
-
-                const chipClasificacionStyle =
-                  clasificacion === 'CLASIFICADO'
-                    ? 'bg-green-100 text-green-700 border-green-300'
-                    : clasificacion === 'DESCALIFICADO'
-                    ? 'bg-red-100 text-red-700 border-red-300'
-                    : 'bg-gray-100 text-gray-600 border-gray-300';
 
                 return (
                   <tr
@@ -205,14 +226,18 @@ export default function CompetidorList({
                       firmada ? 'opacity-60 hover:bg-gray-100' : 'hover:bg-gray-50'
                     }`}
                   >
-                    <td className="p-2 text-center text-black">{pos}</td>
+                    <td className="p-2 text-center text-black font-semibold">{pos}</td>
 
-                    <td className="p-2 text-black font-medium">
+                    <td className="p-2 text-black font-semibold">
                       {c.competidor.nombres} {c.competidor.apellidos}
                     </td>
-                    <td className="p-2 text-center text-black">{c.competidor.ci}</td>
+
+                    <td className="p-2 text-center text-black font-semibold">{c.competidor.ci}</td>
+
+                    <td className="p-2 text-center text-black">{c.competidor.escuela}</td>
+
                     <td className="p-2 text-center text-black">
-                      {c.competidor.escuela}
+                      {area}
                     </td>
 
                     {mostrarNivel && (
@@ -230,9 +255,15 @@ export default function CompetidorList({
                     {mostrarEstado && (
                       <td className="p-2 text-center">
                         <span
-                          className={`inline-block text-xs border px-2 py-0.5 rounded-md font-bold ${chipClasificacionStyle}`}
+                          className={`inline-block text-xs border px-2 py-0.5 rounded-md font-bold ${chipStyle}`}
                         >
-                          {clasificacion}
+                          {estado === 'SIN_EVALUACION'
+                            ? 'Sin evaluación'
+                            : estado === 'CLASIFICADO'
+                            ? 'Clasificado'
+                            : estado === 'NO_CLASIFICADO'
+                            ? 'No clasificado'
+                            : 'Descalificado'}
                         </span>
                       </td>
                     )}
@@ -270,8 +301,8 @@ export default function CompetidorList({
                       {firmada && (
                         <div
                           className="absolute bottom-full mb-1 hidden group-hover:block
-                                     bg-gray-800 text-white text-xs rounded-md px-2 py-1 whitespace-nowrap
-                                     left-1/2 -translate-x-1/2"
+                                    bg-gray-800 text-white text-xs rounded-md px-2 py-1 whitespace-nowrap
+                                    left-1/2 -translate-x-1/2"
                         >
                           Fase cerrada
                           <div className="absolute left-1/2 -bottom-1 w-2 h-2 bg-gray-800 rotate-45 -translate-x-1/2"></div>
@@ -282,6 +313,7 @@ export default function CompetidorList({
                 );
               })}
             </tbody>
+
           </table>
         </>
       )}
