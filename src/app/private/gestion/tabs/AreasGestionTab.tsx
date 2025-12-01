@@ -286,5 +286,5 @@ function AreaRowCard({ area }: { area: AreaGestionDTO }) {
                 </div>
             </div>
         </div>
-    );
+  );
 }
