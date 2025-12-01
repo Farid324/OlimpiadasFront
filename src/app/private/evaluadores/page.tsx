@@ -9,6 +9,7 @@ import { Mail, Phone, MoreVertical, Pencil, Trash2, X, CheckCircle2 } from 'luci
 import { FiSearch } from 'react-icons/fi';
 import AddEvaluatorModal from '@/components/features/RegistroEva/AddEvaluatorModal';
 import { usePageHeader } from '@/contexts/pageHeader';
+import AssignOlimpistasModal from '@/components/features/RegistroEva/AssignOlimpistasModal';
 
 type Area = { id_area: number; nombre_area: string };
 
@@ -37,6 +38,8 @@ export default function EvaluadoresPage() {
   const [menuOpenId, setMenuOpenId] = useState<number | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ id: number; nombre: string } | null>(null);
   const [deleteSuccess, setDeleteSuccess] = useState<string | null>(null);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   async function load(query?: string) {
@@ -125,6 +128,7 @@ export default function EvaluadoresPage() {
     setShowModal(true);
     setMenuOpenId(null);
   };
+
   const askDelete = (row: Evaluador) => {
     setConfirmDelete({ id: row.id_usuario, nombre: `${row.nombre} ${row.apellido}` });
     setMenuOpenId(null);
@@ -172,10 +176,19 @@ export default function EvaluadoresPage() {
         />
       </div>
 
-      {/* Botón */}
-      <div className="flex justify-start">
+      {/* Botones */}
+      <div className="flex flex-wrap gap-2 justify-start">
         <Button onClick={openCreate} className="bg-blue-600 hover:bg-blue-700">
           + Agregar Evaluador
+        </Button>
+
+        {/* 🔹 Mismo estilo que el botón de Agregar Evaluador */}
+        <Button
+          type="button"
+          onClick={() => setShowAssignModal(true)}
+          className="bg-blue-600 hover:bg-blue-700"
+        >
+          Asignar olimpistas
         </Button>
       </div>
 
@@ -349,27 +362,28 @@ export default function EvaluadoresPage() {
                             <MoreVertical className="w-5 h-5 text-gray-700" />
                           </button>
 
-                        {isMenuOpen && (
-                          <div
-                            role="menu"
-                            className="absolute right-2 bottom-10 z-20 w-40 rounded-md border-gray-300 bg-white shadow-lg overflow-hidden"
-                          >
-                            <button
-                              type="button"
-                              onClick={() => openEdit(e)}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-gray-50 text-gray-700"
+                          {isMenuOpen && (
+                            <div
+                              role="menu"
+                              className="absolute right-2 bottom-0 rounded-md border border-gray-300 bg-white shadow-lg overflow-hidden"
                             >
-                              <Pencil className="w-4 h-4" /> Editar
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => askDelete(e)}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
-                            >
-                              <Trash2 className="w-4 h-4" /> Eliminar
-                            </button>
-                          </div>
-                        )}
+                              <button
+                                type="button"
+                                onClick={() => openEdit(e)}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-gray-50 text-gray-700"
+                              >
+                                <Pencil className="w-4 h-4" /> Editar
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => askDelete(e)}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-4 h-4" /> Eliminar
+                              </button>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     );
@@ -402,12 +416,24 @@ export default function EvaluadoresPage() {
                   institucion: editData.institucion ?? '',
                   especialidad: editData.especialidad ?? '',
                   experiencia: editData.experiencia ?? undefined,
-                  id_areas: editData.evaluadores_area
-                    ?.map((ea) => ea.area?.id_area)
-                    .filter(Boolean) as number[],
+                  id_areas:
+                    editData.evaluadores_area
+                      ?.map((ea) => ea.area?.id_area)
+                      .filter(Boolean) as number[],
                 }
               : undefined
           }
+        />
+      )}
+
+      {showAssignModal && (
+        <AssignOlimpistasModal
+          onClose={() => setShowAssignModal(false)}
+          onSuccess={() => {
+            setShowAssignModal(false);
+            // Si más adelante quieres refrescar algo, aquí puedes llamar refetch()
+          }}
+          evaluadores={evaluadores}
         />
       )}
 
