@@ -60,6 +60,8 @@ export default function EvaluacionesEvaluadoresPage() {
   const [modalCompetidor, setModalCompetidor] = useState<CompetidorInscripcion | null>(null);
   const { user } = useAuth();
   const [reloadStats, setReloadStats] = useState(false);
+  const [idAreasEval, setIdAreasEval] = useState<number[]>([]);
+
 
   const [idArea, setIdArea] = useState<number | null>(null);
   const [idNivel, setIdNivel] = useState<number | null>(null);
@@ -72,19 +74,41 @@ export default function EvaluacionesEvaluadoresPage() {
   /* ===== Título ===== */
   useEffect(() => { setTitle('Evaluaciones'); }, [setTitle]);
 
+  // useEffect(() => {
+  //   let cancel = false;
+  //   (async () => {
+  //     try {
+  //       setLoadingCatalogs(true);
+  //       const [a, n] = await Promise.all([getAreas(), getNiveles()]);
+  //       if (!cancel) { setAreas(a); setNiveles(n); }
+  //     } finally {
+  //       if (!cancel) setLoadingCatalogs(false);
+  //     }
+  //   })();
+  //   return () => { cancel = true; };
+  // }, []);
   useEffect(() => {
     let cancel = false;
     (async () => {
       try {
         setLoadingCatalogs(true);
         const [a, n] = await Promise.all([getAreas(), getNiveles()]);
-        if (!cancel) { setAreas(a); setNiveles(n); }
+
+        if (!cancel) {
+          setAreas(a);
+          setNiveles(n);
+
+          // << Guardar solo IDs para el backend >>
+          setIdAreasEval(a.map(x => x.id));
+        }
       } finally {
         if (!cancel) setLoadingCatalogs(false);
       }
     })();
+
     return () => { cancel = true; };
   }, []);
+
 
   const fetchCompetidores = useCallback(async () => {
     setLoading(true);
@@ -96,12 +120,13 @@ export default function EvaluacionesEvaluadoresPage() {
           activeFilter === 'Evaluados' ? 'EVALUADO' : 'TODOS',
         id_area: idArea ?? undefined,
         id_nivel: idNivel ?? undefined,
+        idAreas: idAreasEval,
       });
       setCompetidoresFase1(data);
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, activeFilter, idArea, idNivel]);
+  },[searchQuery, activeFilter, idArea, idNivel, idAreasEval]);
 
   const fetchCompetidoresClasificados = useCallback(async () => {
     setLoading(true);
@@ -110,12 +135,13 @@ export default function EvaluacionesEvaluadoresPage() {
         search: searchQuery || undefined,
         id_area: idArea ?? undefined,
         id_nivel: idNivel ?? undefined,
+        idAreas: idAreasEval,
       });
       setCompetidoresFase2(data);
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, idArea, idNivel]);
+  }, [searchQuery, idArea, idNivel, idAreasEval]);
 
   /* ===== Ejecutar fetch según tab activo ===== */
   useEffect(() => {
