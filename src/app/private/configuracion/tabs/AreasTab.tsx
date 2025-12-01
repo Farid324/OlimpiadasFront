@@ -1,3 +1,4 @@
+// src/app/private/configuracion/tabs/AreasTab.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
