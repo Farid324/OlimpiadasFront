@@ -55,6 +55,7 @@ export const evaluacionesService = {
     filtro?: FiltroEstado;
     id_area?: number; 
     id_nivel?: number;  
+    idAreas: number[]; 
   }) {
     const qp: Record<string, unknown> = {};
     if (params?.search) qp.search = params.search;
@@ -77,6 +78,7 @@ export const evaluacionesService = {
     search?: string;
     id_area?: number;
     id_nivel?: number;
+    idAreas: number[]; 
   }) {
     const qp: Record<string, unknown> = {};
     if (params?.search) qp.search = params.search;
