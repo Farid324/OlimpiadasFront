@@ -151,20 +151,28 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
           ? data?.message.join(" ")
           : typeof data?.message === "string"
           ? data.message
-          : "";
+          : "Error desconocido";
 
         const text = rawMsg.toLowerCase();
 
-        if (
-          text.includes("ci ya está registrado") ||
-          text.includes("ci ya esta registrado")
-        ) {
+        if (text.includes("ci ya está registrado") || text.includes("ci ya esta registrado")) {
           setError("ci", {
             type: "server",
             message: "El CI ya se encuentra registrado",
           });
-        } else {
-          console.error("Error al registrar olimpista", err);
+        } 
+        // 2. Manejo de error de Tutor no encontrado (NUEVO)
+        else if (text.includes("debe registrar un tutor") || text.includes("tutor")) {
+          setError("tutorContacto", {
+            type: "server",
+            message: "Este número no está registrado. Haga clic en 'Registrar tutor'.",
+          });
+        } 
+        // 3. Otros errores (ej: Gestión cerrada)
+        else {
+           // Si tienes un lugar para errores generales, úsalo, si no, alert o console
+           alert(`Error: ${rawMsg}`); 
+           console.error("Error backend:", rawMsg);
         }
       } else {
         console.error("Error al registrar olimpista", err);
