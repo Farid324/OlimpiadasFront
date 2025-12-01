@@ -1,4 +1,4 @@
-//src/components/olimpistas/RegisterOlimpistaModal.tsx
+// src/components/olimpistas/RegisterOlimpistaModal.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -61,15 +61,27 @@ type FormData = z.infer<typeof schema>;
 interface Props {
   onClose: () => void;
   onSuccess: () => void;
+  /** create por defecto, edit cuando vengas desde el menú de 3 puntos */
+  mode?: "create" | "edit";
+  /** id_inscripcion del olimpista (rows.id) cuando se edita */
+  olimpistaId?: number;
 }
 
-export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
+export default function RegisterOlimpistaModal({
+  onClose,
+  onSuccess,
+  mode = "create",
+  olimpistaId,
+}: Props) {
   const [areas, setAreas] = useState<Area[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Banner de éxito
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [lockAfterSuccess, setLockAfterSuccess] = useState(false);
+
+  // Carga inicial cuando es modo edición
+  const [initialLoading, setInitialLoading] = useState(false);
 
   const {
     register,
@@ -78,6 +90,7 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
     setValue,
     watch,
     setError,
+    reset,
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -94,12 +107,13 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
 
   const nivelCompetencia = watch("nivelCompetencia");
 
+  // Cargar ÁREAS
   useEffect(() => {
     (async () => {
       try {
         const { data } = await api.get<Area[]>("/areas");
         setAreas(data);
-        if (data.length) {
+        if (data.length && mode === "create") {
           setValue("areaNombre", data[0].nombre_area, {
             shouldValidate: true,
           });
@@ -108,7 +122,39 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
         console.error("Error cargando áreas");
       }
     })();
-  }, [setValue]);
+  }, [setValue, mode]);
+
+  // Si es modo EDICIÓN, cargar datos del olimpista desde el back
+  useEffect(() => {
+    if (mode !== "edit" || !olimpistaId) return;
+
+    const fetchOlimpista = async () => {
+      try {
+        setInitialLoading(true);
+        const { data } = await api.get(`/olimpistas/${olimpistaId}`);
+
+        reset(
+          {
+            nombreCompleto: data.nombreCompleto,
+            ci: data.ci,
+            tutorContacto: data.tutorContacto,
+            unidadEducativa: data.unidadEducativa,
+            departamento: data.departamento,
+            nivelCompetencia: data.nivelCompetencia as NivelCompetencia,
+            grado: data.grado,
+            areaNombre: data.area,
+          },
+          { keepDefaultValues: false }
+        );
+      } catch (err) {
+        console.error("Error cargando datos del olimpista", err);
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+
+    void fetchOlimpista();
+  }, [mode, olimpistaId, reset]);
 
   const onSubmit = async (f: FormData) => {
     if (lockAfterSuccess) return;
@@ -119,20 +165,41 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
     try {
       const gradoEscolar = composeNivelCodigo(f.nivelCompetencia, f.grado);
 
-      await api.post("/olimpistas/register", {
-        nombreCompleto: f.nombreCompleto.trim().replace(/\s+/g, " "),
-        ci: f.ci.trim(),
-        tutorContacto: f.tutorContacto.trim(),
-        unidadEducativa: f.unidadEducativa.trim().replace(/\s+/g, " "),
-        departamento: f.departamento,
-        area: f.areaNombre,
-        nivel: f.nivelCompetencia,
-        grado: f.grado,
-        gradoEscolar,
-      });
+      if (mode === "edit" && olimpistaId) {
+        // Actualizar
+        await api.patch(`/olimpistas/${olimpistaId}`, {
+          nombreCompleto: f.nombreCompleto.trim().replace(/\s+/g, " "),
+          ci: f.ci.trim(),
+          tutorContacto: f.tutorContacto.trim(),
+          unidadEducativa: f.unidadEducativa.trim().replace(/\s+/g, " "),
+          departamento: f.departamento,
+          area: f.areaNombre,
+          nivel: f.nivelCompetencia,
+          grado: f.grado,
+          gradoEscolar,
+        });
+      } else {
+        // Crear (comportamiento original)
+        await api.post("/olimpistas/register", {
+          nombreCompleto: f.nombreCompleto.trim().replace(/\s+/g, " "),
+          ci: f.ci.trim(),
+          tutorContacto: f.tutorContacto.trim(),
+          unidadEducativa: f.unidadEducativa.trim().replace(/\s+/g, " "),
+          departamento: f.departamento,
+          area: f.areaNombre,
+          nivel: f.nivelCompetencia,
+          grado: f.grado,
+          gradoEscolar,
+        });
+      }
 
-      // ✅ Banner de éxito (MISMO COMPORTAMIENTO QUE EN RESPONSABLES)
-      setSuccessMsg("Olimpista registrado con éxito");
+      const msg =
+        mode === "edit"
+          ? "Olimpista actualizado con éxito"
+          : "Olimpista registrado con éxito";
+
+      // Banner de éxito
+      setSuccessMsg(msg);
       setLockAfterSuccess(true);
 
       setTimeout(() => {
@@ -167,15 +234,27 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
             type: "server",
             message: "Este número no está registrado. Haga clic en 'Registrar tutor'.",
           });
-        } 
+        }
         // 3. Otros errores (ej: Gestión cerrada)
         else {
-           // Si tienes un lugar para errores generales, úsalo, si no, alert o console
-           alert(`Error: ${rawMsg}`); 
-           console.error("Error backend:", rawMsg);
+          // Tu alerta visual para el usuario
+          alert(`Error: ${rawMsg}`);
+
+          // El log detallado de tu amigo (adaptado para que funcione con tu lógica)
+          console.error(
+            mode === "edit"
+              ? "Error al actualizar olimpista"
+              : "Error al registrar olimpista",
+            err
+          );
         }
       } else {
-        console.error("Error al registrar olimpista", err);
+        console.error(
+          mode === "edit"
+            ? "Error al actualizar olimpista"
+            : "Error al registrar olimpista",
+          err
+        );
       }
     } finally {
       setLoading(false);
@@ -235,13 +314,15 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
         </button>
 
         <h2 className="text-xl font-bold text-black">
-          Registrar Nuevo Olimpista
+          {mode === "edit" ? "Editar Olimpista" : "Registrar Nuevo Olimpista"}
         </h2>
         <p className="text-gray-500 mb-4">
-          Complete la información del Olimpista
+          {mode === "edit"
+            ? "Actualice la información del Olimpista"
+            : "Complete la información del Olimpista"}
         </p>
 
-        {/* ✅ Banner de éxito, estilo responsables */}
+        {/* Banner de éxito */}
         {successMsg && (
           <div
             className="mb-3 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-green-700"
@@ -252,9 +333,19 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
           </div>
         )}
 
+        {initialLoading && (
+          <p className="text-sm text-gray-500 mb-3">
+            Cargando datos del olimpista...
+          </p>
+        )}
+
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className={lockAfterSuccess ? "pointer-events-none opacity-75" : ""}
+          className={
+            lockAfterSuccess || initialLoading
+              ? "pointer-events-none opacity-75"
+              : ""
+          }
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Nombre completo */}
@@ -303,7 +394,8 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
             {/* Contacto tutor */}
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">
-                Contacto del tutor legal <span className="text-red-500">*</span>
+                Contacto del tutor legal{" "}
+                <span className="text-red-500">*</span>
               </label>
               <div className="flex gap-2">
                 <Input
@@ -485,7 +577,13 @@ export default function RegisterOlimpistaModal({ onClose, onSuccess }: Props) {
               Cancelar
             </Button>
             <Button type="submit" disabled={loading || lockAfterSuccess}>
-              {loading ? "Guardando..." : "Registrar"}
+              {loading
+                ? mode === "edit"
+                  ? "Actualizando..."
+                  : "Guardando..."
+                : mode === "edit"
+                ? "Actualizar"
+                : "Registrar"}
             </Button>
           </div>
         </form>
