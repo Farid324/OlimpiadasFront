@@ -25,7 +25,9 @@ export interface CompetidorInscripcion {
   clasificacion: string;
   id_inscripcion: number;
   estado_inscripcion: string;
-  area: { nombre_area: string };
+  area: {
+    nombre: string; nombre_area: string 
+};
   nivel: { nombre_nivel: string };
   competidor: {
     nivel: string | undefined;

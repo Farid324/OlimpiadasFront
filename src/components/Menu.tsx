@@ -16,6 +16,7 @@ import {
 } from "react-icons/lu";
 // Agregamos FiX para el icono de cerrar (X)
 import { FiUserCheck, FiSmartphone, FiUser, FiLogOut, FiSidebar } from "react-icons/fi";
+import { MdOutlineManageAccounts } from "react-icons/md";
 import { useAuth } from "@/hooks/useAuth";
 
 export type RoleName = 'ADMINISTRADOR' | 'EVALUADOR' | 'RESPONSABLE_DE_AREA';
@@ -31,6 +32,7 @@ const ICONS = {
   LuActivity,
   FiUserCheck,
   FiSmartphone,
+  MdOutlineManageAccounts,
 } as const;
 
 type IconKey = keyof typeof ICONS;
@@ -52,6 +54,7 @@ export const MENU_BY_ROLE: Record<RoleName, MenuItem[]> = {
     { icon: 'LuChartColumn', label: 'Reportes', href: '/private/reportes' },
     { icon: 'LuActivity', label: 'Registro de Actividades', href: '/private/registroActividades' },
     { icon: 'LuSettings', label: 'Configuración', href: '/private/configuracion' },
+    { icon: 'MdOutlineManageAccounts', label: 'Gestión', href: '/private/gestion' },
   ],
   EVALUADOR: [
     { icon: 'LuHouse', label: 'Panel Principal', href: '/private/panelPrincipal' },

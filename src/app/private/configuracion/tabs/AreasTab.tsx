@@ -2,19 +2,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-// Ruta corregida a tres niveles de carpeta: app/private/configuracion/tabs/ -> src/libs/api
 import { api } from '@/libs/api'; 
-import { Edit, Trash2, Plus, X, Search, Save, CheckCircle2 } from 'lucide-react';
+import { Edit, Trash2, Plus, X, Search, Save, CheckCircle2, AlertCircle } from 'lucide-react';
+import axios from 'axios';
 
 /* --- Tipos --- */
-
 type AreaDTO = {
   id_area: number;
   nombre_area: string;
-  // Aceptamos number o null en el DTO por seguridad, aunque la UI lo maneje como number
-  nota_aprobacion: number | null; 
+  nota_aprobacion: number | null;
   tipo: 'INDIVIDUAL' | 'GRUPAL';
-  niveles_target: string | null; 
+  niveles_target: string | null;
   activo: boolean;
 };
 
@@ -25,8 +23,6 @@ type AreaResponseItem = {
   tipo?: 'INDIVIDUAL' | 'GRUPAL' | null;
   niveles_target?: string | null;
   activo?: boolean;
-  estado?: string;
-  niveles?: unknown[]; 
 };
 
 export default function AreasTab() {
@@ -34,15 +30,24 @@ export default function AreasTab() {
   const [loading, setLoading] = useState(false);
   const [q, setQ] = useState(''); 
 
-  // Estado del Modal
+  // Estado del Modal (Crear/Editar)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingArea, setEditingArea] = useState<AreaDTO | null>(null);
 
-  // Formulario: Nota inicial se basa en la que se edita o 51
+  // --- ESTADOS PARA ELIMINAR (NUEVO) ---
+  const [confirmDelete, setConfirmDelete] = useState<{ id: number; nombre: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  // Formulario
   const [formNombre, setFormNombre] = useState('');
   const [formNota, setFormNota] = useState<number | string>(51);
   const [formTipo, setFormTipo] = useState<'INDIVIDUAL' | 'GRUPAL'>('INDIVIDUAL');
   const [formNiveles, setFormNiveles] = useState<string[]>([]); 
+
+  // --- ESTADOS DE VALIDACIÓN Y MENSAJES ---
+  const [nameError, setNameError] = useState<string | null>(null); // Rojo debajo del input
+  const [formStatus, setFormStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null); // Banner encima del form
+  const [deleteError, setDeleteError] = useState<string | null>(null); // Error al eliminar en la lista
 
   const fetchAreas = async () => {
     setLoading(true);
@@ -53,12 +58,9 @@ export default function AreasTab() {
         ? data.map((d) => ({
             id_area: Number(d.id_area),
             nombre_area: d.nombre_area,
-            // Lógica ajustada: 
-            // 1. Convertir a number si es string/decimal (típico de DB)
-            // 2. Usar 51 como ÚLTIMO recurso si es null o undefined
             nota_aprobacion: d.nota_aprobacion ? Number(d.nota_aprobacion) : 51,
             tipo: d.tipo ?? 'INDIVIDUAL',
-            niveles_target: d.niveles_target ?? null, // Usamos null para 'no asignado'
+            niveles_target: d.niveles_target ?? null,
             activo: d.activo ?? true
           })) 
         : [];
@@ -75,12 +77,14 @@ export default function AreasTab() {
     fetchAreas();
   }, []);
 
-  // --- Handlers del Modal ---
+  // --- Handlers del Modal (Crear/Editar) ---
   const openModal = (area?: AreaDTO) => {
+    setNameError(null);
+    setFormStatus(null);
+
     if (area) {
       setEditingArea(area);
       setFormNombre(area.nombre_area);
-      // Usar la nota existente si existe, si no, 51
       setFormNota(area.nota_aprobacion ?? 51); 
       setFormTipo(area.tipo);
       setFormNiveles(area.niveles_target ? area.niveles_target.split(',').map(s => s.trim()) : []);
@@ -97,6 +101,8 @@ export default function AreasTab() {
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingArea(null);
+    setNameError(null);
+    setFormStatus(null);
   };
 
   const handleLevelChange = (level: string) => {
@@ -105,19 +111,44 @@ export default function AreasTab() {
     );
   };
 
-  const handleSave = async () => {
-    if (!formNombre.trim()) return alert('El nombre es obligatorio');
-    
-    // Conversión segura: si está vacío (''), lo tratamos como 0 para que falle la validación
-    const notaFinal = formNota === '' ? 0 : Number(formNota);
+  const handleNameChange = (val: string) => {
+    setFormNombre(val);
+    if (nameError) setNameError(null);
+  };
 
-    // Validamos usand la variable convertida
-    if (notaFinal < 51 || notaFinal > 100) return alert('La nota debe estar entre 51 y 100');
-    if (formNiveles.length === 0) return alert('Seleccione al menos un nivel');
+  const handleSave = async () => {
+    setFormStatus(null);
+    setNameError(null);
+
+    if (!formNombre.trim()) {
+        setNameError('El nombre es obligatorio.');
+        return;
+    }
+    
+    const notaFinal = formNota === '' ? 0 : Number(formNota);
+    if (notaFinal < 51 || notaFinal > 100) {
+        setFormStatus({ type: 'error', message: 'La nota debe estar entre 51 y 100.' });
+        return;
+    }
+    if (formNiveles.length === 0) {
+        setFormStatus({ type: 'error', message: 'Seleccione al menos un nivel.' });
+        return;
+    }
+
+    const nombreNormalizado = formNombre.trim().toLowerCase();
+    const duplicado = areas.find(a => 
+        a.nombre_area.trim().toLowerCase() === nombreNormalizado &&
+        a.id_area !== editingArea?.id_area
+    );
+
+    if (duplicado) {
+        setNameError('Área ya registrada. Edite la existente para modificar niveles.');
+        return;
+    }
 
     const payload = {
       nombre_area: formNombre,
-      nota_aprobacion: notaFinal, // Usamos notaFinal aquí
+      nota_aprobacion: notaFinal, 
       tipo: formTipo,
       niveles_target: formNiveles.join(', '),
     };
@@ -126,19 +157,16 @@ export default function AreasTab() {
       let updatedAreaResponse: AreaDTO;
 
       if (editingArea) {
-        // En la edición, pasamos solo los campos actualizados
         const { data } = await api.put<AreaResponseItem>(`/areas/${editingArea.id_area}`, payload);
         updatedAreaResponse = {
-            ...editingArea, // Mantenemos los campos no editables (como activo)
+            ...editingArea, 
             nombre_area: data.nombre_area,
             nota_aprobacion: data.nota_aprobacion ? Number(data.nota_aprobacion) : 51,
             tipo: data.tipo ?? 'INDIVIDUAL',
             niveles_target: data.niveles_target ?? null,
-            // Aseguramos que el ID y activo estén presentes si la respuesta es parcial
             id_area: editingArea.id_area,
             activo: editingArea.activo,
         };
-
       } else {
         const { data } = await api.post<AreaResponseItem>('/areas', payload);
         updatedAreaResponse = {
@@ -151,36 +179,66 @@ export default function AreasTab() {
         };
       }
       
-      // Actualizamos el estado de la tabla con la respuesta correcta del servidor/mapeo
       setAreas(prev => {
         const index = prev.findIndex(a => a.id_area === updatedAreaResponse.id_area);
         if (index > -1) {
-          // Actualizar (edición)
           return prev.map((item, i) => i === index ? updatedAreaResponse : item);
         } else {
-          // Agregar (registro nuevo)
           return [...prev, updatedAreaResponse];
         }
       });
 
-      closeModal();
-      // Ya actualizamos el estado, no necesitamos un fetchAreas() completo
-    } catch (error) {
+      setFormStatus({ 
+          type: 'success', 
+          message: editingArea ? 'Área actualizada correctamente.' : 'Área registrada correctamente.' 
+      });
+
+      setTimeout(() => {
+          closeModal();
+      }, 1500);
+
+    } catch (error: unknown) {
       console.error('Error guardando área', error);
-      alert('Error al guardar el área.');
+
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+        if (status === 409) {
+            setNameError('El nombre del área ya está registrado (incluso si fue eliminado). Se reactivará si corresponde.');
+            return; 
+        }
+      }
+      setFormStatus({ type: 'error', message: 'No se pudo registrar el área. Intente nuevamente.' });
     }
   };
 
-  const handleDelete = async (id: number) => {
-    // Cambiado de window.confirm a una alerta simple ya que no podemos usar window.confirm
-    if (!window.confirm('¿Estás seguro de eliminar esta área?')) return; 
+  // --- LÓGICA DE ELIMINACIÓN (Modal) ---
+
+  const askDelete = (area: AreaDTO) => {
+    setDeleteError(null); // Limpiar errores previos
+    setConfirmDelete({ id: area.id_area, nombre: area.nombre_area });
+  };
+
+  const doDelete = async () => {
+    if (!confirmDelete) return;
+    setDeleting(true);
+    
     try {
-      await api.delete(`/areas/${id}`);
-      // Eliminación optimista: asumimos éxito y quitamos de la lista
-      setAreas(prev => prev.filter(a => a.id_area !== id));
-    } catch (e) {
+      await api.delete(`/areas/${confirmDelete.id}`);
+      setAreas(prev => prev.filter(a => a.id_area !== confirmDelete.id));
+      setConfirmDelete(null); // Cerrar modal si éxito
+    } catch (e: unknown) {
       console.error(e);
-      alert('Error al eliminar el área. Intente de nuevo.');
+      setConfirmDelete(null); // Cerrar modal al fallar para mostrar el banner rojo en la lista principal
+
+      if (axios.isAxiosError(e) && (e.response?.status === 409 || e.response?.status === 500)) {
+         setDeleteError(`No se puede eliminar el área "${confirmDelete.nombre}" porque tiene olimpistas asignados.`);
+      } else {
+         setDeleteError('Ocurrió un error al intentar eliminar el área.');
+      }
+      
+      setTimeout(() => setDeleteError(null), 5000);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -191,7 +249,18 @@ export default function AreasTab() {
   return (
     <div className="space-y-6">
       
-      {/* Toolbar: Buscador + Botón Agregar (Unificados) */}
+      {/* Banner de Error al Eliminar (Lista Principal) */}
+      {deleteError && (
+        <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <span className="text-sm font-medium">{deleteError}</span>
+            <button onClick={() => setDeleteError(null)} className="ml-auto text-red-600 hover:text-red-800">
+                <X className="w-4 h-4" />
+            </button>
+        </div>
+      )}
+      
+      {/* Toolbar */}
       <div className=" bg-white p-3 flex flex-col sm:flex-row gap-4 justify-between items-center rounded-lg">
         <div className="relative w-full sm:max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -261,7 +330,7 @@ export default function AreasTab() {
                             <button onClick={() => openModal(area)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Editar">
                                 <Edit className="w-4 h-4" />
                             </button>
-                            <button onClick={() => handleDelete(area.id_area)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Eliminar">
+                            <button onClick={() => askDelete(area)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Eliminar">
                                 <Trash2 className="w-4 h-4" />
                             </button>
                         </div>
@@ -274,12 +343,13 @@ export default function AreasTab() {
         </div>
       </div>
 
-      {/* MODAL */}
+      {/* MODAL CREAR/EDITAR */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-opacity">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform scale-100 transition-transform border border-gray-100">
+            
             {/* Modal Header */}
-            <div className="bg-white px-6 py-5 border-b border-gray-100 flex justify-between items-center">
+            <div className="bg-white px-6 py-5 flex justify-between items-center">
               <div>
                 <h3 className="text-lg font-bold text-gray-900">
                   {editingArea ? 'Editar Área' : 'Registro de Área'}
@@ -294,18 +364,40 @@ export default function AreasTab() {
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 space-y-5">
+            <div className="px-6 space-y-5">
               
+              {/* Banner Estado */}
+              {formStatus && (
+                <div className={`px-4 py-3 rounded-lg flex items-center gap-2 text-sm border animate-in fade-in slide-in-from-top-1 ${
+                    formStatus.type === 'success' 
+                        ? 'bg-green-50 border-green-200 text-green-800' 
+                        : 'bg-red-50 border-red-200 text-red-800'
+                }`}>
+                    {formStatus.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+                    <span>{formStatus.message}</span>
+                </div>
+              )}
+
               {/* Nombre */}
               <div className="space-y-1.5">
                 <label className="block text-sm font-semibold text-gray-700">Nombre del Área <span className="text-red-500">*</span></label>
                 <input
                   type="text"
                   value={formNombre}
-                  onChange={e => setFormNombre(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-gray-900 text-sm transition"
+                  onChange={e => handleNameChange(e.target.value)}
+                  className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none text-gray-900 text-sm transition ${
+                      nameError 
+                      ? 'border-red-300 focus:ring-red-200 focus:border-red-500 bg-red-50/50' 
+                      : 'border-gray-200 focus:ring-blue-500/20 focus:border-blue-500'
+                  }`}
                   placeholder="Ej: Matemáticas"
                 />
+                {nameError && (
+                    <p className="text-red-600 text-xs mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {nameError}
+                    </p>
+                )}
               </div>
 
               {/* Nota */}
@@ -316,24 +408,16 @@ export default function AreasTab() {
                     type="number"
                     min="51"
                     max="100"
-                    // El value lo pasamos tal cual (puede ser número o string vacío)
                     value={formNota} 
                     onChange={(e) => {
                       const val = e.target.value;
-                      // Si está vacío, permitimos que se quede vacío
-                      if (val === '') {
-                          setFormNota('');
-                      } else {
-                          // Si hay texto, intentamos convertir a entero
+                      if (val === '') setFormNota('');
+                      else {
                           const parsed = parseInt(val);
-                          // Si es un número válido, lo guardamos (esto quita ceros a la izquierda: "07" -> 7)
-                          if (!isNaN(parsed)) {
-                              setFormNota(parsed);
-                          }
+                          if (!isNaN(parsed)) setFormNota(parsed);
                       }
                     }}
                     onKeyDown={(e) => {
-                      // Tu validación actual está bien, consérvala
                       if (!/[0-9]/.test(e.key) && !['Backspace', 'ArrowLeft', 'ArrowRight', 'Tab', 'Delete'].includes(e.key)) {
                           e.preventDefault();
                       }
@@ -378,8 +462,8 @@ export default function AreasTab() {
                         onClick={() => handleLevelChange(lvl)}
                         className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border transition-all ${isSelected ? 'bg-emerald-50 border-emerald-200 text-emerald-700 ring-1 ring-emerald-200 shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'}`}
                       >
-                         {isSelected ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <div className="w-4 h-4 rounded-full border-2 border-gray-300" />}
-                         <span className="font-medium text-sm">{lvl}</span>
+                          {isSelected ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <div className="w-4 h-4 rounded-full border-2 border-gray-300" />}
+                          <span className="font-medium text-sm">{lvl}</span>
                       </button>
                     )
                   })}
@@ -402,6 +486,66 @@ export default function AreasTab() {
               >
                 <Save className="w-4 h-4" />
                 {editingArea ? 'Guardar Cambios' : 'Registrar Área'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL CONFIRMACIÓN ELIMINAR */}
+      {confirmDelete && (
+        <div className="fixed inset-0 z-[70] bg-black/40 flex items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md border border-gray-100 overflow-hidden transform scale-100 transition-transform">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gray-50/50">
+              <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                <Trash2 className="w-5 h-5 text-red-500" />
+                Eliminar Área
+              </h3>
+              <button
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-200/50 transition"
+                onClick={() => setConfirmDelete(null)}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            {/* Body */}
+            <div className="px-6 py-3">
+              <p className="text-gray-600 text-sm leading-relaxed">
+                ¿Estás seguro que deseas eliminar el área <span className="font-bold text-gray-900">{confirmDelete.nombre}</span>?
+                <br/><br/>
+                Esta acción no se puede deshacer si no hay dependencias.
+              </p>
+            </div>
+
+            {/* Footer */}
+            <div className="px-5 py-2 bg-gray-50/50 border-t border-gray-100 flex justify-end gap-3">
+              <button
+                type="button"
+                className="px-4 py-2.5 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:bg-white hover:shadow-sm transition-all"
+                onClick={() => setConfirmDelete(null)}
+                disabled={deleting}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="px-4 py-2.5 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition-colors shadow-sm disabled:opacity-70 flex items-center gap-2"
+                onClick={doDelete}
+                disabled={deleting}
+              >
+                {deleting ? (
+                   <>
+                     <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>
+                     Eliminando...
+                   </>
+                ) : (
+                   <>
+                     <Trash2 className="w-4 h-4" />
+                     Sí, eliminar
+                   </>
+                )}
               </button>
             </div>
           </div>
