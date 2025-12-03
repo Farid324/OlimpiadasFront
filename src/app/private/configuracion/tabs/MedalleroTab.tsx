@@ -340,148 +340,148 @@ export default function MedalleroTab() {
       </div>
 
       {/* Edit Modal */}
-      {editing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200 text-gray-900"> 
-            <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100 bg-gray-50">
-              <div>
-                <h3 className="text-lg font-bold text-gray-900">Editar Configuración de Medallero</h3>
-                <p className="text-sm text-gray-500">{editing.area_nombre} - {editing.nivel_nombre} ({editing.participantes} participantes)</p>
+        {editing && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200 text-gray-900"> 
+          <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100 bg-gray-50">
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">Editar Configuración de Medallero</h3>
+              <p className="text-sm text-gray-500">{editing.area_nombre} - {editing.nivel_nombre} ({editing.participantes} participantes)</p>
+            </div>
+            <button onClick={closeEdit} className="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="p-6 space-y-6">
+            <div className="grid grid-cols-2 gap-6">
+              <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-semibold text-gray-700">Medallas de Oro</span>
+            <div className="relative">
+              <Award className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-yellow-600 pointer-events-none"/>
+              <input
+              type="number"
+              min={0}
+              value={editing.oros === 0 ? '' : editing.oros ?? 0}
+              onChange={(e) => updateEditingField('oros', e.target.value === '' ? 0 : Number(e.target.value))}
+              className="pl-9 w-full p-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" 
+              />
+            </div>
+              </label>
+
+              <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-semibold text-gray-700">Medallas de Plata</span>
+            <div className="relative">
+              <Medal className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"/>
+              <input
+              type="number"
+              min={0}
+              value={editing.platas === 0 ? '' : editing.platas ?? 0}
+              onChange={(e) => updateEditingField('platas', e.target.value === '' ? 0 : Number(e.target.value))}
+              className="pl-9 w-full p-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" 
+              />
+            </div>
+              </label>
+
+              <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-semibold text-gray-700">Medallas de Bronce</span>
+            <div className="relative">
+              <Medal className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-700 pointer-events-none"/>
+              <input
+              type="number"
+              min={0}
+              value={editing.bronces === 0 ? '' : editing.bronces ?? 0}
+              onChange={(e) => updateEditingField('bronces', e.target.value === '' ? 0 : Number(e.target.value))}
+              className="pl-9 w-full p-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" 
+              />
+            </div>
+              </label>
+
+              <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-semibold text-gray-700">Menciones de Honor</span>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 font-bold flex items-center justify-center text-xs pointer-events-none">M</span>
+              <input
+              type="number"
+              min={0}
+              value={editing.menciones === 0 ? '' : editing.menciones ?? 0}
+              onChange={(e) => updateEditingField('menciones', e.target.value === '' ? 0 : Number(e.target.value))}
+              className="pl-9 w-full p-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" 
+              />
+            </div>
+              </label>
+            </div>
+
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 flex justify-between items-center"> 
+              <p className="text-sm text-blue-800">
+            Total de premios configurados: 
+              </p>
+              <div className="text-right">
+              <span className="text-lg font-bold text-blue-900">{getTotal(editing)}</span>
+              {editing.participantes > 0 && 
+              <span className="text-xs text-blue-600 block">
+              ({getPercent(editing).toFixed(1)}% de los participantes)
+              </span>
+              }
               </div>
-              <button onClick={closeEdit} className="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100">
-                <X className="w-5 h-5" />
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button 
+            onClick={closeEdit} 
+            className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium transition"
+              >
+            Cancelar
+              </button>
+              <button
+            onClick={handleSave}
+            disabled={saving}
+            className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-sm transition"
+              >
+            {saving ? 'Guardando...' : 'Guardar Cambios'}
+            {!saving && <Save className="w-4 h-4" />}
               </button>
             </div>
-
-            <div className="p-6 space-y-6">
-              <div className="grid grid-cols-2 gap-6">
-                <label className="flex flex-col gap-1.5">
-                  <span className="text-sm font-semibold text-gray-700">Medallas de Oro</span>
-                  <div className="relative">
-                    <Award className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-yellow-600 pointer-events-none"/>
-                    <input
-                        type="number"
-                        min={0}
-                        value={editing.oros ?? 0}
-                        onChange={(e) => updateEditingField('oros', Number(e.target.value))}
-                        className="pl-9 w-full p-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" 
-                    />
-                  </div>
-                </label>
-
-                <label className="flex flex-col gap-1.5">
-                  <span className="text-sm font-semibold text-gray-700">Medallas de Plata</span>
-                  <div className="relative">
-                    <Medal className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"/>
-                    <input
-                        type="number"
-                        min={0}
-                        value={editing.platas ?? 0}
-                        onChange={(e) => updateEditingField('platas', Number(e.target.value))}
-                        className="pl-9 w-full p-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" 
-                    />
-                  </div>
-                </label>
-
-                <label className="flex flex-col gap-1.5">
-                  <span className="text-sm font-semibold text-gray-700">Medallas de Bronce</span>
-                  <div className="relative">
-                    <Medal className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-700 pointer-events-none"/>
-                    <input
-                        type="number"
-                        min={0}
-                        value={editing.bronces ?? 0}
-                        onChange={(e) => updateEditingField('bronces', Number(e.target.value))}
-                        className="pl-9 w-full p-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" 
-                    />
-                  </div>
-                </label>
-
-                <label className="flex flex-col gap-1.5">
-                  <span className="text-sm font-semibold text-gray-700">Menciones de Honor</span>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 font-bold flex items-center justify-center text-xs pointer-events-none">M</span>
-                    <input
-                        type="number"
-                        min={0}
-                        value={editing.menciones ?? 0}
-                        onChange={(e) => updateEditingField('menciones', Number(e.target.value))}
-                        className="pl-9 w-full p-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" 
-                    />
-                  </div>
-                </label>
-              </div>
-
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 flex justify-between items-center"> 
-                <p className="text-sm text-blue-800">
-                  Total de premios configurados: 
-                </p>
-                <div className="text-right">
-                    <span className="text-lg font-bold text-blue-900">{getTotal(editing)}</span>
-                    {editing.participantes > 0 && 
-                        <span className="text-xs text-blue-600 block">
-                        ({getPercent(editing).toFixed(1)}% de los participantes)
-                        </span>
-                    }
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-2">
-                <button 
-                  onClick={closeEdit} 
-                  className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium transition"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-sm transition"
-                >
-                  {saving ? 'Guardando...' : 'Guardar Cambios'}
-                  {!saving && <Save className="w-4 h-4" />}
-                </button>
-              </div>
+          </div>
             </div>
           </div>
+        )}
+          </div>
+        );
+      }
+
+      // -------------------- Componentes Auxiliares --------------------
+
+      function CardMetricNoIcon({ label, value, subValue, icon }: { label: string; value: React.ReactNode; subValue: string; icon: React.ReactNode }) {
+        return (
+          <div className="bg-white p-4 rounded-lg shadow h-28 flex flex-col justify-between relative border border-gray-100">
+        <div className="flex justify-between items-center">
+          <p className="text-sm text-gray-500 font-semibold">{label}</p>
+          <span className="text-gray-400">{icon}</span> 
         </div>
-      )}
-    </div>
-  );
-}
+        <div className="flex flex-col">
+          <p className="text-3xl font-bold text-black">{value}</p>
+          <p className="text-xs text-gray-400 mt-1">{subValue}</p>
+        </div>
+          </div>
+        );
+      }
 
-// -------------------- Componentes Auxiliares --------------------
-
-function CardMetricNoIcon({ label, value, subValue, icon }: { label: string; value: React.ReactNode; subValue: string; icon: React.ReactNode }) {
-  return (
-    <div className="bg-white p-4 rounded-lg shadow h-28 flex flex-col justify-between relative border border-gray-100">
-      <div className="flex justify-between items-center">
-        <p className="text-sm text-gray-500 font-semibold">{label}</p>
-        <span className="text-gray-400">{icon}</span> 
-      </div>
-      <div className="flex flex-col">
-        <p className="text-3xl font-bold text-black">{value}</p>
-        <p className="text-xs text-gray-400 mt-1">{subValue}</p>
-      </div>
-    </div>
-  );
-}
-
-function CardMetricWithPercent({ label, value, icon, subValue }: { label: string; value: React.ReactNode; total: number; icon: React.ReactNode; subValue: string; totalValue: number }) {
-  const isTotalMedallas = label.includes('Total Medallas');
-  
-  return (
-    <div className="bg-white p-4 rounded-lg shadow h-28 flex flex-col justify-between relative border border-gray-100">
-      <div className="flex justify-between items-start">
-        <p className="text-sm text-gray-500 font-semibold">{label}</p>
-        <span className="text-xl font-bold">{icon}</span> 
-      </div>
-      <div className="flex flex-col">
-        <p className="text-3xl font-bold text-black">{value}</p>
-        <p className="text-xs text-gray-400 mt-1">
-            {isTotalMedallas ? subValue : subValue.replace('%', '% del total')}
-        </p>
-      </div>
-    </div>
-  );
-}
+      function CardMetricWithPercent({ label, value, icon, subValue }: { label: string; value: React.ReactNode; total: number; icon: React.ReactNode; subValue: string; totalValue: number }) {
+        const isTotalMedallas = label.includes('Total Medallas');
+        
+        return (
+          <div className="bg-white p-4 rounded-lg shadow h-28 flex flex-col justify-between relative border border-gray-100">
+        <div className="flex justify-between items-start">
+          <p className="text-sm text-gray-500 font-semibold">{label}</p>
+          <span className="text-xl font-bold">{icon}</span> 
+        </div>
+        <div className="flex flex-col">
+          <p className="text-3xl font-bold text-black">{value}</p>
+          <p className="text-xs text-gray-400 mt-1">
+          {isTotalMedallas ? subValue : subValue.replace('%', '% del total')}
+          </p>
+        </div>
+          </div>
+        );
+      }
