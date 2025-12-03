@@ -48,11 +48,20 @@ export default function PasswordTab() {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-    } catch (err: any) {
-      setError(
-        err?.response?.data?.message ??
-          'Ocurrió un error al actualizar la contraseña.',
-      );
+    } catch (err: unknown) {
+      let backendMsg = 'Ocurrió un error al actualizar la contraseña.';
+
+      if (typeof err === 'object' && err !== null) {
+        const axiosErr = err as {
+          response?: { data?: { message?: unknown } };
+        };
+
+        if (axiosErr.response?.data?.message !== undefined) {
+          backendMsg = String(axiosErr.response.data.message);
+        }
+      }
+
+      setError(backendMsg);
     } finally {
       setLoading(false);
     }
