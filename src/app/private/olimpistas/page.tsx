@@ -221,29 +221,30 @@ export default function OlimpistasPage() {
 
       {/* Modal de confirmación de eliminar */}
       {confirmDelete && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow w-full max-w-md">
-            <div className="flex items-center justify-between px-4 py-3 border-b">
-              <h3 className="font-semibold">Eliminar olimpista</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-xl bg-white shadow border border-gray-200">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+              <h3 className="text-sm font-semibold text-gray-900">Eliminar olimpista</h3>
               <button
                 className="p-1 rounded hover:bg-gray-100"
                 onClick={() => setConfirmDelete(null)}
                 aria-label="Cerrar"
               >
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
-            <div className="px-4 py-4 text-sm">
+            <div className="px-4 py-4 text-sm text-black">
               ¿Seguro que deseas eliminar a{" "}
               <span className="font-semibold">
                 {confirmDelete.nombreCompleto}
               </span>
               ? Esta acción no se puede deshacer.
             </div>
-            <div className="px-4 py-3 border-t flex justify-end gap-2">
+            <div className="px-4 py-3 border-t border-gray-200 flex justify-end gap-2">
               <button
                 type="button"
-                className="px-4 py-2 rounded-md border border-gray-300 text-sm hover:bg-gray-50"
+                className="px-4 py-2 rounded-md border border-gray-300 bg-white text-black hover:bg-gray-50"
                 onClick={() => setConfirmDelete(null)}
               >
                 Cancelar

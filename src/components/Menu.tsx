@@ -59,6 +59,7 @@ export const MENU_BY_ROLE: Record<RoleName, MenuItem[]> = {
   EVALUADOR: [
     { icon: 'LuHouse', label: 'Panel Principal', href: '/private/panelPrincipal' },
     { icon: 'LuFilePen', label: 'Evaluaciones', href: '/private/evaluaciones/evaluadores' },
+    { icon: 'LuSettings', label: 'Configuración', href: '/private/configuracion' },
   ],
   RESPONSABLE_DE_AREA: [
     { icon: 'LuHouse', label: 'Panel Principal', href: '/private/panelPrincipal' },
@@ -66,6 +67,7 @@ export const MENU_BY_ROLE: Record<RoleName, MenuItem[]> = {
     { icon: 'FiUserCheck', label: 'Evaluadores', href: '/private/evaluadores' },
     { icon: 'LuGitBranch', label: 'Control de Fases', href: '/private/controlFases/responsables' },
     { icon: 'LuChartColumn', label: 'Reportes', href: '/private/reportes/responsables' },
+    { icon: 'LuSettings', label: 'Configuración', href: '/private/configuracion' },
   ],
 };
 

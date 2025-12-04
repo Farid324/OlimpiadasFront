@@ -91,8 +91,8 @@ const schema = z.object({
 
   ci: z
     .string()
-    .min(6, 'El CI debe tener entre 6 y 8 dígitos')
-    .max(8, 'El CI debe tener entre 6 y 8 dígitos')
+    .min(6, 'El CI debe tener entre 6 y 12 dígitos')
+    .max(12, 'El CI debe tener entre 6 y 12 dígitos')
     .regex(/^[0-9]+$/, 'El CI solo debe contener números'),
 
   // Institución sin validaciones (por ahora)
