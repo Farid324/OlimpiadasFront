@@ -181,15 +181,27 @@ export default function AssignOlimpistasModal({
         onSuccess();
         onClose();
       }, 900);
-    } catch (err: any) {
-      const backendMsg =
-        err?.response?.data?.message ??
-        'No se pudo asignar los cupos. Revisa los valores.';
+    } catch (err: unknown) {
+      // Tipar error provenientes de Axios u otros
+      let backendMsg: unknown = 'No se pudo asignar los cupos. Revisa los valores.';
+
+      if (typeof err === 'object' && err !== null) {
+        const axiosErr = err as {
+          response?: { data?: { message?: unknown } };
+        };
+
+        if (axiosErr.response?.data?.message !== undefined) {
+          backendMsg = axiosErr.response.data.message;
+        }
+      }
+
       setMsgType('err');
       setMsg(
-        Array.isArray(backendMsg) ? backendMsg.join(' / ') : String(backendMsg),
+        Array.isArray(backendMsg)
+          ? backendMsg.join(' / ')
+          : String(backendMsg),
       );
-    } finally {
+    }finally {
       setLoading(false);
     }
   };

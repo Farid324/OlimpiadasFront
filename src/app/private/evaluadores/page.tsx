@@ -407,20 +407,20 @@ export default function EvaluadoresPage() {
           initial={
             editData
               ? {
-                  id_usuario: editData.id_usuario,
-                  nombre: editData.nombre,
-                  apellido: editData.apellido,
-                  correo: editData.correo,
-                  telefono: editData.telefono ?? '',
-                  ci: editData.ci ?? '',
-                  institucion: editData.institucion ?? '',
-                  especialidad: editData.especialidad ?? '',
-                  experiencia: editData.experiencia ?? undefined,
-                  id_areas:
-                    editData.evaluadores_area
-                      ?.map((ea) => ea.area?.id_area)
-                      .filter(Boolean) as number[],
-                }
+                id_usuario: editData.id_usuario,
+                nombre: editData.nombre,
+                apellido: editData.apellido,
+                correo: editData.correo,
+                telefono: editData.telefono ?? '',
+                ci: editData.ci ?? '',
+                institucion: editData.institucion ?? '',
+                especialidad: editData.especialidad ?? '',
+                experiencia: editData.experiencia ?? undefined,
+                id_areas:
+                  editData.evaluadores_area
+                    ?.map((ea) => ea.area?.id_area)
+                    .filter(Boolean) as number[],
+              }
               : undefined
           }
         />
@@ -439,28 +439,37 @@ export default function EvaluadoresPage() {
 
       {/* Confirmación eliminar */}
       {confirmDelete && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow w-full max-w-md">
-            <div className="flex items-center justify-between px-4 py-3 border-b">
-              <h3 className="font-semibold">Eliminar evaluador</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 dark:bg-black/60 p-4">
+          <div className="w-full max-w-md rounded-xl bg-white shadow-lg border border-gray-200">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+              <h3 className="text-sm font-semibold text-gray-900">
+                Eliminar evaluador
+              </h3>
               <button
-                className="p-1 rounded hover:bg-gray-100"
+                className="p-1 rounded hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-400"
                 onClick={() => setConfirmDelete(null)}
                 aria-label="Cerrar"
               >
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
-            <div className="px-4 py-4 text-sm">
-              ¿Seguro que deseas eliminar a{' '}
-              <span className="font-semibold">{confirmDelete.nombre}</span>? Esta acción no se puede
-              deshacer.
+
+            {/* Texto */}
+            <div className="px-4 py-4 text-sm text-gray-600">
+              ¿Seguro que deseas eliminar a{" "}
+              <span className="font-semibold text-black">
+                {confirmDelete.nombre}
+              </span>
+              ? Esta acción no se puede deshacer.
             </div>
-            <div className="px-4 py-3 border-t flex justify-end gap-2">
+
+            {/* Footer botones */}
+            <div className="px-4 py-3 border-t border-gray-200 flex justify-end gap-2">
               <Button variant="outline" onClick={() => setConfirmDelete(null)}>
                 Cancelar
               </Button>
-              <Button className="bg-red-600 hover:bg-red-700" onClick={doDelete}>
+              <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={doDelete}>
                 Eliminar
               </Button>
             </div>

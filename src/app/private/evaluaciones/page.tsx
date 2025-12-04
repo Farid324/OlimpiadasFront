@@ -97,7 +97,7 @@ export default function EvaluacionesPage() {
   // 🖥️ Render principal
   // ======================
   return (
-    <div className="p-6 space-y-6">
+    <div className="-px-2 -py-1 sm:px-6 sm:py-6 space-y-4 sm:space-y-6">
       {/* Encabezado (mismo estilo que Responsables) */}
       <div>
         <h1 className="text-2xl font-bold text-black">Sistema de Evaluaciones</h1>

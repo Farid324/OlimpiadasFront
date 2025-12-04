@@ -195,8 +195,8 @@ export default function AddEvaluatorModal({
     // CI: 6–8 dígitos (obligatorio + duplicado)
     if (!ci.trim()) {
       newErrors.ci = 'El CI es obligatorio';
-    } else if (!/^\d{6,8}$/.test(ci.trim())) {
-      newErrors.ci = 'El CI debe tener entre 6 y 8 dígitos numéricos';
+    } else if (!/^\d{6,12}$/.test(ci.trim())) {
+      newErrors.ci = 'El CI debe tener entre 6 y 12 dígitos numéricos';
     } else if (!(mode === 'edit' && ci.trim() === (initial?.ci ?? ''))) {
       try {
         const { data } = await api.get(`/evaluadores?ci=${ci.trim()}`);

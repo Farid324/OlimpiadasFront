@@ -1,7 +1,7 @@
 // src/components/olimpistas/RegisterOlimpistaModal.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,7 +20,13 @@ import { VM } from "@/config/validation-messages";
 import axios from "axios";
 import { CheckCircle2 } from "lucide-react";
 
-type Area = { id_area: number; nombre_area: string };
+type Area = {
+  id_area: number;
+  nombre_area: string;
+  // NUEVO: campos que ahora llegan del backend para filtrar por nivel
+  niveles_target?: string | null;
+  nivelesTarget?: string[];
+};
 
 // ========= Esquema Zod (todas las validaciones de campos) =========
 const schema = z.object({
@@ -106,6 +112,33 @@ export default function RegisterOlimpistaModal({
   const [tutorMsg, setTutorMsg] = useState<string | null>(null);
 
   const nivelCompetencia = watch("nivelCompetencia");
+  const areaNombre = watch("areaNombre");
+
+  // 🔹 Función auxiliar: decide si un área pertenece al nivel actual
+  const areaMatchesNivel = (area: Area, nivel: NivelCompetencia) => {
+    const tags =
+      area.nivelesTarget && area.nivelesTarget.length
+        ? area.nivelesTarget
+        : area.niveles_target
+        ? String(area.niveles_target)
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [];
+
+    // Si el área no tiene niveles_target configurado, la mostramos para ambos niveles
+    if (!tags.length) return true;
+
+    return tags.some(
+      (tag) => tag.toLowerCase() === nivel.toLowerCase(), // ej: "Primaria" / "Secundaria"
+    );
+  };
+
+  // 🔹 Lista de áreas filtradas según el nivel seleccionado (Primaria / Secundaria)
+  const filteredAreas = useMemo(
+    () => areas.filter((a) => areaMatchesNivel(a, nivelCompetencia)),
+    [areas, nivelCompetencia],
+  );
 
   // Cargar ÁREAS
   useEffect(() => {
@@ -113,16 +146,50 @@ export default function RegisterOlimpistaModal({
       try {
         const { data } = await api.get<Area[]>("/areas");
         setAreas(data);
+
+        // Mantener comportamiento original, pero si es create,
+        // y el área actual no es válida, asignamos una por defecto.
         if (data.length && mode === "create") {
-          setValue("areaNombre", data[0].nombre_area, {
-            shouldValidate: true,
-          });
+          const currentArea = areaNombre;
+          const existsCurrent = data.some(
+            (a) => a.nombre_area === currentArea,
+          );
+
+          if (!existsCurrent) {
+            // Preferimos una que coincida con el nivel actual
+            const firstMatch = data.find((a) =>
+              areaMatchesNivel(a, nivelCompetencia),
+            );
+            setValue(
+              "areaNombre",
+              firstMatch ? firstMatch.nombre_area : data[0].nombre_area,
+              {
+                shouldValidate: true,
+              },
+            );
+          }
         }
       } catch {
         console.error("Error cargando áreas");
       }
     })();
-  }, [setValue, mode]);
+  }, [setValue, mode, areaNombre, nivelCompetencia]);
+
+  // 🔹 Si cambia el nivel (Primaria / Secundaria) y el área seleccionada ya no pertenece
+  //     a ese nivel, asignamos la primera del filtro.
+  useEffect(() => {
+    if (!filteredAreas.length) return;
+
+    const stillValid = filteredAreas.some(
+      (a) => a.nombre_area === areaNombre,
+    );
+
+    if (!stillValid) {
+      setValue("areaNombre", filteredAreas[0].nombre_area, {
+        shouldValidate: true,
+      });
+    }
+  }, [filteredAreas, areaNombre, setValue]);
 
   // Si es modo EDICIÓN, cargar datos del olimpista desde el back
   useEffect(() => {
@@ -144,7 +211,7 @@ export default function RegisterOlimpistaModal({
             grado: data.grado,
             areaNombre: data.area,
           },
-          { keepDefaultValues: false }
+          { keepDefaultValues: false },
         );
       } catch (err) {
         console.error("Error cargando datos del olimpista", err);
@@ -222,30 +289,34 @@ export default function RegisterOlimpistaModal({
 
         const text = rawMsg.toLowerCase();
 
-        if (text.includes("ci ya está registrado") || text.includes("ci ya esta registrado")) {
+        if (
+          text.includes("ci ya está registrado") ||
+          text.includes("ci ya esta registrado")
+        ) {
           setError("ci", {
             type: "server",
             message: "El CI ya se encuentra registrado",
           });
-        } 
+        }
         // 2. Manejo de error de Tutor no encontrado (NUEVO)
-        else if (text.includes("debe registrar un tutor") || text.includes("tutor")) {
+        else if (
+          text.includes("debe registrar un tutor") ||
+          text.includes("tutor")
+        ) {
           setError("tutorContacto", {
             type: "server",
-            message: "Este número no está registrado. Haga clic en 'Registrar tutor'.",
+            message:
+              "Este número no está registrado. Haga clic en 'Registrar tutor'.",
           });
         }
         // 3. Otros errores (ej: Gestión cerrada)
         else {
-          // Tu alerta visual para el usuario
           alert(`Error: ${rawMsg}`);
-
-          // El log detallado de tu amigo (adaptado para que funcione con tu lógica)
           console.error(
             mode === "edit"
               ? "Error al actualizar olimpista"
               : "Error al registrar olimpista",
-            err
+            err,
           );
         }
       } else {
@@ -253,7 +324,7 @@ export default function RegisterOlimpistaModal({
           mode === "edit"
             ? "Error al actualizar olimpista"
             : "Error al registrar olimpista",
-          err
+          err,
         );
       }
     } finally {
@@ -434,7 +505,7 @@ export default function RegisterOlimpistaModal({
                     });
 
                     setTutorMsg(
-                      `Tutor “${tutorNombre}” guardado. ${linked} olimpista(s) vinculados automáticamente.`
+                      `Tutor “${tutorNombre}” guardado. ${linked} olimpista(s) vinculados automáticamente.`,
                     );
 
                     setShowTutor(false);
@@ -446,7 +517,7 @@ export default function RegisterOlimpistaModal({
 
             {/* Departamento */}
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">
+              <label className="block text.sm font-bold text-gray-700 mb-1">
                 Departamento de procedencia
               </label>
               <select
@@ -545,10 +616,10 @@ export default function RegisterOlimpistaModal({
               Áreas de competencia
             </label>
             <div className="flex flex-wrap gap-2">
-              {areas.map((a) => (
+              {filteredAreas.map((a) => (
                 <Pill
                   key={a.id_area}
-                  active={watch("areaNombre") === a.nombre_area}
+                  active={areaNombre === a.nombre_area}
                   onClick={() =>
                     setValue("areaNombre", a.nombre_area, {
                       shouldValidate: true,
@@ -591,3 +662,5 @@ export default function RegisterOlimpistaModal({
     </div>
   );
 }
+
+ 

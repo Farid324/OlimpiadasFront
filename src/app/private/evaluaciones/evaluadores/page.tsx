@@ -247,7 +247,7 @@ export default function EvaluacionesEvaluadoresPage() {
 
   /* ===== Render ===== */
   return (
-    <div className="p-6 space-y-6 bg-transparent">
+    <div className="p-0 sm:p-6 space-y-6 bg-transparent">
       <h1 className="text-2xl text-black font-bold">Sistema de evaluaciones</h1>
 
       <div className="flex p-1 bg-gray-100 rounded-full w-full shadow-inner mb-6">
