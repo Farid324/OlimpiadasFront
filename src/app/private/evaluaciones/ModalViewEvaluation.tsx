@@ -97,7 +97,7 @@ export default function ModalViewEvaluation({
         <div className="mt-6 flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium"
+            className="px-4 py-2 bg-gray-300 text-black hover:bg-gray-400 rounded-lg text-sm font-medium"
           >
             Cerrar
           </button>

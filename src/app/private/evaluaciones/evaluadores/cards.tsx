@@ -62,7 +62,7 @@ export default function CardsSummary({ refreshToken, idFase }: CardsSummaryProps
 
   if (loading) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-pulse">
+    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-4 mb-6">
       {[...Array(4)].map((_, i) => (
         <div key={i} className="h-28 bg-gray-100 rounded-2xl" />
       ))}
@@ -71,7 +71,7 @@ export default function CardsSummary({ refreshToken, idFase }: CardsSummaryProps
 }
 
 return (
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+  <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-4 mb-6">
     <Card
       title="Total asignados"
       value={stats.total}
