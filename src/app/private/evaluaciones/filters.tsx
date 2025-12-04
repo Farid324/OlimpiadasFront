@@ -21,8 +21,8 @@ export default function Filters({
   // mantener placeholder inicial
   const [touchedArea, setTouchedArea] = useState(false);
   const [touchedNivel, setTouchedNivel] = useState(false);
-  const areaValue = touchedArea ? (selectedArea ?? '') : '';
-  const nivelValue = touchedNivel ? (selectedNivel ?? '') : '';
+  const areaValue = touchedArea  === undefined ? '' : selectedArea;
+  const nivelValue = touchedNivel  === undefined ? '' : selectedNivel;
 
   const handleAreaChange = (v: string) => {
     setTouchedArea(true);
