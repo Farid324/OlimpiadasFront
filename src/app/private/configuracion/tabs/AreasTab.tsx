@@ -2,9 +2,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { api } from '@/libs/api'; 
-import { Edit, Trash2, Plus, X, Search, Save, CheckCircle2, AlertCircle } from 'lucide-react';
+import { api } from '@/libs/api';
+import { Edit, Trash2, Plus, X, Search, Save, CheckCircle2, AlertCircle, } from 'lucide-react';
 import axios from 'axios';
+import { Button } from '@/components/ui/Button';
 
 /* --- Tipos --- */
 type AreaDTO = {
@@ -28,41 +29,51 @@ type AreaResponseItem = {
 export default function AreasTab() {
   const [areas, setAreas] = useState<AreaDTO[]>([]);
   const [loading, setLoading] = useState(false);
-  const [q, setQ] = useState(''); 
+  const [q, setQ] = useState('');
 
   // Estado del Modal (Crear/Editar)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingArea, setEditingArea] = useState<AreaDTO | null>(null);
 
   // --- ESTADOS PARA ELIMINAR (NUEVO) ---
-  const [confirmDelete, setConfirmDelete] = useState<{ id: number; nombre: string } | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{
+    id: number;
+    nombre: string;
+  } | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   // Formulario
   const [formNombre, setFormNombre] = useState('');
   const [formNota, setFormNota] = useState<number | string>(51);
-  const [formTipo, setFormTipo] = useState<'INDIVIDUAL' | 'GRUPAL'>('INDIVIDUAL');
-  const [formNiveles, setFormNiveles] = useState<string[]>([]); 
+  const [formTipo, setFormTipo] = useState<'INDIVIDUAL' | 'GRUPAL'>(
+    'INDIVIDUAL',
+  );
+  const [formNiveles, setFormNiveles] = useState<string[]>([]);
 
   // --- ESTADOS DE VALIDACIÓN Y MENSAJES ---
   const [nameError, setNameError] = useState<string | null>(null); // Rojo debajo del input
-  const [formStatus, setFormStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null); // Banner encima del form
+  const [formStatus, setFormStatus] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null); // Banner encima del form
   const [deleteError, setDeleteError] = useState<string | null>(null); // Error al eliminar en la lista
 
   const fetchAreas = async () => {
     setLoading(true);
     try {
-      const { data } = await api.get<AreaResponseItem[]>('/areas'); 
-      
-      const mapped: AreaDTO[] = Array.isArray(data) 
+      const { data } = await api.get<AreaResponseItem[]>('/areas');
+
+      const mapped: AreaDTO[] = Array.isArray(data)
         ? data.map((d) => ({
-            id_area: Number(d.id_area),
-            nombre_area: d.nombre_area,
-            nota_aprobacion: d.nota_aprobacion ? Number(d.nota_aprobacion) : 51,
-            tipo: d.tipo ?? 'INDIVIDUAL',
-            niveles_target: d.niveles_target ?? null,
-            activo: d.activo ?? true
-          })) 
+          id_area: Number(d.id_area),
+          nombre_area: d.nombre_area,
+          nota_aprobacion: d.nota_aprobacion
+            ? Number(d.nota_aprobacion)
+            : 51,
+          tipo: d.tipo ?? 'INDIVIDUAL',
+          niveles_target: d.niveles_target ?? null,
+          activo: d.activo ?? true,
+        }))
         : [];
 
       setAreas(mapped);
@@ -85,9 +96,13 @@ export default function AreasTab() {
     if (area) {
       setEditingArea(area);
       setFormNombre(area.nombre_area);
-      setFormNota(area.nota_aprobacion ?? 51); 
+      setFormNota(area.nota_aprobacion ?? 51);
       setFormTipo(area.tipo);
-      setFormNiveles(area.niveles_target ? area.niveles_target.split(',').map(s => s.trim()) : []);
+      setFormNiveles(
+        area.niveles_target
+          ? area.niveles_target.split(',').map((s) => s.trim())
+          : [],
+      );
     } else {
       setEditingArea(null);
       setFormNombre('');
@@ -106,8 +121,10 @@ export default function AreasTab() {
   };
 
   const handleLevelChange = (level: string) => {
-    setFormNiveles(prev => 
-      prev.includes(level) ? prev.filter(l => l !== level) : [...prev, level]
+    setFormNiveles((prev) =>
+      prev.includes(level)
+        ? prev.filter((l) => l !== level)
+        : [...prev, level],
     );
   };
 
@@ -121,34 +138,43 @@ export default function AreasTab() {
     setNameError(null);
 
     if (!formNombre.trim()) {
-        setNameError('El nombre es obligatorio.');
-        return;
+      setNameError('El nombre es obligatorio.');
+      return;
     }
-    
+
     const notaFinal = formNota === '' ? 0 : Number(formNota);
     if (notaFinal < 51 || notaFinal > 100) {
-        setFormStatus({ type: 'error', message: 'La nota debe estar entre 51 y 100.' });
-        return;
+      setFormStatus({
+        type: 'error',
+        message: 'La nota debe estar entre 51 y 100.',
+      });
+      return;
     }
     if (formNiveles.length === 0) {
-        setFormStatus({ type: 'error', message: 'Seleccione al menos un nivel.' });
-        return;
+      setFormStatus({
+        type: 'error',
+        message: 'Seleccione al menos un nivel.',
+      });
+      return;
     }
 
     const nombreNormalizado = formNombre.trim().toLowerCase();
-    const duplicado = areas.find(a => 
+    const duplicado = areas.find(
+      (a) =>
         a.nombre_area.trim().toLowerCase() === nombreNormalizado &&
-        a.id_area !== editingArea?.id_area
+        a.id_area !== editingArea?.id_area,
     );
 
     if (duplicado) {
-        setNameError('Área ya registrada. Edite la existente para modificar niveles.');
-        return;
+      setNameError(
+        'Área ya registrada. Edite la existente para modificar niveles.',
+      );
+      return;
     }
 
     const payload = {
       nombre_area: formNombre,
-      nota_aprobacion: notaFinal, 
+      nota_aprobacion: notaFinal,
       tipo: formTipo,
       niveles_target: formNiveles.join(', '),
     };
@@ -157,57 +183,74 @@ export default function AreasTab() {
       let updatedAreaResponse: AreaDTO;
 
       if (editingArea) {
-        const { data } = await api.put<AreaResponseItem>(`/areas/${editingArea.id_area}`, payload);
+        const { data } = await api.put<AreaResponseItem>(
+          `/areas/${editingArea.id_area}`,
+          payload,
+        );
         updatedAreaResponse = {
-            ...editingArea, 
-            nombre_area: data.nombre_area,
-            nota_aprobacion: data.nota_aprobacion ? Number(data.nota_aprobacion) : 51,
-            tipo: data.tipo ?? 'INDIVIDUAL',
-            niveles_target: data.niveles_target ?? null,
-            id_area: editingArea.id_area,
-            activo: editingArea.activo,
+          ...editingArea,
+          nombre_area: data.nombre_area,
+          nota_aprobacion: data.nota_aprobacion
+            ? Number(data.nota_aprobacion)
+            : 51,
+          tipo: data.tipo ?? 'INDIVIDUAL',
+          niveles_target: data.niveles_target ?? null,
+          id_area: editingArea.id_area,
+          activo: editingArea.activo,
         };
       } else {
         const { data } = await api.post<AreaResponseItem>('/areas', payload);
         updatedAreaResponse = {
-            id_area: Number(data.id_area),
-            nombre_area: data.nombre_area,
-            nota_aprobacion: data.nota_aprobacion ? Number(data.nota_aprobacion) : 51,
-            tipo: data.tipo ?? 'INDIVIDUAL',
-            niveles_target: data.niveles_target ?? null,
-            activo: data.activo ?? true,
+          id_area: Number(data.id_area),
+          nombre_area: data.nombre_area,
+          nota_aprobacion: data.nota_aprobacion
+            ? Number(data.nota_aprobacion)
+            : 51,
+          tipo: data.tipo ?? 'INDIVIDUAL',
+          niveles_target: data.niveles_target ?? null,
+          activo: data.activo ?? true,
         };
       }
-      
-      setAreas(prev => {
-        const index = prev.findIndex(a => a.id_area === updatedAreaResponse.id_area);
+
+      setAreas((prev) => {
+        const index = prev.findIndex(
+          (a) => a.id_area === updatedAreaResponse.id_area,
+        );
         if (index > -1) {
-          return prev.map((item, i) => i === index ? updatedAreaResponse : item);
+          return prev.map((item, i) =>
+            i === index ? updatedAreaResponse : item,
+          );
         } else {
           return [...prev, updatedAreaResponse];
         }
       });
 
-      setFormStatus({ 
-          type: 'success', 
-          message: editingArea ? 'Área actualizada correctamente.' : 'Área registrada correctamente.' 
+      setFormStatus({
+        type: 'success',
+        message: editingArea
+          ? 'Área actualizada correctamente.'
+          : 'Área registrada correctamente.',
       });
 
       setTimeout(() => {
-          closeModal();
+        closeModal();
       }, 1500);
-
     } catch (error: unknown) {
       console.error('Error guardando área', error);
 
       if (axios.isAxiosError(error)) {
         const status = error.response?.status;
         if (status === 409) {
-            setNameError('El nombre del área ya está registrado (incluso si fue eliminado). Se reactivará si corresponde.');
-            return; 
+          setNameError(
+            'El nombre del área ya está registrado (incluso si fue eliminado). Se reactivará si corresponde.',
+          );
+          return;
         }
       }
-      setFormStatus({ type: 'error', message: 'No se pudo registrar el área. Intente nuevamente.' });
+      setFormStatus({
+        type: 'error',
+        message: 'No se pudo registrar el área. Intente nuevamente.',
+      });
     }
   };
 
@@ -221,133 +264,210 @@ export default function AreasTab() {
   const doDelete = async () => {
     if (!confirmDelete) return;
     setDeleting(true);
-    
+
     try {
       await api.delete(`/areas/${confirmDelete.id}`);
-      setAreas(prev => prev.filter(a => a.id_area !== confirmDelete.id));
+      setAreas((prev) =>
+        prev.filter((a) => a.id_area !== confirmDelete.id),
+      );
       setConfirmDelete(null); // Cerrar modal si éxito
     } catch (e: unknown) {
       console.error(e);
       setConfirmDelete(null); // Cerrar modal al fallar para mostrar el banner rojo en la lista principal
 
-      if (axios.isAxiosError(e) && (e.response?.status === 409 || e.response?.status === 500)) {
-         setDeleteError(`No se puede eliminar el área "${confirmDelete.nombre}" porque tiene olimpistas asignados.`);
+      if (
+        axios.isAxiosError(e) &&
+        (e.response?.status === 409 || e.response?.status === 500)
+      ) {
+        setDeleteError(
+          `No se puede eliminar el área "${confirmDelete.nombre}" porque tiene olimpistas asignados.`,
+        );
       } else {
-         setDeleteError('Ocurrió un error al intentar eliminar el área.');
+        setDeleteError(
+          'Ocurrió un error al intentar eliminar el área.',
+        );
       }
-      
+
       setTimeout(() => setDeleteError(null), 5000);
     } finally {
       setDeleting(false);
     }
   };
 
-  const filteredData = areas.filter(a => 
-    a.nombre_area.toLowerCase().includes(q.toLowerCase())
+  const filteredData = areas.filter((a) =>
+    a.nombre_area.toLowerCase().includes(q.toLowerCase()),
   );
 
   return (
-    <div className="space-y-6">
-      
+    <div className="p-0 sm:p-0 space-y-4">
       {/* Banner de Error al Eliminar (Lista Principal) */}
       {deleteError && (
         <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
-            <AlertCircle className="w-5 h-5 shrink-0" />
-            <span className="text-sm font-medium">{deleteError}</span>
-            <button onClick={() => setDeleteError(null)} className="ml-auto text-red-600 hover:text-red-800">
-                <X className="w-4 h-4" />
-            </button>
+          <AlertCircle className="w-5 h-5 shrink-0" />
+          <span className="text-sm font-medium">{deleteError}</span>
+          <button
+            onClick={() => setDeleteError(null)}
+            className="ml-auto text-red-600 hover:text-red-800"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
-      
-      {/* Toolbar */}
-      <div className=" bg-white p-3 flex flex-col sm:flex-row gap-4 justify-between items-center rounded-lg">
-        <div className="relative w-full sm:max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
+
+      {/* Buscador estilo tarjeta */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
             type="text"
             placeholder="Buscar área..."
             value={q}
-            onChange={e => setQ(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm text-gray-900 placeholder-gray-500 transition-all"
-            />
+            onChange={(e) => setQ(e.target.value)}
+            className="w-full h-12 pl-12 pr-10 rounded-lg bg-gray-50 border border-gray-200
+              text-gray-800 placeholder:text-gray-400
+              focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600
+              transition"
+          />
+          {q && (
+            <button
+              type="button"
+              onClick={() => setQ('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-xl leading-none
+                text-gray-400 hover:text-gray-600"
+              aria-label="Limpiar búsqueda"
+            >
+              ×
+            </button>
+          )}
         </div>
-
-        <button
-          onClick={() => openModal()}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition shadow-sm active:scale-95"
-        >
-          <Plus className="w-4 h-4" />
-          Agregar Área
-        </button>
       </div>
 
-      {/* Tabla */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50/50">
-                <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Nombre de Área </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Niveles</th>
-                <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Tipo</th>
-                <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Nota Aprobación</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Acciones</th>
+      
+      {/* Botón agregar área */}
+      <div className="flex justify-start">
+        <Button
+          onClick={() => openModal()}
+          className="bg-blue-600 hover:bg-blue-700"
+        >
+          + Agregar Área
+        </Button>
+      </div>
+
+      {/* Tabla dentro de card como Responsables */}
+      <div className="bg-white rounded-lg shadow p-3 sm:p-4">
+        <h2 className="font-semibold text-gray-700 mb-2">
+          Áreas Registradas ({filteredData.length})
+        </h2>
+        <p className="text-sm text-gray-500 mb-4">
+          Lista completa de áreas configuradas para las olimpiadas
+        </p>
+
+        {loading ? (
+          <p className="text-center text-gray-500">Cargando datos...</p>
+        ) : filteredData.length === 0 ? (
+          <div className="border rounded-md p-6 text-gray-500 text-center">
+            No se encontraron áreas
+            {q ? ' para la búsqueda actual.' : ' registradas.'}
+          </div>
+        ) : (
+          <div
+            className="max-h-[500px] overflow-y-auto overflow-x-auto"
+            tabIndex={0}
+          >
+            <table className="min-w-[800px] w-full border-collapse text-sm">
+              <thead className="sticky top-0 bg-white z-10 border-b border-black">
+                <tr className="text-gray-700">
+                  <th className="py-3 px-4 text-left font-semibold">
+                    Nombre de Área
+                  </th>
+                  <th className="py-3 px-4 text-left font-semibold">
+                    Niveles
+                  </th>
+                  <th className="py-3 px-4 text-center font-semibold">
+                    Tipo
+                  </th>
+                  <th className="py-3 px-4 text-center font-semibold">
+                    Nota Aprobación
+                  </th>
+                  <th className="py-3 px-4 text-right font-semibold">
+                    Acciones
+                  </th>
                 </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-                {loading ? (
-                <tr><td colSpan={5} className="p-8 text-center text-gray-500 text-sm">Cargando datos...</td></tr>
-                ) : filteredData.length === 0 ? (
-                <tr><td colSpan={5} className="p-8 text-center text-gray-500 text-sm">No se encontraron áreas.</td></tr>
-                ) : (
-                filteredData.map((area) => (
-                    <tr key={area.id_area} className="hover:bg-gray-50/80 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{area.nombre_area}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {area.niveles_target && area.niveles_target !== 'Todos' ? (
+              </thead>
+              <tbody>
+                {filteredData.map((area) => (
+                  <tr
+                    key={area.id_area}
+                    className="border-b border-gray-200 hover:bg-gray-50"
+                  >
+                    <td className="px-4 py-3 whitespace-nowrap text-sm font-bold text-gray-900">
+                      {area.nombre_area}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                      {area.niveles_target &&
+                        area.niveles_target !== 'Todos' ? (
                         <div className="flex flex-wrap gap-1.5">
-                            {area.niveles_target.split(',').map(l => (
-                            <span key={l} className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-600 border border-gray-200">
-                                {l.trim()}
+                          {area.niveles_target.split(',').map((l) => (
+                            <span
+                              key={l}
+                              className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-gray-100 text-gray-600 border border-gray-200"
+                            >
+                              {l.trim()}
                             </span>
-                            ))}
+                          ))}
                         </div>
-                        ) : <span className="text-gray-400 italic text-xs">No asignado</span>}
+                      ) : (
+                        <span className="text-gray-400 italic text-xs">
+                          No asignado
+                        </span>
+                      )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${area.tipo === 'GRUPAL' ? 'bg-purple-50 text-purple-700 border border-purple-100' : 'bg-blue-50 text-blue-700 border border-blue-100'}`}>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${area.tipo === 'GRUPAL'
+                          ? 'bg-purple-50 text-purple-700 border border-purple-100'
+                          : 'bg-blue-50 text-blue-700 border border-blue-100'
+                          }`}
+                      >
                         {area.tipo === 'GRUPAL' ? 'Grupal' : 'Individual'}
-                        </span>
+                      </span>
+
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                        <span className="font-mono font-semibold text-gray-700 bg-gray-50 px-2 py-1 rounded border border-gray-200">
-                            {area.nota_aprobacion ?? 51}
-                        </span>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
+                      <span className="font-bold text-gray-800">
+                        {area.nota_aprobacion ?? 51}
+                      </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center justify-end gap-2">
-                            <button onClick={() => openModal(area)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Editar">
-                                <Edit className="w-4 h-4" />
-                            </button>
-                            <button onClick={() => askDelete(area)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Eliminar">
-                                <Trash2 className="w-4 h-4" />
-                            </button>
-                        </div>
+                    <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => openModal(area)}
+                          className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                          title="Editar"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => askDelete(area)}
+                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                          title="Eliminar"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
-                    </tr>
-                ))
-                )}
-            </tbody>
+                  </tr>
+                ))}
+              </tbody>
             </table>
-        </div>
+          </div>
+        )}
       </div>
 
       {/* MODAL CREAR/EDITAR */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-opacity">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform scale-100 transition-transform border border-gray-100">
-            
             {/* Modal Header */}
             <div className="bg-white px-6 py-5 flex justify-between items-center">
               <div>
@@ -355,103 +475,150 @@ export default function AreasTab() {
                   {editingArea ? 'Editar Área' : 'Registro de Área'}
                 </h3>
                 <p className="text-xs text-gray-500 mt-0.5">
-                    {editingArea ? 'Modifique los datos del área' : 'Complete el formulario para registrar'}
+                  {editingArea
+                    ? 'Modifique los datos del área'
+                    : 'Complete el formulario para registrar'}
                 </p>
               </div>
-              <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition">
+              <button
+                onClick={closeModal}
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="px-6 space-y-5">
-              
+            <div className="px-6 space-y-5 pb-4">
               {/* Banner Estado */}
               {formStatus && (
-                <div className={`px-4 py-3 rounded-lg flex items-center gap-2 text-sm border animate-in fade-in slide-in-from-top-1 ${
-                    formStatus.type === 'success' 
-                        ? 'bg-green-50 border-green-200 text-green-800' 
-                        : 'bg-red-50 border-red-200 text-red-800'
-                }`}>
-                    {formStatus.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
-                    <span>{formStatus.message}</span>
+                <div
+                  className={`px-4 py-3 rounded-lg flex items-center gap-2 text-sm border animate-in fade-in slide-in-from-top-1 ${formStatus.type === 'success'
+                    ? 'bg-green-50 border-green-200 text-green-800'
+                    : 'bg-red-50 border-red-200 text-red-800'
+                    }`}
+                >
+                  {formStatus.type === 'success' ? (
+                    <CheckCircle2 className="w-4 h-4" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4" />
+                  )}
+                  <span>{formStatus.message}</span>
                 </div>
               )}
 
               {/* Nombre */}
               <div className="space-y-1.5">
-                <label className="block text-sm font-semibold text-gray-700">Nombre del Área <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-semibold text-gray-700">
+                  Nombre del Área <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   value={formNombre}
-                  onChange={e => handleNameChange(e.target.value)}
-                  className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none text-gray-900 text-sm transition ${
-                      nameError 
-                      ? 'border-red-300 focus:ring-red-200 focus:border-red-500 bg-red-50/50' 
-                      : 'border-gray-200 focus:ring-blue-500/20 focus:border-blue-500'
-                  }`}
-                  placeholder="Ej: Matemáticas"
+                  onChange={(e) => handleNameChange(e.target.value)}
+                  className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none text-gray-900 text-sm transition ${nameError
+                    ? 'border-red-300 focus:ring-red-200 focus:border-red-500 bg-red-50/50'
+                    : 'border-gray-200 focus:ring-blue-500/20 focus:border-blue-500'
+                    }`}
+                  placeholder="Ej: Matemática"
                 />
                 {nameError && (
-                    <p className="text-red-600 text-xs mt-1 flex items-center gap-1">
-                        <AlertCircle className="w-3 h-3" />
-                        {nameError}
-                    </p>
+                  <p className="text-red-600 text-xs mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {nameError}
+                  </p>
                 )}
               </div>
 
               {/* Nota */}
               <div className="space-y-1.5">
-                <label className="block text-sm font-semibold text-gray-700">Establecer Nota de Aprobación (51-100) <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-semibold text-gray-700">
+                  Establecer Nota de Aprobación (51-100){' '}
+                  <span className="text-red-500">*</span>
+                </label>
                 <div className="relative">
                   <input
                     type="number"
                     min="51"
                     max="100"
-                    value={formNota} 
+                    value={formNota}
                     onChange={(e) => {
                       const val = e.target.value;
                       if (val === '') setFormNota('');
                       else {
-                          const parsed = parseInt(val);
-                          if (!isNaN(parsed)) setFormNota(parsed);
+                        const parsed = parseInt(val);
+                        if (!isNaN(parsed)) setFormNota(parsed);
                       }
                     }}
                     onKeyDown={(e) => {
-                      if (!/[0-9]/.test(e.key) && !['Backspace', 'ArrowLeft', 'ArrowRight', 'Tab', 'Delete'].includes(e.key)) {
-                          e.preventDefault();
+                      if (
+                        !/[0-9]/.test(e.key) &&
+                        ![
+                          'Backspace',
+                          'ArrowLeft',
+                          'ArrowRight',
+                          'Tab',
+                          'Delete',
+                        ].includes(e.key)
+                      ) {
+                        e.preventDefault();
                       }
                     }}
                     className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-gray-900 text-sm transition"
                   />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-400 bg-white pl-2">Puntos</span>
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-400 bg-white pl-2">
+                    Puntos
+                  </span>
                 </div>
               </div>
 
               {/* Tipo */}
               <div className="space-y-1.5">
-                <label className="block text-sm font-semibold text-gray-700">Tipo de Participación <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-semibold text-gray-700">
+                  Tipo de Participación{' '}
+                  <span className="text-red-500">*</span>
+                </label>
                 <div className="grid grid-cols-2 gap-3">
-                   <button
-                     type="button"
-                     onClick={() => setFormTipo('INDIVIDUAL')}
-                     className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-medium transition-all ${formTipo === 'INDIVIDUAL' ? 'bg-blue-50 border-blue-200 text-blue-700 ring-1 ring-blue-200' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'}`}
-                   >
-                     <span className={`w-2 h-2 rounded-full ${formTipo === 'INDIVIDUAL' ? 'bg-blue-600' : 'bg-gray-300'}`} /> Individual
-                   </button>
-                   <button
-                     type="button"
-                     onClick={() => setFormTipo('GRUPAL')}
-                     className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-medium transition-all ${formTipo === 'GRUPAL' ? 'bg-purple-50 border-purple-200 text-purple-700 ring-1 ring-purple-200' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'}`}
-                   >
-                     <span className={`w-2 h-2 rounded-full ${formTipo === 'GRUPAL' ? 'bg-purple-600' : 'bg-gray-300'}`} /> Grupal
-                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormTipo('INDIVIDUAL')}
+                    className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-medium transition-all ${formTipo === 'INDIVIDUAL'
+                      ? 'bg-blue-50 border-blue-200 text-blue-700 ring-1 ring-blue-200'
+                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
+                      }`}
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${formTipo === 'INDIVIDUAL'
+                        ? 'bg-blue-600'
+                        : 'bg-gray-300'
+                        }`}
+                    />{' '}
+                    Individual
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormTipo('GRUPAL')}
+                    className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-medium transition-all ${formTipo === 'GRUPAL'
+                      ? 'bg-purple-50 border-purple-200 text-purple-700 ring-1 ring-purple-200'
+                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
+                      }`}
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${formTipo === 'GRUPAL'
+                        ? 'bg-purple-600'
+                        : 'bg-gray-300'
+                        }`}
+                    />{' '}
+                    Grupal
+                  </button>
                 </div>
               </div>
 
               {/* Niveles */}
-              <div className="space-y-1.5">
-                <label className="block text-sm font-semibold text-gray-700">Niveles Habilitados</label>
+              <div className="space-y-1.5 pb-2">
+                <label className="block text-sm font-semibold text-gray-700">
+                  Niveles Habilitados
+                </label>
                 <div className="flex gap-3">
                   {['Primaria', 'Secundaria'].map((lvl) => {
                     const isSelected = formNiveles.includes(lvl);
@@ -460,16 +627,22 @@ export default function AreasTab() {
                         key={lvl}
                         type="button"
                         onClick={() => handleLevelChange(lvl)}
-                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border transition-all ${isSelected ? 'bg-emerald-50 border-emerald-200 text-emerald-700 ring-1 ring-emerald-200 shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'}`}
+                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border transition-all ${isSelected
+                          ? 'bg-emerald-50 border-emerald-200 text-emerald-700 ring-1 ring-emerald-200 shadow-sm'
+                          : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
+                          }`}
                       >
-                          {isSelected ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <div className="w-4 h-4 rounded-full border-2 border-gray-300" />}
-                          <span className="font-medium text-sm">{lvl}</span>
+                        {isSelected ? (
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        ) : (
+                          <div className="w-4 h-4 rounded-full border-2 border-gray-300" />
+                        )}
+                        <span className="font-medium text-sm">{lvl}</span>
                       </button>
-                    )
+                    );
                   })}
                 </div>
               </div>
-
             </div>
 
             {/* Footer */}
@@ -509,12 +682,17 @@ export default function AreasTab() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             {/* Body */}
             <div className="px-6 py-3">
               <p className="text-gray-600 text-sm leading-relaxed">
-                ¿Estás seguro que deseas eliminar el área <span className="font-bold text-gray-900">{confirmDelete.nombre}</span>?
-                <br/><br/>
+                ¿Estás seguro que deseas eliminar el área{' '}
+                <span className="font-bold text-gray-900">
+                  {confirmDelete.nombre}
+                </span>
+                ?
+                <br />
+                <br />
                 Esta acción no se puede deshacer si no hay dependencias.
               </p>
             </div>
@@ -536,15 +714,15 @@ export default function AreasTab() {
                 disabled={deleting}
               >
                 {deleting ? (
-                   <>
-                     <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>
-                     Eliminando...
-                   </>
+                  <>
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Eliminando...
+                  </>
                 ) : (
-                   <>
-                     <Trash2 className="w-4 h-4" />
-                     Sí, eliminar
-                   </>
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    Sí, eliminar
+                  </>
                 )}
               </button>
             </div>

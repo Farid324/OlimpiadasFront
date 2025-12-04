@@ -69,7 +69,7 @@ function ConfiguracionContent() {
   const headerInfo = TAB_CONTENT[activeTab];
 
   return (
-    <div className="p-1 space-y-6 text-gray-900">
+    <div className="p-2 space-y-6 text-gray-900">
       
       <div className="bg-[var(--fondoAzulGris)] border-gray-100 min-h-[600px] p-4 flex flex-col gap-6">
         {/* Título de la sección */}

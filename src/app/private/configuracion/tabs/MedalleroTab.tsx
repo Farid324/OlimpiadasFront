@@ -161,12 +161,6 @@ export default function MedalleroTab() {
   /* -------------------- Render -------------------- */
   return (
     <div className="space-y-6">
-      
-      {/* Header interno de la pestaña */}
-      <div>
-        <h2 className="text-lg font-semibold text-gray-800">Configuración de Medallero</h2>
-        <p className="text-sm text-gray-500">Parametrización de medallas y menciones por área de competencia.</p>
-      </div>
 
       {/* Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-6 gap-4">

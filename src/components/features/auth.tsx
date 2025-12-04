@@ -1,5 +1,6 @@
 // src/components/features/auth.tsx
 'use client';
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -10,6 +11,7 @@ import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import Image from 'next/image';
 import Navbar from '@/components/ui/Navbar';
 import { api } from '@/libs/api';
+import { XCircle, CheckCircle2 } from 'lucide-react';
 
 // Pequeña ayuda para leer mensajes de error del backend sin usar "any"
 function getErrorMessage(err: unknown, fallback: string): string {
@@ -93,7 +95,7 @@ export default function LoginForm() {
     setRecoveryMessage(null);
 
     if (!fullName.trim() || !recoveryEmail.trim() || !ci.trim()) {
-      setRecoveryError('Por favor, complete todos los campos.');
+      setRecoveryError('Debe completar todos los campos correctamente.');
       return;
     }
 
@@ -109,10 +111,15 @@ export default function LoginForm() {
         'Tu contraseña ha sido actualizada a tu CI actual. Intenta iniciar sesión de nuevo.',
       );
 
-      // Opcional: limpiar campos
+      // limpiar campos
       setFullName('');
       setRecoveryEmail('');
       setCi('');
+
+      // cerrar modal después de 3 segundos
+      setTimeout(() => {
+        closeRecovery();
+      }, 3000);
     } catch (err: unknown) {
       const msg = getErrorMessage(
         err,
@@ -131,7 +138,7 @@ export default function LoginForm() {
     setRecoveryMessage(null);
 
     if (!recoveryEmailOnly.trim()) {
-      setRecoveryError('Por favor, ingresa tu correo.');
+      setRecoveryError('Debe completar todos los campos correctamente.');
       return;
     }
 
@@ -145,6 +152,11 @@ export default function LoginForm() {
         'Se ha enviado una contraseña temporal a tu correo. Revisa tu bandeja de entrada.',
       );
       setRecoveryEmailOnly('');
+
+      // cerrar modal después de 3 segundos
+      setTimeout(() => {
+        closeRecovery();
+      }, 3000);
     } catch (err: unknown) {
       const msg = getErrorMessage(
         err,
@@ -312,6 +324,21 @@ export default function LoginForm() {
 
             {/* Contenido modal */}
             <div className="px-4 py-4 space-y-4 text-sm text-[color:var(--negro)]">
+              {/* BANNERS DE ESTADO (arriba, como en los otros formularios) */}
+              {recoveryError && (
+                <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-red-700">
+                  <XCircle className="h-5 w-5" />
+                  <span className="text-sm font-medium">{recoveryError}</span>
+                </div>
+              )}
+
+              {recoveryMessage && !recoveryError && (
+                <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-green-700">
+                  <CheckCircle2 className="h-5 w-5" />
+                  <span className="text-sm font-medium">{recoveryMessage}</span>
+                </div>
+              )}
+
               {recoveryMode === 'options' && (
                 <>
                   <p className="text-[color:var(--negroGris)] mb-2">
@@ -351,7 +378,11 @@ export default function LoginForm() {
               )}
 
               {recoveryMode === 'byData' && (
-                <form onSubmit={handleRecoverByData} className="space-y-3">
+                <form
+                  onSubmit={handleRecoverByData}
+                  className="space-y-3"
+                  noValidate
+                >
                   <p className="text-[color:var(--negroGris)]">
                     Ingresa tu nombre completo, correo y CI. Si coinciden con un
                     registro, tu contraseña se actualizará a tu CI actual.
@@ -374,7 +405,7 @@ export default function LoginForm() {
                       Correo electrónico
                     </label>
                     <Input
-                      type="email"
+                      type="text"
                       placeholder="correo@ejemplo.com"
                       value={recoveryEmail}
                       onChange={(e) => setRecoveryEmail(e.target.value)}
@@ -390,13 +421,6 @@ export default function LoginForm() {
                       onChange={(e) => setCi(e.target.value)}
                     />
                   </div>
-
-                  {recoveryError && (
-                    <p className="text-xs text-red-600">{recoveryError}</p>
-                  )}
-                  {recoveryMessage && (
-                    <p className="text-xs text-green-600">{recoveryMessage}</p>
-                  )}
 
                   <div className="flex justify-between gap-2 pt-2">
                     <Button
@@ -423,7 +447,11 @@ export default function LoginForm() {
               )}
 
               {recoveryMode === 'byEmail' && (
-                <form onSubmit={handleRecoverByEmail} className="space-y-3">
+                <form
+                  onSubmit={handleRecoverByEmail}
+                  className="space-y-3"
+                  noValidate
+                >
                   <p className="text-[color:var(--negroGris)]">
                     Ingresa el correo vinculado a tu cuenta. Te enviaremos una
                     contraseña temporal alfanumérica.
@@ -434,19 +462,12 @@ export default function LoginForm() {
                       Correo electrónico
                     </label>
                     <Input
-                      type="email"
+                      type="text"
                       placeholder="correo@ejemplo.com"
                       value={recoveryEmailOnly}
                       onChange={(e) => setRecoveryEmailOnly(e.target.value)}
                     />
                   </div>
-
-                  {recoveryError && (
-                    <p className="text-xs text-red-600">{recoveryError}</p>
-                  )}
-                  {recoveryMessage && (
-                    <p className="text-xs text-green-600">{recoveryMessage}</p>
-                  )}
 
                   <div className="flex justify-between gap-2 pt-2">
                     <Button
