@@ -4,7 +4,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { usePageHeader } from "@/contexts/pageHeader";
 import dynamic from "next/dynamic";
-import { Users, GraduationCap, Layers, AlertCircle } from "lucide-react";
+import { Users, GraduationCap, Layers, AlertCircle, X } from "lucide-react";
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/Button";
@@ -17,7 +17,6 @@ import {
   openGestion,
 } from "@/libs/gestiones.api";
 
-// --- Importación Dinámica de Tabs (Lazy Loading) ---
 const OlimpistasTab = dynamic(
   () => import("@/app/private/gestion/tabs/OlimpistasTab"),
   {
@@ -75,7 +74,6 @@ type GestionFeedback = {
   message: string;
 } | null;
 
-// Helper tipado para extraer el mensaje del backend sin usar `any`
 type BackendError = {
   response?: {
     data?: {
@@ -118,6 +116,11 @@ function GestionContent() {
 
   const [gestionFeedback, setGestionFeedback] = useState<GestionFeedback>(null);
 
+  const [showConfirmClose, setShowConfirmClose] = useState(false);
+  const [showConfirmNew, setShowConfirmNew] = useState(false);
+  const [pendingNewAnio, setPendingNewAnio] = useState<number | null>(null);
+  const [pendingNewNombre, setPendingNewNombre] = useState<string>("");
+
   useEffect(() => {
     setTitle("Gestión Integral");
   }, [setTitle]);
@@ -129,7 +132,7 @@ function GestionContent() {
   async function reloadGestionState() {
     try {
       setLoadingGestion(true);
-      setGestionFeedback(null); // limpiar feedback al recargar
+      setGestionFeedback(null);
       const [gestion, eligibility] = await Promise.all([
         fetchCurrentGestion(),
         fetchCanCloseGestion().catch(() => ({
@@ -162,6 +165,8 @@ function GestionContent() {
 
   const hayGestionAbierta =
     !!gestionActual && gestionActual.estado === "ABIERTA";
+
+  // click en "Nueva gestión"
   function handleNuevaGestionClick() {
     setGestionFeedback(null);
 
@@ -179,7 +184,7 @@ function GestionContent() {
     abrirModalNuevaGestion();
   }
 
-  async function handleCloseGestionClick() {
+  function handleCloseGestionClick() {
     setGestionFeedback(null);
 
     if (loadingGestion || closing) return;
@@ -202,23 +207,30 @@ function GestionContent() {
       return;
     }
 
-    const confirmado = window.confirm(
-      `¿Seguro que deseas cerrar la gestión ${gestionActual.anio}${
-        gestionActual.nombre ? ` – ${gestionActual.nombre}` : ""
-      }? Esta acción no se puede deshacer desde la interfaz.`
-    );
-    if (!confirmado) return;
+    setShowConfirmClose(true);
+  }
+
+  async function confirmarCierreGestion() {
+    if (!gestionActual || gestionActual.estado !== "ABIERTA") {
+      setShowConfirmClose(false);
+      return;
+    }
 
     try {
       setClosing(true);
       await closeGestion();
+      setShowConfirmClose(false);
       await reloadGestionState();
-      window.alert("Gestión cerrada correctamente.");
+      setGestionFeedback({
+        type: "info",
+        message: "Gestión cerrada correctamente.",
+      });
     } catch (error: unknown) {
+      setShowConfirmClose(false);
       const msg =
         getBackendErrorMessage(error) ??
         "No fue posible cerrar la gestión. Revisa las fases y vuelve a intentar.";
-      window.alert(msg);
+      setGestionFeedback({ type: "error", message: msg });
     } finally {
       setClosing(false);
     }
@@ -233,29 +245,49 @@ function GestionContent() {
     setShowNewGestionModal(false);
   }
 
-  async function handleCrearGestion(e: React.FormEvent) {
+  function handleCrearGestion(e: React.FormEvent) {
     e.preventDefault();
 
     const anioNum = Number(nuevoAnio);
     if (!anioNum || Number.isNaN(anioNum)) {
-      window.alert("Debes indicar un año válido.");
+      setGestionFeedback({
+        type: "error",
+        message: "Debes indicar un año válido.",
+      });
+      return;
+    }
+
+    setPendingNewAnio(anioNum);
+    setPendingNewNombre(nuevoNombre.trim());
+    setShowConfirmNew(true);
+  }
+
+  // ejecuta la creación real después de confirmar en el modal
+  async function confirmarCrearGestion() {
+    if (pendingNewAnio == null) {
+      setShowConfirmNew(false);
       return;
     }
 
     try {
       setCreating(true);
       await openGestion({
-        anio: anioNum,
-        nombre: nuevoNombre.trim() || undefined,
+        anio: pendingNewAnio,
+        nombre: pendingNewNombre || undefined,
       });
-      await reloadGestionState();
+      setShowConfirmNew(false);
       setShowNewGestionModal(false);
-      window.alert("Nueva gestión iniciada correctamente.");
+      await reloadGestionState();
+      setGestionFeedback({
+        type: "info",
+        message: "Nueva gestión iniciada correctamente.",
+      });
     } catch (error: unknown) {
+      setShowConfirmNew(false);
       const msg =
         getBackendErrorMessage(error) ??
         "No fue posible iniciar la nueva gestión. Verifica que no haya otra gestión abierta.";
-      window.alert(msg);
+      setGestionFeedback({ type: "error", message: msg });
     } finally {
       setCreating(false);
     }
@@ -320,7 +352,7 @@ function GestionContent() {
                   ${
                     gestionFeedback.type === "error"
                       ? "bg-red-50 border-red-200 text-red-800"
-                      : "bg-blue-50 border-blue-200 text-blue-800"
+                      : "bg-green-50 border-green-200 text-green-800"
                   }`}
               >
                 <AlertCircle className="w-4 h-4 mt-[2px]" />
@@ -379,14 +411,26 @@ function GestionContent() {
         </div>
       </div>
 
-      {/* Modal Nueva Gestión */}
+      {/* Modal Nueva Gestión (formulario) */}
       {showNewGestionModal && (
         <ModalPortal>
           <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
             <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Iniciar nueva gestión
-              </h3>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Iniciar nueva gestión
+                </h3>
+                <button
+                  type="button"
+                  className="p-1 rounded hover:bg-gray-100"
+                  onClick={cerrarModalNuevaGestion}
+                  disabled={creating}
+                  aria-label="Cerrar"
+                >
+                  <X className="w-4 h-4 text-gray-600" />
+                </button>
+              </div>
+
               <p className="text-sm text-gray-500 mb-4">
                 Para iniciar una nueva gestión, indica el año y, opcionalmente,
                 un nombre descriptivo. Solo puede haber una gestión abierta a la
@@ -432,10 +476,122 @@ function GestionContent() {
                     Cancelar
                   </Button>
                   <Button type="submit" size="sm" disabled={creating}>
-                    {creating ? "Creando…" : "Iniciar gestión"}
+                    {creating ? "Validando…" : "Iniciar gestión"}
                   </Button>
                 </div>
               </form>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
+
+      {/* Modal de confirmación: Cerrar gestión */}
+      {showConfirmClose && gestionActual && (
+        <ModalPortal>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="bg-white rounded-xl shadow w-full max-w-md">
+              <div className="flex items-center justify-between px-4 py-3 border-b">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5 text-red-500" />
+                  <h3 className="font-semibold text-gray-900">
+                    Cerrar gestión
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  className="p-1 rounded hover:bg-gray-100"
+                  onClick={() => setShowConfirmClose(false)}
+                  aria-label="Cerrar"
+                >
+                  <X className="w-5 h-5 text-gray-600" />
+                </button>
+              </div>
+
+              <div className="px-4 py-4 text-sm text-gray-700">
+                ¿Seguro que deseas cerrar la gestión{" "}
+                <span className="font-semibold">
+                  {gestionActual.anio}
+                  {gestionActual.nombre ? ` – ${gestionActual.nombre}` : ""}
+                </span>
+                ? Esta acción no se puede deshacer desde la interfaz.
+              </div>
+
+              <div className="px-4 py-3 border-t flex justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowConfirmClose(false)}
+                  disabled={closing}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="bg-red-600 hover:bg-red-700"
+                  onClick={confirmarCierreGestion}
+                  disabled={closing}
+                >
+                  {closing ? "Cerrando…" : "Aceptar"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
+
+      {/* Modal de confirmación: Nueva gestión */}
+      {showConfirmNew && pendingNewAnio != null && (
+        <ModalPortal>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="bg-white rounded-xl shadow w-full max-w-md">
+              <div className="flex items-center justify-between px-4 py-3 border-b">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5 text-blue-500" />
+                  <h3 className="font-semibold text-gray-900">
+                    Confirmar nueva gestión
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  className="p-1 rounded hover:bg-gray-100"
+                  onClick={() => setShowConfirmNew(false)}
+                  aria-label="Cerrar"
+                >
+                  <X className="w-5 h-5 text-gray-600" />
+                </button>
+              </div>
+
+              <div className="px-4 py-4 text-sm text-gray-700">
+                Vas a iniciar la gestión{" "}
+                <span className="font-semibold">
+                  {pendingNewAnio}
+                  {pendingNewNombre ? ` – ${pendingNewNombre}` : ""}
+                </span>
+                . Solo puede haber una gestión abierta a la vez. ¿Deseas
+                continuar?
+              </div>
+
+              <div className="px-4 py-3 border-t flex justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowConfirmNew(false)}
+                  disabled={creating}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={confirmarCrearGestion}
+                  disabled={creating}
+                >
+                  {creating ? "Creando…" : "Aceptar"}
+                </Button>
+              </div>
             </div>
           </div>
         </ModalPortal>
