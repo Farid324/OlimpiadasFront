@@ -1,25 +1,25 @@
 // src/app/private/gestion/page.tsx
-'use client';
+"use client";
 
-import { useEffect, useState, Suspense } from 'react';
-import { usePageHeader } from '@/contexts/pageHeader';
-import dynamic from 'next/dynamic';
-import { Users, GraduationCap, Layers, AlertCircle } from 'lucide-react'; // ⬅️ agregado AlertCircle
-import { useSearchParams, usePathname, useRouter } from 'next/navigation';
+import { useEffect, useState, Suspense } from "react";
+import { usePageHeader } from "@/contexts/pageHeader";
+import dynamic from "next/dynamic";
+import { Users, GraduationCap, Layers, AlertCircle } from "lucide-react";
+import { useSearchParams, usePathname, useRouter } from "next/navigation";
 
-import { Button } from '@/components/ui/Button';
-import ModalPortal from '@/components/ui/ModalPortal';
-import type { Gestion } from '@/libs/gestiones.api';
+import { Button } from "@/components/ui/Button";
+import ModalPortal from "@/components/ui/ModalPortal";
+import type { Gestion } from "@/libs/gestiones.api";
 import {
   fetchCurrentGestion,
   fetchCanCloseGestion,
   closeGestion,
   openGestion,
-} from '@/libs/gestiones.api';
+} from "@/libs/gestiones.api";
 
 // --- Importación Dinámica de Tabs (Lazy Loading) ---
 const OlimpistasTab = dynamic(
-  () => import('@/app/private/gestion/tabs/OlimpistasTab'),
+  () => import("@/app/private/gestion/tabs/OlimpistasTab"),
   {
     ssr: false,
     loading: () => (
@@ -27,10 +27,10 @@ const OlimpistasTab = dynamic(
         Cargando módulo de Olimpistas...
       </div>
     ),
-  },
+  }
 );
 const EquipoTab = dynamic(
-  () => import('@/app/private/gestion/tabs/EquipoTab'),
+  () => import("@/app/private/gestion/tabs/EquipoTab"),
   {
     ssr: false,
     loading: () => (
@@ -38,10 +38,10 @@ const EquipoTab = dynamic(
         Cargando módulo de Equipo...
       </div>
     ),
-  },
+  }
 );
 const AreasGestionTab = dynamic(
-  () => import('@/app/private/gestion/tabs/AreasGestionTab'),
+  () => import("@/app/private/gestion/tabs/AreasGestionTab"),
   {
     ssr: false,
     loading: () => (
@@ -49,30 +49,49 @@ const AreasGestionTab = dynamic(
         Cargando módulo de Áreas...
       </div>
     ),
-  },
+  }
 );
 
-type TabKey = 'Olimpistas' | 'Equipo' | 'Areas';
+type TabKey = "Olimpistas" | "Equipo" | "Areas";
 
 const TAB_CONTENT = {
   Olimpistas: {
-    title: 'Directorio de Olimpistas',
-    subtitle: 'Gestión, inscripción y seguimiento de estudiantes participantes.',
+    title: "Directorio de Olimpistas",
+    subtitle:
+      "Gestión, inscripción y seguimiento de estudiantes participantes.",
   },
   Equipo: {
-    title: 'Equipo Académico',
-    subtitle: 'Administración de Evaluadores y Responsables de Área.',
+    title: "Equipo Académico",
+    subtitle: "Administración de Evaluadores y Responsables de Área.",
   },
   Areas: {
-    title: 'Gestión Operativa de Áreas',
-    subtitle: 'Supervisión y control de las áreas activas en la competencia.',
+    title: "Gestión Operativa de Áreas",
+    subtitle: "Supervisión y control de las áreas activas en la competencia.",
   },
 };
 
 type GestionFeedback = {
-  type: 'error' | 'info';
+  type: "error" | "info";
   message: string;
 } | null;
+
+// Helper tipado para extraer el mensaje del backend sin usar `any`
+type BackendError = {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+};
+
+function getBackendErrorMessage(error: unknown): string | null {
+  if (typeof error !== "object" || error === null) return null;
+
+  const maybeError = error as BackendError;
+  const message = maybeError.response?.data?.message;
+
+  return typeof message === "string" ? message : null;
+}
 
 function GestionContent() {
   const { setTitle } = usePageHeader();
@@ -80,11 +99,11 @@ function GestionContent() {
   const pathname = usePathname();
   const router = useRouter();
 
-  const tabParam = searchParams.get('tab');
+  const tabParam = searchParams.get("tab");
   const activeTab: TabKey =
-    tabParam === 'Equipo' || tabParam === 'Areas'
+    tabParam === "Equipo" || tabParam === "Areas"
       ? (tabParam as TabKey)
-      : 'Olimpistas';
+      : "Olimpistas";
 
   const [gestionActual, setGestionActual] = useState<Gestion | null>(null);
   const [canClose, setCanClose] = useState(false);
@@ -93,19 +112,18 @@ function GestionContent() {
   const [closing, setClosing] = useState(false);
 
   const [showNewGestionModal, setShowNewGestionModal] = useState(false);
-  const [nuevoAnio, setNuevoAnio] = useState<string>('');
-  const [nuevoNombre, setNuevoNombre] = useState<string>('');
+  const [nuevoAnio, setNuevoAnio] = useState<string>("");
+  const [nuevoNombre, setNuevoNombre] = useState<string>("");
   const [creating, setCreating] = useState(false);
 
-  const [gestionFeedback, setGestionFeedback] = useState<GestionFeedback>(null); // ⬅️ NUEVO
+  const [gestionFeedback, setGestionFeedback] = useState<GestionFeedback>(null);
 
   useEffect(() => {
-    setTitle('Gestión Integral');
+    setTitle("Gestión Integral");
   }, [setTitle]);
 
   useEffect(() => {
     void reloadGestionState();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function reloadGestionState() {
@@ -116,12 +134,14 @@ function GestionContent() {
         fetchCurrentGestion(),
         fetchCanCloseGestion().catch(() => ({
           canClose: false,
-          reason: 'No fue posible verificar el estado de cierre.',
+          reason: "No fue posible verificar el estado de cierre.",
           gestionId: null,
         })),
       ]);
       setGestionActual(gestion);
-      setCanClose(!!eligibility.canClose && !!gestion && gestion.estado === 'ABIERTA');
+      setCanClose(
+        !!eligibility.canClose && !!gestion && gestion.estado === "ABIERTA"
+      );
       setCanCloseReason(eligibility.reason ?? null);
 
       if (gestion) {
@@ -136,14 +156,12 @@ function GestionContent() {
 
   const handleTabChange = (tab: TabKey) => {
     const params = new URLSearchParams(searchParams);
-    params.set('tab', tab);
+    params.set("tab", tab);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   const hayGestionAbierta =
-    !!gestionActual && gestionActual.estado === 'ABIERTA';
-
-  // ⬅️ NUEVO: handler de click para "Nueva gestión" con validación y feedback visual
+    !!gestionActual && gestionActual.estado === "ABIERTA";
   function handleNuevaGestionClick() {
     setGestionFeedback(null);
 
@@ -151,9 +169,9 @@ function GestionContent() {
 
     if (hayGestionAbierta) {
       setGestionFeedback({
-        type: 'error',
+        type: "error",
         message:
-          'No es posible iniciar una nueva gestión mientras exista una gestión abierta. Cierra la gestión actual primero.',
+          "No es posible iniciar una nueva gestión mientras exista una gestión abierta. Cierra la gestión actual primero.",
       });
       return;
     }
@@ -161,34 +179,33 @@ function GestionContent() {
     abrirModalNuevaGestion();
   }
 
-  // ⬅️ REFACTORIZADO: handler de cerrar gestión con validación previa y feedback
   async function handleCloseGestionClick() {
     setGestionFeedback(null);
 
     if (loadingGestion || closing) return;
 
-    if (!gestionActual || gestionActual.estado !== 'ABIERTA') {
+    if (!gestionActual || gestionActual.estado !== "ABIERTA") {
       setGestionFeedback({
-        type: 'error',
-        message: 'No hay una gestión abierta para cerrar.',
+        type: "error",
+        message: "No hay una gestión abierta para cerrar.",
       });
       return;
     }
 
     if (!canClose) {
       setGestionFeedback({
-        type: 'error',
+        type: "error",
         message:
           canCloseReason ??
-          'No es posible cerrar la gestión: aún no hay cierres validados para ambas fases (clasificación y final).',
+          "No es posible cerrar la gestión: aún no hay cierres validados para ambas fases (clasificación y final).",
       });
       return;
     }
 
     const confirmado = window.confirm(
       `¿Seguro que deseas cerrar la gestión ${gestionActual.anio}${
-        gestionActual.nombre ? ` – ${gestionActual.nombre}` : ''
-      }? Esta acción no se puede deshacer desde la interfaz.`,
+        gestionActual.nombre ? ` – ${gestionActual.nombre}` : ""
+      }? Esta acción no se puede deshacer desde la interfaz.`
     );
     if (!confirmado) return;
 
@@ -196,12 +213,11 @@ function GestionContent() {
       setClosing(true);
       await closeGestion();
       await reloadGestionState();
-      window.alert('Gestión cerrada correctamente.');
-    } catch (err: any) {
+      window.alert("Gestión cerrada correctamente.");
+    } catch (error: unknown) {
       const msg =
-        err?.response?.data?.message ??
-        'No fue posible cerrar la gestión. Revisa las fases y vuelve a intentar.';
-      // puedes mantener el alert para errores inesperados de backend
+        getBackendErrorMessage(error) ??
+        "No fue posible cerrar la gestión. Revisa las fases y vuelve a intentar.";
       window.alert(msg);
     } finally {
       setClosing(false);
@@ -222,7 +238,7 @@ function GestionContent() {
 
     const anioNum = Number(nuevoAnio);
     if (!anioNum || Number.isNaN(anioNum)) {
-      window.alert('Debes indicar un año válido.');
+      window.alert("Debes indicar un año válido.");
       return;
     }
 
@@ -234,11 +250,11 @@ function GestionContent() {
       });
       await reloadGestionState();
       setShowNewGestionModal(false);
-      window.alert('Nueva gestión iniciada correctamente.');
-    } catch (err: any) {
+      window.alert("Nueva gestión iniciada correctamente.");
+    } catch (error: unknown) {
       const msg =
-        err?.response?.data?.message ??
-        'No fue posible iniciar la nueva gestión. Verifica que no haya otra gestión abierta.';
+        getBackendErrorMessage(error) ??
+        "No fue posible iniciar la nueva gestión. Verifica que no haya otra gestión abierta.";
       window.alert(msg);
     } finally {
       setCreating(false);
@@ -263,15 +279,12 @@ function GestionContent() {
                 <span>Cargando gestión…</span>
               ) : gestionActual ? (
                 <span>
-                  Gestión actual:{' '}
+                  Gestión actual:{" "}
                   <strong>
                     {gestionActual.anio}
-                    {gestionActual.nombre ? ` – ${gestionActual.nombre}` : ''}
-                  </strong>{' '}
-                  ({gestionActual.estado === 'ABIERTA'
-                    ? 'Abierta'
-                    : 'Cerrada'}
-                  )
+                    {gestionActual.nombre ? ` – ${gestionActual.nombre}` : ""}
+                  </strong>{" "}
+                  ({gestionActual.estado === "ABIERTA" ? "Abierta" : "Cerrada"})
                 </span>
               ) : (
                 <span>No hay gestión abierta actualmente.</span>
@@ -285,7 +298,6 @@ function GestionContent() {
               <Button
                 variant="outline"
                 size="sm"
-                // solo deshabilitar por loading/creating, no por reglas de negocio
                 disabled={loadingGestion || creating}
                 onClick={handleNuevaGestionClick}
               >
@@ -295,11 +307,10 @@ function GestionContent() {
               <Button
                 variant="destructive"
                 size="sm"
-                // solo deshabilitar por loading/closing
                 disabled={loadingGestion || closing}
                 onClick={handleCloseGestionClick}
               >
-                {closing ? 'Cerrando…' : 'Cerrar gestión'}
+                {closing ? "Cerrando…" : "Cerrar gestión"}
               </Button>
             </div>
 
@@ -307,9 +318,9 @@ function GestionContent() {
               <div
                 className={`mt-1 max-w-xs sm:max-w-md text-xs sm:text-sm px-3 py-2 rounded-lg border flex items-start gap-2
                   ${
-                    gestionFeedback.type === 'error'
-                      ? 'bg-red-50 border-red-200 text-red-800'
-                      : 'bg-blue-50 border-blue-200 text-blue-800'
+                    gestionFeedback.type === "error"
+                      ? "bg-red-50 border-red-200 text-red-800"
+                      : "bg-blue-50 border-blue-200 text-blue-800"
                   }`}
               >
                 <AlertCircle className="w-4 h-4 mt-[2px]" />
@@ -323,11 +334,11 @@ function GestionContent() {
         <div className="flex justify-center md:justify-start overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
           <div className="inline-flex items-center bg-gray-100 p-1 rounded-full shadow-inner whitespace-nowrap">
             <button
-              onClick={() => handleTabChange('Olimpistas')}
+              onClick={() => handleTabChange("Olimpistas")}
               className={`flex items-center gap-2 px-5 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
-                activeTab === 'Olimpistas'
-                  ? 'bg-white text-gray-900 shadow-sm ring-1 ring-black/5'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50'
+                activeTab === "Olimpistas"
+                  ? "bg-white text-gray-900 shadow-sm ring-1 ring-black/5"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-200/50"
               }`}
             >
               <Users className="w-4 h-4" />
@@ -335,11 +346,11 @@ function GestionContent() {
             </button>
 
             <button
-              onClick={() => handleTabChange('Equipo')}
+              onClick={() => handleTabChange("Equipo")}
               className={`flex items-center gap-2 px-5 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
-                activeTab === 'Equipo'
-                  ? 'bg-white text-gray-900 shadow-sm ring-1 ring-black/5'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50'
+                activeTab === "Equipo"
+                  ? "bg-white text-gray-900 shadow-sm ring-1 ring-black/5"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-200/50"
               }`}
             >
               <GraduationCap className="w-4 h-4" />
@@ -347,11 +358,11 @@ function GestionContent() {
             </button>
 
             <button
-              onClick={() => handleTabChange('Areas')}
+              onClick={() => handleTabChange("Areas")}
               className={`flex items-center gap-2 px-5 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
-                activeTab === 'Areas'
-                  ? 'bg-white text-gray-900 shadow-sm ring-1 ring-black/5'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50'
+                activeTab === "Areas"
+                  ? "bg-white text-gray-900 shadow-sm ring-1 ring-black/5"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-200/50"
               }`}
             >
               <Layers className="w-4 h-4" />
@@ -362,9 +373,9 @@ function GestionContent() {
 
         {/* Contenido del Tab */}
         <div className="flex-1 pt-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
-          {activeTab === 'Olimpistas' && <OlimpistasTab />}
-          {activeTab === 'Equipo' && <EquipoTab />}
-          {activeTab === 'Areas' && <AreasGestionTab />}
+          {activeTab === "Olimpistas" && <OlimpistasTab />}
+          {activeTab === "Equipo" && <EquipoTab />}
+          {activeTab === "Areas" && <AreasGestionTab />}
         </div>
       </div>
 
@@ -378,7 +389,8 @@ function GestionContent() {
               </h3>
               <p className="text-sm text-gray-500 mb-4">
                 Para iniciar una nueva gestión, indica el año y, opcionalmente,
-                un nombre descriptivo. Solo puede haber una gestión abierta a la vez.
+                un nombre descriptivo. Solo puede haber una gestión abierta a la
+                vez.
               </p>
 
               <form className="space-y-4" onSubmit={handleCrearGestion}>
@@ -420,7 +432,7 @@ function GestionContent() {
                     Cancelar
                   </Button>
                   <Button type="submit" size="sm" disabled={creating}>
-                    {creating ? 'Creando…' : 'Iniciar gestión'}
+                    {creating ? "Creando…" : "Iniciar gestión"}
                   </Button>
                 </div>
               </form>
