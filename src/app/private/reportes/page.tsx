@@ -103,51 +103,6 @@ function CardMetric({
 }
 
 /* =========================
-   UI: Chips de fase (candados)
-   ========================= */
-// function PhaseChips({
-//   clasifUnlocked,
-//   finalUnlocked,
-//   onClickClasif,
-//   onClickFinal,
-// }: {
-//   clasifUnlocked: boolean;
-//   finalUnlocked: boolean;
-//   onClickClasif?: () => void;
-//   onClickFinal?: () => void;
-// }) {
-//   const Chip = ({
-//     label,
-//     unlocked,
-//     onClick,
-//   }: {
-//     label: string;
-//     unlocked: boolean;
-//     onClick?: () => void;
-//   }) => (
-//     <button
-//       type="button"
-//       onClick={onClick}
-//       className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs border bg-white text-slate-700 border-slate-300"
-//       aria-pressed={unlocked}
-//     >
-//       {unlocked ? (
-//         <Unlock className="w-4 h-4 text-emerald-500" aria-hidden />
-//       ) : (
-//         <Lock className="w-4 h-4 text-slate-400" aria-hidden />
-//       )}
-//       <span className="font-medium">{label}</span>
-//     </button>
-//   );
-
-//   return (
-//     <div className="flex items-center gap-2">
-
-//     </div>
-//   );
-// }
-
-/* =========================
    UI: Segmented Tabs
    ========================= */
 function SegmentedTabs({
@@ -165,58 +120,41 @@ function SegmentedTabs({
     "Publicación",
   ];
 
-  // Partir tabs en filas de 2 para móvil
-  const rows: TabKey[][] = [];
-  for (let i = 0; i < tabs.length; i += 2) {
-    rows.push(tabs.slice(i, i + 2));
-  }
-
   return (
     <>
-      {/* ===== MÓVIL: filas tipo segmented (2 tabs por fila) ===== */}
-      <div className="grid gap-2 w-full sm:hidden">
-        {rows.map((row, idx) => {
-          const single = row.length === 1;
-
-          return (
-            <div
-              key={idx}
-              role="tablist"
-              aria-label="Secciones de reportes"
-              className={[
-                "flex items-center gap-1 rounded-full bg-gray-100 p-1",
-                single ? "w-fit mr-auto" : "w-full",
-              ].join(" ")}
-            >
-              {row.map((t) => {
-                const isActive = t === active;
-
-                return (
-                  <button
-                    key={t}
-                    type="button"
-                    role="tab"
-                    aria-selected={isActive}
-                    onClick={() => onChange?.(t)}
-                    className={[
-                      // 👇 mismo grosor que desktop
-                      "px-3 py-1 text-sm leading-none rounded-full transition whitespace-nowrap text-center",
-                      single ? "" : "flex-1",
-                      isActive
-                        ? "bg-white text-black shadow"
-                        : "text-gray-600 hover:bg-white hover:text-black",
-                    ].join(" ")}
-                  >
-                    {t}
-                  </button>
-                );
-              })}
-            </div>
-          );
-        })}
+      {/* ===== MÓVIL: carrusel horizontal con scroll (sin sobresalir) ===== */}
+      <div className="sm:hidden">
+        <div className="overflow-x-auto py-1">
+          <div
+            role="tablist"
+            aria-label="Secciones de reportes"
+            className="inline-flex items-center gap-2 rounded-full bg-gray-100 p-1"
+          >
+            {tabs.map((t) => {
+              const isActive = t === active;
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => onChange?.(t)}
+                  className={[
+                    "px-3 py-1 text-sm leading-none rounded-full transition whitespace-nowrap shrink-0",
+                    isActive
+                      ? "bg-white text-black shadow"
+                      : "text-gray-600 hover:bg-white hover:text-black",
+                  ].join(" ")}
+                >
+                  {t}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
-      {/* ===== DESKTOP: segmented original intacto ===== */}
+      {/* ===== DESKTOP: segmented original ===== */}
       <div
         role="tablist"
         aria-label="Secciones de reportes"
@@ -405,9 +343,8 @@ export default function ReportesPage() {
 
   return (
     <RoleGate allow={["ADMINISTRADOR"]}>
-      {/* ✅ móvil sin padding extra, desktop igual que antes */}
       <div className="p-0 sm:p-6 space-y-6">
-        {/* Encabezado + Chips */}
+        {/* Encabezado */}
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold text-black">
@@ -435,7 +372,6 @@ export default function ReportesPage() {
         <div
           className={locked ? "opacity-50 pointer-events-none select-none" : ""}
         >
-          {/* ✅ 2 cards por fila en móvil, desktop intacto */}
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-6 gap-2 sm:gap-6">
             {cards.map((c) => (
               <CardMetric

@@ -147,8 +147,6 @@ export default function RegisterOlimpistaModal({
         const { data } = await api.get<Area[]>("/areas");
         setAreas(data);
 
-        // Mantener comportamiento original, pero si es create,
-        // y el área actual no es válida, asignamos una por defecto.
         if (data.length && mode === "create") {
           const currentArea = areaNombre;
           const existsCurrent = data.some(
@@ -156,7 +154,6 @@ export default function RegisterOlimpistaModal({
           );
 
           if (!existsCurrent) {
-            // Preferimos una que coincida con el nivel actual
             const firstMatch = data.find((a) =>
               areaMatchesNivel(a, nivelCompetencia),
             );
@@ -175,8 +172,7 @@ export default function RegisterOlimpistaModal({
     })();
   }, [setValue, mode, areaNombre, nivelCompetencia]);
 
-  // 🔹 Si cambia el nivel (Primaria / Secundaria) y el área seleccionada ya no pertenece
-  //     a ese nivel, asignamos la primera del filtro.
+  // 🔹 Si cambia el nivel y el área ya no pertenece, asignamos la primera del filtro.
   useEffect(() => {
     if (!filteredAreas.length) return;
 
@@ -233,7 +229,6 @@ export default function RegisterOlimpistaModal({
       const gradoEscolar = composeNivelCodigo(f.nivelCompetencia, f.grado);
 
       if (mode === "edit" && olimpistaId) {
-        // Actualizar
         await api.patch(`/olimpistas/${olimpistaId}`, {
           nombreCompleto: f.nombreCompleto.trim().replace(/\s+/g, " "),
           ci: f.ci.trim(),
@@ -246,7 +241,6 @@ export default function RegisterOlimpistaModal({
           gradoEscolar,
         });
       } else {
-        // Crear (comportamiento original)
         await api.post("/olimpistas/register", {
           nombreCompleto: f.nombreCompleto.trim().replace(/\s+/g, " "),
           ci: f.ci.trim(),
@@ -265,18 +259,16 @@ export default function RegisterOlimpistaModal({
           ? "Olimpista actualizado con éxito"
           : "Olimpista registrado con éxito";
 
-      // Banner de éxito
       setSuccessMsg(msg);
       setLockAfterSuccess(true);
 
       setTimeout(() => {
         setLockAfterSuccess(false);
         setSuccessMsg(null);
-        onSuccess(); // el padre refresca la lista
-        onClose(); // cerramos el modal después de 1s
+        onSuccess();
+        onClose();
       }, 1000);
     } catch (err: unknown) {
-      // CI duplicado -> error bajo el campo CI (sin banner azul)
       if (axios.isAxiosError(err)) {
         const data = err.response?.data as
           | { message?: string | string[] }
@@ -297,9 +289,7 @@ export default function RegisterOlimpistaModal({
             type: "server",
             message: "El CI ya se encuentra registrado",
           });
-        }
-        // 2. Manejo de error de Tutor no encontrado (NUEVO)
-        else if (
+        } else if (
           text.includes("debe registrar un tutor") ||
           text.includes("tutor")
         ) {
@@ -308,9 +298,7 @@ export default function RegisterOlimpistaModal({
             message:
               "Este número no está registrado. Haga clic en 'Registrar tutor'.",
           });
-        }
-        // 3. Otros errores (ej: Gestión cerrada)
-        else {
+        } else {
           alert(`Error: ${rawMsg}`);
           console.error(
             mode === "edit"
@@ -373,8 +361,24 @@ export default function RegisterOlimpistaModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-2">
-      <div className="bg-white p-4 sm:p-6 rounded-xl w-full max-w-[640px] relative">
+    <div
+      className="
+        fixed inset-0 z-50
+        flex items-center justify-center
+        bg-black/40
+        px-2 py-4 sm:py-0
+        overflow-y-auto
+      "
+    >
+      <div
+        className="
+          bg-white p-4 sm:p-6 rounded-xl
+          w-full max-w-[640px]
+          relative
+          max-h-[90vh]
+          overflow-y-auto
+        "
+      >
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
@@ -662,5 +666,3 @@ export default function RegisterOlimpistaModal({
     </div>
   );
 }
-
- 

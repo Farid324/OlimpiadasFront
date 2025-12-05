@@ -87,7 +87,9 @@ export default function OlimpistasPage() {
   };
 
   return (
+    // 👉 Contenedor igual que en tu código de ejemplo (desktop)
     <div className="p-3 sm:p-6 space-y-6 overflow-hidden">
+      {/* Encabezado */}
       <div>
         <h1 className="text-2xl font-bold text-black">Gestión de Olimpistas</h1>
         <p className="text-gray-500 text-sm">
@@ -103,7 +105,7 @@ export default function OlimpistasPage() {
         </div>
       )}
 
-      {/* Carrusel de areas */}
+      {/* Carrusel de áreas */}
       <AreaCarousel
         items={areas}
         active={activeArea ?? undefined}
@@ -137,7 +139,7 @@ export default function OlimpistasPage() {
         </button>
       </div>
 
-      {/* Buscador */}
+      {/* Buscador en card blanca */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4">
         <div className="relative w-full">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -168,16 +170,20 @@ export default function OlimpistasPage() {
         </div>
       </div>
 
-      {/* Tabla responsive */}
-      <OlimpistasTable
-        rows={rows}
-        loading={loading}
-        onEdit={(row) => {
-          setEditingRow(row);
-          setShowModal(true);
-        }}
-        onDelete={(row) => setConfirmDelete(row)}
-      />
+      {/* Tabla en card, con scroll horizontal en móvil */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
+        <div className="min-w-full">
+          <OlimpistasTable
+            rows={rows}
+            loading={loading}
+            onEdit={(row) => {
+              setEditingRow(row);
+              setShowModal(true);
+            }}
+            onDelete={(row) => setConfirmDelete(row)}
+          />
+        </div>
+      </div>
 
       {/* Modal crear / editar */}
       {showModal && (
@@ -225,7 +231,9 @@ export default function OlimpistasPage() {
           <div className="w-full max-w-md rounded-xl bg-white shadow border border-gray-200">
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-              <h3 className="text-sm font-semibold text-gray-900">Eliminar olimpista</h3>
+              <h3 className="text-sm font-semibold text-gray-900">
+                Eliminar olimpista
+              </h3>
               <button
                 className="p-1 rounded hover:bg-gray-100"
                 onClick={() => setConfirmDelete(null)}
