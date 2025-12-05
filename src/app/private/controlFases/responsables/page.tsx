@@ -89,7 +89,7 @@ export default function ControlFasesResponsablePage() {
   if (loading && !data) {
     return (
       <div className="p-0 sm:p-6">
-        <div className="bg-white rounded-lg shadow p-3 sm:p-4 text-slate-600">
+        <div className="bg-white rounded-lg shadow p-3 sm:p-4 text-gray-600">
           Cargando…
         </div>
       </div>
@@ -134,7 +134,7 @@ export default function ControlFasesResponsablePage() {
 
   return (
     // 👉 Igual que la vista de admin: sin padding en móvil, padding en desktop
-    <div className="p-0 sm:p-6 space-y-6">
+    <div className="p-0 sm:p-0 space-y-6">
       {error && (
         <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-amber-700 text-sm">
           {error}
@@ -145,7 +145,7 @@ export default function ControlFasesResponsablePage() {
       <section className="mb-2 flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-black">Control de Fases</h1>
-          <p className="text-gray-500 text-sm">
+          <p className="mt-1 text-slate-500">
             Gestión y aprobación de fases de evaluación por área
           </p>
         </div>
