@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '@/libs/api';
-import { Edit, Trash2, Plus, X, Search, Save, CheckCircle2, AlertCircle, } from 'lucide-react';
+import { Edit, Trash2, X, Search, Save, CheckCircle2, AlertCircle, } from 'lucide-react';
 import axios from 'axios';
 import { Button } from '@/components/ui/Button';
 
@@ -35,7 +35,7 @@ export default function AreasTab() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingArea, setEditingArea] = useState<AreaDTO | null>(null);
 
-  // --- ESTADOS PARA ELIMINAR (NUEVO) ---
+  // --- ESTADOS PARA ELIMINAR ---
   const [confirmDelete, setConfirmDelete] = useState<{
     id: number;
     nombre: string;
@@ -51,12 +51,12 @@ export default function AreasTab() {
   const [formNiveles, setFormNiveles] = useState<string[]>([]);
 
   // --- ESTADOS DE VALIDACIÓN Y MENSAJES ---
-  const [nameError, setNameError] = useState<string | null>(null); // Rojo debajo del input
+  const [nameError, setNameError] = useState<string | null>(null);
   const [formStatus, setFormStatus] = useState<{
     type: 'success' | 'error';
     message: string;
-  } | null>(null); // Banner encima del form
-  const [deleteError, setDeleteError] = useState<string | null>(null); // Error al eliminar en la lista
+  } | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const fetchAreas = async () => {
     setLoading(true);
@@ -143,13 +143,16 @@ export default function AreasTab() {
     }
 
     const notaFinal = formNota === '' ? 0 : Number(formNota);
-    if (notaFinal < 51 || notaFinal > 100) {
+    
+    // Validación flexible: 0-100
+    if (notaFinal < 0 || notaFinal > 100) {
       setFormStatus({
         type: 'error',
-        message: 'La nota debe estar entre 51 y 100.',
+        message: 'La nota debe estar entre 0 y 100.',
       });
       return;
     }
+    
     if (formNiveles.length === 0) {
       setFormStatus({
         type: 'error',
@@ -257,7 +260,7 @@ export default function AreasTab() {
   // --- LÓGICA DE ELIMINACIÓN (Modal) ---
 
   const askDelete = (area: AreaDTO) => {
-    setDeleteError(null); // Limpiar errores previos
+    setDeleteError(null);
     setConfirmDelete({ id: area.id_area, nombre: area.nombre_area });
   };
 
@@ -270,10 +273,10 @@ export default function AreasTab() {
       setAreas((prev) =>
         prev.filter((a) => a.id_area !== confirmDelete.id),
       );
-      setConfirmDelete(null); // Cerrar modal si éxito
+      setConfirmDelete(null);
     } catch (e: unknown) {
       console.error(e);
-      setConfirmDelete(null); // Cerrar modal al fallar para mostrar el banner rojo en la lista principal
+      setConfirmDelete(null);
 
       if (
         axios.isAxiosError(e) &&
@@ -533,13 +536,13 @@ export default function AreasTab() {
               {/* Nota */}
               <div className="space-y-1.5">
                 <label className="block text-sm font-semibold text-gray-700">
-                  Establecer Nota de Aprobación (51-100){' '}
+                  Establecer Nota de Aprobación (0-100){' '}
                   <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <input
                     type="number"
-                    min="51"
+                    min="0"
                     max="100"
                     value={formNota}
                     onChange={(e) => {
