@@ -1,4 +1,4 @@
-//src/components/olimpistas/RegisterGrupoModal.tsx
+// src/components/olimpistas/RegisterGrupoModal.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -203,242 +203,264 @@ export default function RegisterGrupoModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-2">
-      <div className="bg-white p-4 sm:p-6 rounded-xl w-full max-w-[780px] relative">
+      {/* Contenedor del modal */}
+      <div className="bg-white rounded-xl w-full max-w-[780px] max-h-[90vh] overflow-y-auto relative shadow px-4 py-4 sm:px-6 sm:py-6">
+        {/* Botón de cierre mejor alineado */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-xl"
         >
           ✕
         </button>
 
-        <h2 className="text-xl font-bold text-black">
-          Registrar Nuevo Grupo Olimpista
-        </h2>
-        <p className="text-gray-500 mb-4">Complete la información del Grupo</p>
-
-        {/* Banner de confirmación */}
-        {successMsg && (
-          <div className="mb-3 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-green-700">
-            <CheckCircle2 className="h-5 w-5" />
-            <span className="text-sm font-medium">{successMsg}</span>
-          </div>
-        )}
-
-        {/*FormularioPrincipal*/}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">
-              Nombre del Equipo <span className="text-red-500">*</span>
-            </label>
-            <Input
-              value={nombreEquipo}
-              onChange={(e) =>
-                setNombreEquipo(
-                  e.target.value
-                    .replace(/[^ \p{L}.'-]/gu, "")
-                    .replace(/\s+/g, " ")
-                    .trimStart()
-                )
-              }
-              className="text-gray-700"
-              placeholder="Team Robotics"
-            />
-            {errors.nombreEquipo && (
-              <p className="text-red-600 text-sm mt-1">{errors.nombreEquipo}</p>
-            )}
+        {/* Contenido con espaciado vertical consistente */}
+        <div className="space-y-4">
+          {/* Cabecera con padding a la derecha para que el texto no choque con la X */}
+          <div className="pr-10 sm:pr-12">
+            <h2 className="text-xl font-bold text-black">
+              Registrar Nuevo Grupo Olimpista
+            </h2>
+            <p className="text-gray-500">
+              Complete la información del Grupo
+            </p>
           </div>
 
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">
-              Unidad Educativa <span className="text-red-500">*</span>
-            </label>
-            <Input
-              value={unidadEducativa}
-              onChange={(e) =>
-                setUnidadEducativa(
-                  e.target.value
-                    .replace(/[^ \p{L}.'-]/gu, "")
-                    .replace(/\s+/g, " ")
-                    .trimStart()
-                )
-              }
-              className="text-gray-700"
-              placeholder="U.E. Santa María"
-            />
-            {errors.unidadEducativa && (
-              <p className="text-red-600 text-sm mt-1">
-                {errors.unidadEducativa}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">
-              Departamento de procedencia
-            </label>
-            <select
-              className="border rounded-md p-2 w-full text-gray-700"
-              value={departamento}
-              onChange={(e) => setDepartamento(e.target.value)}
-            >
-              {DEPARTAMENTOS.map((d) => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
-            </select>
-            {errors.departamento && (
-              <p className="text-red-600 text-sm mt-1">{errors.departamento}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">
-              Nivel de competencia
-            </label>
-            <div className="flex gap-2">
-              {NIVELES_COMPETENCIA.map((n) => (
-                <Pill
-                  key={n}
-                  active={nivelCompetencia === n}
-                  onClick={() => setNivelCompetencia(n as NivelCompetencia)}
-                >
-                  {n}
-                </Pill>
-              ))}
+          {/* Banner de confirmación */}
+          {successMsg && (
+            <div className="mb-1 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-green-700">
+              <CheckCircle2 className="h-5 w-5" />
+              <span className="text-sm font-medium">{successMsg}</span>
             </div>
-          </div>
+          )}
 
-          <div className="col-span-2">
-            <label className="block text-sm font-bold text-gray-700 mb-1">
-              Áreas de competencia
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {areas.map((a) => (
-                <Pill
-                  key={a.id_area}
-                  active={areaNombre === a.nombre_area}
-                  onClick={() => setAreaNombre(a.nombre_area)}
-                >
-                  {a.nombre_area}
-                </Pill>
-              ))}
+          {/* Formulario principal */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">
+                Nombre del Equipo <span className="text-red-500">*</span>
+              </label>
+              <Input
+                value={nombreEquipo}
+                onChange={(e) =>
+                  setNombreEquipo(
+                    e.target.value
+                      .replace(/[^ \p{L}.'-]/gu, "")
+                      .replace(/\s+/g, " ")
+                      .trimStart()
+                  )
+                }
+                className="text-gray-700"
+                placeholder="Team Robotics"
+              />
+              {errors.nombreEquipo && (
+                <p className="text-red-600 text-sm mt-1">
+                  {errors.nombreEquipo}
+                </p>
+              )}
             </div>
-          </div>
-        </div>
 
-        {/*tutor responsable GR*/}
-        <div className="border rounded-lg mb-4 p-4">
-          <h3 className="font-semibold text-gray-700 mb-2">
-            Tutor académico responsable <span className="text-red-500">*</span>
-          </h3>
-          {tutorSeleccionado ? (
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-gray-800 font-medium">
-                  {tutorSeleccionado.nombre}
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">
+                Unidad Educativa <span className="text-red-500">*</span>
+              </label>
+              <Input
+                value={unidadEducativa}
+                onChange={(e) =>
+                  setUnidadEducativa(
+                    e.target.value
+                      .replace(/[^ \p{L}.'-]/gu, "")
+                      .replace(/\s+/g, " ")
+                      .trimStart()
+                  )
+                }
+                className="text-gray-700"
+                placeholder="U.E. Santa María"
+              />
+              {errors.unidadEducativa && (
+                <p className="text-red-600 text-sm mt-1">
+                  {errors.unidadEducativa}
                 </p>
-                <p className="text-sm text-gray-500">
-                  Teléfono: {tutorSeleccionado.telefono}
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">
+                Departamento de procedencia
+              </label>
+              <select
+                className="border rounded-md p-2 w-full text-gray-700"
+                value={departamento}
+                onChange={(e) => setDepartamento(e.target.value)}
+              >
+                {DEPARTAMENTOS.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </select>
+              {errors.departamento && (
+                <p className="text-red-600 text-sm mt-1">
+                  {errors.departamento}
                 </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">
+                Nivel de competencia
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {NIVELES_COMPETENCIA.map((n) => (
+                  <Pill
+                    key={n}
+                    active={nivelCompetencia === n}
+                    onClick={() => setNivelCompetencia(n as NivelCompetencia)}
+                  >
+                    {n}
+                  </Pill>
+                ))}
               </div>
-              <Button
-                variant="outline"
-                onClick={() => setTutorSeleccionado(null)}
-              >
-                Eliminar tutor
-              </Button>
             </div>
-          ) : (
-            <Button
-              onClick={() => {
-                setTutorError(null);
-                setShowTutorModal(true);
-              }}
-            >
-              Registrar / Seleccionar tutor
-            </Button>
-          )}
-          {tutorError && (
-            <p className="mt-2 text-sm text-red-600">{tutorError}</p>
-          )}
-        </div>
 
-        {/*miembros*/}
-        <div className="border rounded-lg">
-          <div className="flex items-center justify-between p-3">
-            <h3 className="font-semibold text-gray-700">Miembros del equipo <span className="text-red-500">*</span></h3>
-            <Button onClick={() => setShowAdd(true)}>Agregar olimpista</Button>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-bold text-gray-700 mb-1">
+                Áreas de competencia
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {areas.map((a) => (
+                  <Pill
+                    key={a.id_area}
+                    active={areaNombre === a.nombre_area}
+                    onClick={() => setAreaNombre(a.nombre_area)}
+                  >
+                    {a.nombre_area}
+                  </Pill>
+                ))}
+              </div>
+            </div>
           </div>
 
-          <div className="px-3 pb-3">
-            {miembros.length === 0 ? (
-              <div
-                className={`text-sm border rounded-md p-3 text-center ${
-                  membersError
-                    ? "text-red-600 border-red-300 bg-red-50"
-                    : "text-gray-500"
-                }`}
-              >
-                {membersError
-                  ? "Agregue al menos 2 olimpistas para registrar un grupo."
-                  : "Aún no añadiste miembros."}
+          {/* Tutor responsable */}
+          <div className="border rounded-lg p-4">
+            <h3 className="font-semibold text-gray-700 mb-2">
+              Tutor académico responsable <span className="text-red-500">*</span>
+            </h3>
+            {tutorSeleccionado ? (
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div>
+                  <p className="text-gray-800 font-medium">
+                    {tutorSeleccionado.nombre}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Teléfono: {tutorSeleccionado.telefono}
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => setTutorSeleccionado(null)}
+                >
+                  Eliminar tutor
+                </Button>
               </div>
             ) : (
-              <>
-                <table className="min-w-full text-sm">
-                  <thead>
-                    <tr className="text-gray-700 border-b">
-                      <th className="text-left py-2 px-2">Nombre</th>
-                      <th className="text-left py-2 px-2">CI</th>
-                      <th className="text-left py-2 px-2">
-                        Grado de escolaridad
-                      </th>
-                      <th className="text-left py-2 px-2">Acción</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {miembros.map((m) => (
-                      <tr key={m.ci} className="border-b">
-                        <td className="py-2 px-2 text-gray-700">
-                          {m.nombreCompleto}
-                        </td>
-                        <td className="py-2 px-2 text-gray-700">{m.ci}</td>
-                        <td className="py-2 px-2 text-gray-700">
-                          {m.grado}ro. {nivelCompetencia}
-                        </td>
-                        <td className="py-2 px-2">
-                          <button
-                            className="text-red-600 hover:underline"
-                            onClick={() => removeMiembro(m.ci)}
-                          >
-                            Eliminar
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-
-                {/* Mensaje cuando hay 1 miembro (o en general <2) */}
-                {miembros.length > 0 && miembros.length < 2 && (
-                  <p className="mt-2 text-sm text-red-600">
-                    {VM.minGroupMembers}
-                  </p>
-                )}
-              </>
+              <Button
+                onClick={() => {
+                  setTutorError(null);
+                  setShowTutorModal(true);
+                }}
+              >
+                Registrar / Seleccionar tutor
+              </Button>
+            )}
+            {tutorError && (
+              <p className="mt-2 text-sm text-red-600">{tutorError}</p>
             )}
           </div>
-        </div>
 
-        {/* Botones de acción */}
-        <div className="flex justify-end gap-2 mt-4">
-          <Button variant="outline" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button onClick={submit} disabled={loading}>
-            {loading ? "Guardando..." : "Registrar"}
-          </Button>
+          {/* Miembros */}
+          <div className="border rounded-lg">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3">
+              <h3 className="font-semibold text-gray-700">
+                Miembros del equipo <span className="text-red-500">*</span>
+              </h3>
+              <Button onClick={() => setShowAdd(true)}>
+                Agregar olimpista
+              </Button>
+            </div>
+
+            <div className="px-3 pb-3">
+              {miembros.length === 0 ? (
+                <div
+                  className={`text-sm border rounded-md p-3 text-center ${
+                    membersError
+                      ? "text-red-600 border-red-300 bg-red-50"
+                      : "text-gray-500"
+                  }`}
+                >
+                  {membersError
+                    ? "Agregue al menos 2 olimpistas para registrar un grupo."
+                    : "Aún no añadiste miembros."}
+                </div>
+              ) : (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full text-sm">
+                      <thead>
+                        <tr className="text-gray-700 border-b">
+                          <th className="text-left py-2 px-2">Nombre</th>
+                          <th className="text-left py-2 px-2">CI</th>
+                          <th className="text-left py-2 px-2">
+                            Grado de escolaridad
+                          </th>
+                          <th className="text-left py-2 px-2">Acción</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {miembros.map((m) => (
+                          <tr key={m.ci} className="border-b">
+                            <td className="py-2 px-2 text-gray-700">
+                              {m.nombreCompleto}
+                            </td>
+                            <td className="py-2 px-2 text-gray-700">
+                              {m.ci}
+                            </td>
+                            <td className="py-2 px-2 text-gray-700">
+                              {m.grado}ro. {nivelCompetencia}
+                            </td>
+                            <td className="py-2 px-2">
+                              <button
+                                className="text-red-600 hover:underline"
+                                onClick={() => removeMiembro(m.ci)}
+                              >
+                                Eliminar
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mensaje cuando hay 1 miembro (o en general <2) */}
+                  {miembros.length > 0 && miembros.length < 2 && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {VM.minGroupMembers}
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Botones de acción */}
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button onClick={submit} disabled={loading}>
+              {loading ? "Guardando..." : "Registrar"}
+            </Button>
+          </div>
         </div>
 
         {showAdd && (
