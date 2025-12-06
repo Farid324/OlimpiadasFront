@@ -328,7 +328,10 @@ export default function PremiadosTab({
             {/* Área */}
             <div className="relative">
               <select
-                className="h-11 w-full appearance-none rounded-md border px-3 pr-9 text-gray-500"
+                // CAMBIO AQUÍ: Clase condicional para el color del texto
+                className={`h-11 w-full appearance-none rounded-md border px-3 pr-9 ${
+                  filters.id_area ? "text-black" : "text-gray-500"
+                }`}
                 value={filters.id_area ?? ""}
                 onChange={(e) =>
                   setFilters((f) => ({
@@ -343,9 +346,11 @@ export default function PremiadosTab({
                 <option value="" disabled hidden>
                   Filtrar por área
                 </option>
-                <option value={0}>Todas las áreas</option>
+                <option value={0} className="text-black">
+                  Todas las áreas
+                </option>
                 {safeAreas.map((a) => (
-                  <option key={`area-${a.id}`} value={a.id}>
+                  <option key={`area-${a.id}`} value={a.id} className="text-black">
                     {a.nombre}
                   </option>
                 ))}
@@ -356,7 +361,10 @@ export default function PremiadosTab({
             {/* Nivel */}
             <div className="relative">
               <select
-                className="h-11 w-full appearance-none rounded-md border px-3 pr-9 text-gray-500"
+                // CAMBIO AQUÍ: Clase condicional para el color del texto
+                className={`h-11 w-full appearance-none rounded-md border px-3 pr-9 ${
+                  filters.id_nivel ? "text-black" : "text-gray-500"
+                }`}
                 value={filters.id_nivel ?? ""}
                 onChange={(e) =>
                   setFilters((f) => ({
@@ -371,9 +379,11 @@ export default function PremiadosTab({
                 <option value="" disabled hidden>
                   Filtrar por nivel
                 </option>
-                <option value={0}>Todos los niveles</option>
+                <option value={0} className="text-black">
+                  Todos los niveles
+                </option>
                 {safeNiveles.map((n) => (
-                  <option key={`nivel-${n.id}`} value={n.id}>
+                  <option key={`nivel-${n.id}`} value={n.id} className="text-black">
                     {n.nombre}
                   </option>
                 ))}
@@ -384,7 +394,10 @@ export default function PremiadosTab({
             {/* Estado */}
             <div className="relative">
               <select
-                className="h-11 w-full appearance-none rounded-md border px-3 pr-9 text-gray-500"
+                // CAMBIO AQUÍ: Clase condicional para el color del texto
+                className={`h-11 w-full appearance-none rounded-md border px-3 pr-9 ${
+                  filters.estado ? "text-black" : "text-gray-500"
+                }`}
                 value={filters.estado ?? ""}
                 onChange={(e) =>
                   setFilters((f) => ({
@@ -398,11 +411,21 @@ export default function PremiadosTab({
                 <option value="" disabled hidden>
                   Filtrar por estado
                 </option>
-                <option value="TODOS">Todos</option>
-                <option value="ORO">Oro</option>
-                <option value="PLATA">Plata</option>
-                <option value="BRONCE">Bronce</option>
-                <option value="MENCION">Mención</option>
+                <option value="TODOS" className="text-black">
+                  Todos
+                </option>
+                <option value="ORO" className="text-black">
+                  Oro
+                </option>
+                <option value="PLATA" className="text-black">
+                  Plata
+                </option>
+                <option value="BRONCE" className="text-black">
+                  Bronce
+                </option>
+                <option value="MENCION" className="text-black">
+                  Mención
+                </option>
               </select>
               <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
             </div>
@@ -525,7 +548,9 @@ export default function PremiadosTab({
                       <td className="py-3 px-4 text-black">
                         {r.unidadEducativa}
                       </td>
-                      <td className="py-3 px-4 text-black">{r.departamento}</td>
+                      <td className="py-3 px-4 text-black">
+                        {r.departamento}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
