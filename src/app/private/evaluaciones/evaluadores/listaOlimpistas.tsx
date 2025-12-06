@@ -177,7 +177,12 @@ export default function CompetidorList({
                 <th className="p-2 text-center">Área</th>
                 {mostrarNivel && <th className="p-2 text-center">Nivel</th>}
                 <th className="p-2 text-center">Nota</th>
-                {mostrarEstado && <th className="p-2 text-center">Clasificación</th>}
+                {/* {mostrarEstado && <th className="p-2 text-center">Clasificación</th>} */}
+                {mostrarEstado && (
+                  <th className="p-2 text-center">
+                    {fase === 'FASE_FINAL' ? 'Aprobación' : 'Clasificación'}
+                  </th>
+                )}
                 <th className="p-2 text-center">Acciones</th>
               </tr>
             </thead>
@@ -192,18 +197,38 @@ export default function CompetidorList({
                 const area = c.area?.nombre_area || c.area?.nombre || '—';
 
                 // ================== NUEVO: CLASIFICACIÓN ==================
+                // let estado: string;
+
+                // if (!c.evaluaciones || c.evaluaciones.length === 0) {
+                //   estado = 'SIN_EVALUACION';
+                // } else if (c.clasificacion === 'CLASIFICADO') {
+                //   estado = 'CLASIFICADO';
+                // } else if (c.clasificacion === 'NO_CLASIFICADO') {
+                //   estado = 'NO_CLASIFICADO';
+                // } else if (c.clasificacion === 'DESCALIFICADO') {
+                //   estado = 'DESCALIFICADO';
+                // } else {
+                //   estado = 'SIN_EVALUACION';
+                // }
+
                 let estado: string;
 
-                if (!c.evaluaciones || c.evaluaciones.length === 0) {
-                  estado = 'SIN_EVALUACION';
-                } else if (c.clasificacion === 'CLASIFICADO') {
-                  estado = 'CLASIFICADO';
-                } else if (c.clasificacion === 'NO_CLASIFICADO') {
-                  estado = 'NO_CLASIFICADO';
-                } else if (c.clasificacion === 'DESCALIFICADO') {
-                  estado = 'DESCALIFICADO';
+                if (fase === 'FASE_FINAL') {
+                  // En fase final usamos estado_final
+                  estado = c.estado_final ?? 'SIN_EVALUACION';
                 } else {
-                  estado = 'SIN_EVALUACION';
+                  // En clasificación usamos la clasificación actual
+                  if (!c.evaluaciones || c.evaluaciones.length === 0) {
+                    estado = 'SIN_EVALUACION';
+                  } else if (c.clasificacion === 'CLASIFICADO') {
+                    estado = 'CLASIFICADO';
+                  } else if (c.clasificacion === 'NO_CLASIFICADO') {
+                    estado = 'NO_CLASIFICADO';
+                  } else if (c.clasificacion === 'DESCALIFICADO') {
+                    estado = 'DESCALIFICADO';
+                  } else {
+                    estado = 'SIN_EVALUACION';
+                  }
                 }
 
                 const chipStyle =
@@ -257,13 +282,26 @@ export default function CompetidorList({
                         <span
                           className={`inline-block text-xs border px-2 py-0.5 rounded-md font-bold ${chipStyle}`}
                         >
-                          {estado === 'SIN_EVALUACION'
+                          {/* {estado === 'SIN_EVALUACION'
                             ? 'Sin evaluación'
                             : estado === 'CLASIFICADO'
                             ? 'Clasificado'
                             : estado === 'NO_CLASIFICADO'
                             ? 'No clasificado'
-                            : 'Descalificado'}
+                            : 'Descalificado'} */}
+                          {fase === 'FASE_FINAL'
+                          ? estado === 'APROBADO'
+                            ? 'Aprobado'
+                            : estado === 'NO_APROBADO'
+                            ? 'Reprobado'
+                            : 'Sin evaluación'
+                          : estado === 'SIN_EVALUACION'
+                          ? 'Sin evaluación'
+                          : estado === 'CLASIFICADO'
+                          ? 'Clasificado'
+                          : estado === 'NO_CLASIFICADO'
+                          ? 'No clasificado'
+                          : 'Descalificado'}
                         </span>
                       </td>
                     )}

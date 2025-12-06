@@ -1,4 +1,5 @@
-'use client';
+// Ruta: src/app/page.tsx (CORREGIDO - Tono de Azul CLARO/Brillante)
+'use client'; 
 
 import { useRouter } from 'next/navigation';
 import { useState, useMemo, useEffect } from 'react';
@@ -24,22 +25,18 @@ declare module 'jspdf' {
 export default function Page() {
   const router = useRouter();
 
-  // --- Estado ---
+  // --- Estado, Carga de Datos y Lógica (Sin cambios en funcionalidad) ---
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedArea, setSelectedArea] = useState<string>('all');
   const [selectedYear, setSelectedYear] = useState<string>('all');
-  const [selectedMedal, setSelectedMedal] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<ActiveTab>('current');
   const [competitors, setCompetitors] = useState<CompetitorData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // --- Carga de Datos ---
   useEffect(() => {
     async function fetchData() {
       try {
         setLoading(true);
-        // Usamos un timeout simulado para probar el estado de carga en desarrollo
-        // await new Promise(resolve => setTimeout(resolve, 1000)); 
         const { data } = await api.get<CompetitorData[]>('/public/reportes/clasificados');
         setCompetitors(data || []);
       } catch (error) {
@@ -52,12 +49,11 @@ export default function Page() {
     fetchData();
   }, []);
 
-  // --- Datos Derivados ---
   const areas = useMemo(
     () => Array.from(new Set(competitors.map((c) => c.area))),
     [competitors]
   );
-
+  
   const years = useMemo(
     () =>
       Array.from(new Set(competitors.map((c) => c.year))).sort(
@@ -76,8 +72,6 @@ export default function Page() {
       const matchesYear =
         selectedYear === 'all' ||
         c.year.toString() === selectedYear;
-      const matchesMedal =
-        selectedMedal === 'all' || c.medal === selectedMedal;
 
       const currentYear = new Date().getFullYear();
       const matchesStatus =
@@ -89,7 +83,6 @@ export default function Page() {
         matchesSearch &&
         matchesArea &&
         matchesYear &&
-        matchesMedal &&
         matchesStatus
       );
     });
@@ -98,7 +91,6 @@ export default function Page() {
     searchTerm,
     selectedArea,
     selectedYear,
-    selectedMedal,
     activeTab
   ]);
 
@@ -111,7 +103,6 @@ export default function Page() {
   const silverMedals = currentYearStats.filter((c) => c.medal === 'Plata').length;
   const bronzeMedals = currentYearStats.filter((c) => c.medal === 'Bronce').length;
 
-  // --- Funciones Auxiliares ---
   const handleNavigateToLogin = () => router.push('/auth');
 
   const downloadPDF = () => {
@@ -170,6 +161,7 @@ export default function Page() {
     }
   };
 
+
   // --- Render ---
   if (loading) {
     return (
@@ -177,33 +169,34 @@ export default function Page() {
         <p className="animate-pulse text-xl font-bold text-blue-600">
           Cargando datos...
         </p>
-        {/* Usamos un spinner visual simple */}
+        
         
 
 [Image of a simple loading spinner for web]
+
 
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    // Fondo de la página en BLANCO (bg-white)
+    <div className="min-h-screen bg-white"> 
       <PublicNavbar onNavigateToLogin={handleNavigateToLogin} />
 
-      {/* Contenedor principal del contenido:
-        - max-w-7xl: Limita el ancho en pantallas muy grandes.
-        - mx-auto: Centra el contenido.
-        - px-4: Padding horizontal por defecto (móvil).
-        - sm:px-6 lg:px-8: Aumenta el padding en breakpoints más grandes.
-      */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
-        <HeroSection
-          totalCompetitors={currentYearStats.length}
-          goldMedals={goldMedals}
-          silverMedals={silverMedals}
-          bronzeMedals={bronzeMedals}
-        />
-
+      {/* 🚨 CAMBIO DE COLOR: Usamos bg-blue-600 (azul más claro/brillante) */}
+      <div className="w-full bg-blue-600 pb-8"> 
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+          <HeroSection
+            totalCompetitors={currentYearStats.length}
+            goldMedals={goldMedals}
+            silverMedals={silverMedals}
+            bronzeMedals={bronzeMedals}
+          />
+        </div>
+      </div>
+      
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 pt-0 -mt-10 md:-mt-16"> 
         <ResultsSection
           competitors={competitors}
           filteredCompetitors={filteredCompetitors}
@@ -215,8 +208,6 @@ export default function Page() {
           onSelectedAreaChange={setSelectedArea}
           selectedYear={selectedYear}
           onSelectedYearChange={setSelectedYear}
-          selectedMedal={selectedMedal}
-          onSelectedMedalChange={setSelectedMedal}
           activeTab={activeTab}
           onActiveTabChange={setActiveTab}
           onDownloadPDF={downloadPDF}

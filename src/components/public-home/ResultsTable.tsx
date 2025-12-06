@@ -26,15 +26,8 @@ export function ResultsTable({ filteredCompetitors, getMedalColor }: ResultsTabl
         <Table className="min-w-full"> 
           <TableHeader>
             <TableRow className="bg-[var(--blancoGrisOscuro)] font-bold">
-              <TableHead className="w-12 font-semibold">#</TableHead>
-              <TableHead className="font-semibold whitespace-nowrap">Nombre</TableHead> {/* Evita que se rompa */}
-              <TableHead className="font-semibold whitespace-nowrap">CI</TableHead>
-              <TableHead className="font-semibold whitespace-nowrap">Área</TableHead>
-              <TableHead className="font-semibold whitespace-nowrap">Colegio</TableHead>
-              <TableHead className="font-semibold whitespace-nowrap">Ciudad</TableHead>
-              <TableHead className="font-semibold whitespace-nowrap">Año</TableHead>
-              <TableHead className="font-semibold whitespace-nowrap">Puntaje</TableHead>
-              <TableHead className="font-semibold whitespace-nowrap">Medalla</TableHead>
+              {/* 🚨 ZONA CORREGIDA: Todos los TableHead están en la misma línea (o sin espacios) */}
+              <TableHead className="w-12 font-semibold">#</TableHead><TableHead className="font-semibold whitespace-nowrap">Nombre</TableHead><TableHead className="font-semibold whitespace-nowrap">CI</TableHead><TableHead className="font-semibold whitespace-nowrap">Área</TableHead><TableHead className="font-semibold whitespace-nowrap">Colegio</TableHead><TableHead className="font-semibold whitespace-nowrap">Ciudad</TableHead><TableHead className="font-semibold whitespace-nowrap">Año</TableHead><TableHead className="font-semibold whitespace-nowrap">Puntaje</TableHead><TableHead className="font-semibold whitespace-nowrap">Medalla</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

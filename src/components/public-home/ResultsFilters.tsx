@@ -1,4 +1,4 @@
-// src/components/public-home/ResultsFilters.tsx
+// src/components/public-home/ResultsFilters.tsx (CORREGIDO)
 
 import { Input } from '@/components/ui/Input';
 import {
@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/Select';
-import { Search, Filter, Calendar, Medal } from 'lucide-react';
+import { Search, Filter, Calendar } from 'lucide-react'; // 🚨 ELIMINADO: Medal icon
 import { ActiveTab } from '@/types/principal';
 
 interface ResultsFiltersProps {
@@ -20,8 +20,8 @@ interface ResultsFiltersProps {
   selectedYear: string;
   onSelectedYearChange: (year: string) => void;
   years: number[];
-  selectedMedal: string;
-  onSelectedMedalChange: (medal: string) => void;
+  // 🚨 ELIMINADO: selectedMedal: string;
+  // 🚨 ELIMINADO: onSelectedMedalChange: (medal: string) => void;
   activeTab: ActiveTab;
 }
 
@@ -34,32 +34,35 @@ export function ResultsFilters({
   selectedYear,
   onSelectedYearChange,
   years,
-  selectedMedal,
-  onSelectedMedalChange,
+  // 🚨 ELIMINADO: selectedMedal,
+  // 🚨 ELIMINADO: onSelectedMedalChange,
   activeTab,
 }: ResultsFiltersProps) {
   return (
-    // CLASE CLAVE: grid-cols-1 en móvil, se expande a grid-cols-2 en sm, 
-    // y luego a grid-cols-4 en md (desktop/tablet grande).
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    // Ahora, si Year está oculto, pasamos de 4 a 3 columnas activas en desktop
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6"> 
       
-      {/* INPUT DE BÚSQUEDA: Ocupa 1 columna en móvil (grid-cols-1), 2 en tablet (sm:col-span-2) */}
+      {/* INPUT DE BÚSQUEDA */}
       <div className="relative sm:col-span-2">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
         <Input
           placeholder="Buscar por CI..."
           value={searchTerm}
           onChange={(e) => onSearchTermChange(e.target.value)}
-          className="pl-10 w-full"
+          // 🚨 CAMBIO VISUAL: Borde más oscuro y texto más visible
+          className="pl-10 w-full border-gray-400 placeholder:text-gray-500 text-gray-900 focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
         />
       </div>
 
-      {/* SELECT DE ÁREA: Ocupa 1 columna en móvil, 1 en desktop */}
+      {/* SELECT DE ÁREA */}
       <Select value={selectedArea} onValueChange={onSelectedAreaChange}>
-        <SelectTrigger>
+        <SelectTrigger 
+          // 🚨 CAMBIO VISUAL: Borde más oscuro y texto más visible
+          className="border-gray-400 text-gray-900 data-[placeholder]:text-gray-900" 
+        >
           <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            <SelectValue placeholder="Área" />
+            <Filter className="h-4 w-4 text-gray-500" />
+            <SelectValue placeholder="Todas las áreas" />
           </div>
         </SelectTrigger>
         <SelectContent>
@@ -75,10 +78,13 @@ export function ResultsFilters({
       {/* SELECT DE AÑO (Solo en Histórico) */}
       {activeTab === 'historical' && (
         <Select value={selectedYear} onValueChange={onSelectedYearChange}>
-          <SelectTrigger>
+          <SelectTrigger 
+            // 🚨 CAMBIO VISUAL: Borde más oscuro y texto más visible
+            className="border-gray-400 text-gray-900 data-[placeholder]:text-gray-900"
+          >
             <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              <SelectValue placeholder="Año" />
+              <Calendar className="h-4 w-4 text-gray-500" />
+              <SelectValue placeholder="Todos los años" />
             </div>
           </SelectTrigger>
           <SelectContent>
@@ -92,26 +98,7 @@ export function ResultsFilters({
         </Select>
       )}
 
-      {/* SELECT DE MEDALLA: Ocupa 1 columna en móvil. 
-        Aseguramos que ocupe la columna de la derecha en desktop cuando 'Año' no está presente. 
-      */}
-      <Select value={selectedMedal} onValueChange={onSelectedMedalChange}>
-        {/* Usamos md:col-start-4 condicionalmente, asegurando que solo se aplique en desktop */}
-        <SelectTrigger
-          className={activeTab === 'current' ? 'md:col-start-4' : ''}
-        >
-          <div className="flex items-center gap-2">
-            <Medal className="h-4 w-4" />
-            <SelectValue placeholder="Medalla" />
-          </div>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Todas las medallas</SelectItem>
-          <SelectItem value="Oro">Oro</SelectItem>
-          <SelectItem value="Plata">Plata</SelectItem>
-          <SelectItem value="Bronce">Bronce</SelectItem>
-        </SelectContent>
-      </Select>
+      {/* 🚨 ELIMINADO: SELECT DE MEDALLA (Estaba aquí) */}
     </div>
   );
 }
