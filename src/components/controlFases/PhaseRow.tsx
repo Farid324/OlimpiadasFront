@@ -191,7 +191,7 @@ export default function PhaseRow({
                 Descalificados: <b>{resumen?.descalificados ?? 0}</b>
               </span>
             </div>
-            <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-gray-400" />
               <span className="text-slate-700">
                 No evaluados: <b>{resumen?.noEvaluados ?? 0}</b>
@@ -216,11 +216,11 @@ export default function PhaseRow({
         </td>
 
         {/* Acciones 👉 centrado */}
-        <td className="px-3 py-2 align-middle text-center">
+        <td className="px-4 py-4 align-middle text-center">
           {accionLabel && (
             <button
               className={`inline-flex items-center rounded-lg px-3.5 py-2 text-xs font-bold shadow-sm focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${btnMap[accionColor]}`}
-              disabled={isButtonDisabled}
+              disabled={!!accionDisabled}
               onClick={() => setOpen(true)}
             >
               {accionLabel}
