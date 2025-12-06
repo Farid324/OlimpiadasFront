@@ -1,3 +1,5 @@
+// src/components/public-home/ResultsSection.tsx (CORREGIDO)
+
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card2';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
@@ -19,8 +21,8 @@ interface ResultsSectionProps {
   onSelectedAreaChange: (area: string) => void;
   selectedYear: string;
   onSelectedYearChange: (year: string) => void;
-  selectedMedal: string;
-  onSelectedMedalChange: (medal: string) => void;
+  // 🚨 ELIMINADO: selectedMedal: string;
+  // 🚨 ELIMINADO: onSelectedMedalChange: (medal: string) => void;
   activeTab: ActiveTab;
   onActiveTabChange: (tab: ActiveTab) => void;
   onDownloadPDF: () => void;
@@ -96,8 +98,8 @@ export function ResultsSection(props: ResultsSectionProps) {
                     selectedYear={props.selectedYear}
                     onSelectedYearChange={props.onSelectedYearChange}
                     years={props.years}
-                    selectedMedal={props.selectedMedal}
-                    onSelectedMedalChange={props.onSelectedMedalChange}
+                    // 🚨 ELIMINADO: selectedMedal={props.selectedMedal}
+                    // 🚨 ELIMINADO: onSelectedMedalChange={props.onSelectedMedalChange}
                     activeTab="current"
                   />
 
@@ -122,8 +124,8 @@ export function ResultsSection(props: ResultsSectionProps) {
                     selectedYear={props.selectedYear}
                     onSelectedYearChange={props.onSelectedYearChange}
                     years={props.years}
-                    selectedMedal={props.selectedMedal}
-                    onSelectedMedalChange={props.onSelectedMedalChange}
+                    // 🚨 ELIMINADO: selectedMedal={props.selectedMedal}
+                    // 🚨 ELIMINADO: onSelectedMedalChange={props.onSelectedMedalChange}
                     activeTab="current"
                   />
 
@@ -152,8 +154,8 @@ export function ResultsSection(props: ResultsSectionProps) {
                 selectedYear={props.selectedYear}
                 onSelectedYearChange={props.onSelectedYearChange}
                 years={props.years}
-                selectedMedal={props.selectedMedal}
-                onSelectedMedalChange={props.onSelectedMedalChange}
+                // 🚨 ELIMINADO: selectedMedal={props.selectedMedal}
+                // 🚨 ELIMINADO: onSelectedMedalChange={props.onSelectedMedalChange}
                 activeTab="historical"
               />
 

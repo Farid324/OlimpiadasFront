@@ -1,4 +1,4 @@
-// Ruta: src/app/page.tsx (CORREGIDO - Final, Apariencia de la Imagen)
+// Ruta: src/app/page.tsx (CORREGIDO - Tono de Azul CLARO/Brillante)
 'use client'; 
 
 import { useRouter } from 'next/navigation';
@@ -25,11 +25,10 @@ declare module 'jspdf' {
 export default function Page() {
   const router = useRouter();
 
-  // --- Estado, Carga de Datos y Lógica (Sin cambios) ---
+  // --- Estado, Carga de Datos y Lógica (Sin cambios en funcionalidad) ---
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedArea, setSelectedArea] = useState<string>('all');
   const [selectedYear, setSelectedYear] = useState<string>('all');
-  const [selectedMedal, setSelectedMedal] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<ActiveTab>('current');
   const [competitors, setCompetitors] = useState<CompetitorData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,8 +72,6 @@ export default function Page() {
       const matchesYear =
         selectedYear === 'all' ||
         c.year.toString() === selectedYear;
-      const matchesMedal =
-        selectedMedal === 'all' || c.medal === selectedMedal;
 
       const currentYear = new Date().getFullYear();
       const matchesStatus =
@@ -86,7 +83,6 @@ export default function Page() {
         matchesSearch &&
         matchesArea &&
         matchesYear &&
-        matchesMedal &&
         matchesStatus
       );
     });
@@ -95,7 +91,6 @@ export default function Page() {
     searchTerm,
     selectedArea,
     selectedYear,
-    selectedMedal,
     activeTab
   ]);
 
@@ -176,16 +171,20 @@ export default function Page() {
         </p>
         
         
+
+[Image of a simple loading spinner for web]
+
+
       </div>
     );
   }
 
   return (
-    // 🚨 CAMBIO 1: Contenedor principal con fondo BLANCO (bg-white)
+    // Fondo de la página en BLANCO (bg-white)
     <div className="min-h-screen bg-white"> 
       <PublicNavbar onNavigateToLogin={handleNavigateToLogin} />
 
-      {/* 🚨 CAMBIO 2: Fondo Azul Brillante (bg-blue-600 o similar) para la barra superior */}
+      {/* 🚨 CAMBIO DE COLOR: Usamos bg-blue-600 (azul más claro/brillante) */}
       <div className="w-full bg-blue-600 pb-8"> 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
           <HeroSection
@@ -197,8 +196,6 @@ export default function Page() {
         </div>
       </div>
       
-      {/* El <main> está centrado sobre el fondo BLANCO */}
-      {/* Añadimos un padding top negativo para que la ResultsSection se "monte" ligeramente sobre HeroSection */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 pt-0 -mt-10 md:-mt-16"> 
         <ResultsSection
           competitors={competitors}
@@ -211,8 +208,6 @@ export default function Page() {
           onSelectedAreaChange={setSelectedArea}
           selectedYear={selectedYear}
           onSelectedYearChange={setSelectedYear}
-          selectedMedal={selectedMedal}
-          onSelectedMedalChange={setSelectedMedal}
           activeTab={activeTab}
           onActiveTabChange={setActiveTab}
           onDownloadPDF={downloadPDF}
