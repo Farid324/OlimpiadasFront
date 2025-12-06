@@ -29,10 +29,12 @@ interface ResultsSectionProps {
 
 export function ResultsSection(props: ResultsSectionProps) {
   return (
-    <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 border-[var(--bordeGris)]">
+    // Se elimina el max-w-7xl y mx-auto de aquí, ya que el componente padre (Page.tsx) ya lo maneja
+    <section className="py-12 border-[var(--bordeGris)]">
       <Card>
         <CardHeader>
-          <CardTitle className="flex text-[var(--negro)] items-center justify-between flex-wrap gap-4">
+          {/* CLASE CLAVE: flex-col en móvil, cambia a flex-row en sm: (tablet) */}
+          <CardTitle className="flex text-[var(--negro)] items-start justify-between sm:items-center flex-col sm:flex-row gap-4">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-6 w-6 text-[var(--azul)]" />
               <span>Lista de Clasificados</span>
@@ -41,7 +43,7 @@ export function ResultsSection(props: ResultsSectionProps) {
             <Button
               onClick={props.onDownloadPDF}
               variant="outline"
-              className="gap-2 border-[var(--bordeGris)]"
+              className="gap-2 border-[var(--bordeGris)] w-full sm:w-auto" // w-full en móvil
             >
               <Download className="h-4 w-4" />
               Descargar PDF
@@ -56,7 +58,11 @@ export function ResultsSection(props: ResultsSectionProps) {
             onValueChange={(v) => props.onActiveTabChange(v as ActiveTab)}
             className="mb-6"
           >
-            <TabsList className="grid w-full max-w-md grid-cols-2">
+            {/* CLASE CLAVE: El TabsList ocupa todo el ancho (w-full) en móvil y se limita 
+                solo visualmente a 320px (max-w-[320px]) para que no se vea gigantesco en desktop. 
+                grid-cols-2 ya maneja la responsividad interna.
+            */}
+            <TabsList className="grid w-full max-w-sm grid-cols-2">
               <TabsTrigger value="current" className="gap-2">
                 <Calendar className="h-4 w-4" />
                 Clasificando 2025
@@ -73,6 +79,7 @@ export function ResultsSection(props: ResultsSectionProps) {
             {/* ----------------------------------- */}
             <TabsContent value="current" className="mt-6">
               <Tabs defaultValue="fase1" className="mb-6">
+                {/* Lo mismo para el TabsList interno, w-full en móvil, limitado en desktop */}
                 <TabsList className="grid w-full max-w-sm grid-cols-2">
                   <TabsTrigger value="fase1">Fase Clasificatoria</TabsTrigger>
                   <TabsTrigger value="fase2">Fase Final</TabsTrigger>

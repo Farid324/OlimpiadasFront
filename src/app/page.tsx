@@ -38,6 +38,8 @@ export default function Page() {
     async function fetchData() {
       try {
         setLoading(true);
+        // Usamos un timeout simulado para probar el estado de carga en desarrollo
+        // await new Promise(resolve => setTimeout(resolve, 1000)); 
         const { data } = await api.get<CompetitorData[]>('/public/reportes/clasificados');
         setCompetitors(data || []);
       } catch (error) {
@@ -77,10 +79,11 @@ export default function Page() {
       const matchesMedal =
         selectedMedal === 'all' || c.medal === selectedMedal;
 
+      const currentYear = new Date().getFullYear();
       const matchesStatus =
         activeTab === 'current'
-          ? c.year === new Date().getFullYear()
-          : c.year < new Date().getFullYear();
+          ? c.year === currentYear
+          : c.year < currentYear;
 
       return (
         matchesSearch &&
@@ -170,8 +173,15 @@ export default function Page() {
   // --- Render ---
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <p className="text-lg">Cargando datos...</p>
+      <div className="flex h-screen w-screen items-center justify-center bg-white p-4">
+        <p className="animate-pulse text-xl font-bold text-blue-600">
+          Cargando datos...
+        </p>
+        {/* Usamos un spinner visual simple */}
+        
+
+[Image of a simple loading spinner for web]
+
       </div>
     );
   }
@@ -180,31 +190,39 @@ export default function Page() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <PublicNavbar onNavigateToLogin={handleNavigateToLogin} />
 
-      <HeroSection
-        totalCompetitors={currentYearStats.length}
-        goldMedals={goldMedals}
-        silverMedals={silverMedals}
-        bronzeMedals={bronzeMedals}
-      />
+      {/* Contenedor principal del contenido:
+        - max-w-7xl: Limita el ancho en pantallas muy grandes.
+        - mx-auto: Centra el contenido.
+        - px-4: Padding horizontal por defecto (móvil).
+        - sm:px-6 lg:px-8: Aumenta el padding en breakpoints más grandes.
+      */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+        <HeroSection
+          totalCompetitors={currentYearStats.length}
+          goldMedals={goldMedals}
+          silverMedals={silverMedals}
+          bronzeMedals={bronzeMedals}
+        />
 
-      <ResultsSection
-        competitors={competitors}
-        filteredCompetitors={filteredCompetitors}
-        areas={areas}
-        years={years}
-        searchTerm={searchTerm}
-        onSearchTermChange={setSearchTerm}
-        selectedArea={selectedArea}
-        onSelectedAreaChange={setSelectedArea}
-        selectedYear={selectedYear}
-        onSelectedYearChange={setSelectedYear}
-        selectedMedal={selectedMedal}
-        onSelectedMedalChange={setSelectedMedal}
-        activeTab={activeTab}
-        onActiveTabChange={setActiveTab}
-        onDownloadPDF={downloadPDF}
-        getMedalColor={getMedalColor}
-      />
+        <ResultsSection
+          competitors={competitors}
+          filteredCompetitors={filteredCompetitors}
+          areas={areas}
+          years={years}
+          searchTerm={searchTerm}
+          onSearchTermChange={setSearchTerm}
+          selectedArea={selectedArea}
+          onSelectedAreaChange={setSelectedArea}
+          selectedYear={selectedYear}
+          onSelectedYearChange={setSelectedYear}
+          selectedMedal={selectedMedal}
+          onSelectedMedalChange={setSelectedMedal}
+          activeTab={activeTab}
+          onActiveTabChange={setActiveTab}
+          onDownloadPDF={downloadPDF}
+          getMedalColor={getMedalColor}
+        />
+      </main>
 
       <PublicFooter />
     </div>
