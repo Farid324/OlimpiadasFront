@@ -12,6 +12,7 @@ type AreaDTO = {
   id_area: number;
   nombre_area: string;
   nota_aprobacion: number | null;
+  nota_aprobacion_final: number | null;
   tipo: 'INDIVIDUAL' | 'GRUPAL';
   niveles_target: string | null;
   activo: boolean;
@@ -21,6 +22,7 @@ type AreaResponseItem = {
   id_area: number;
   nombre_area: string;
   nota_aprobacion?: number | null;
+  nota_aprobacion_final?: number | null; 
   tipo?: 'INDIVIDUAL' | 'GRUPAL' | null;
   niveles_target?: string | null;
   activo?: boolean;
@@ -49,6 +51,8 @@ export default function AreasTab() {
     'INDIVIDUAL',
   );
   const [formNiveles, setFormNiveles] = useState<string[]>([]);
+  const [formNotaFinal, setFormNotaFinal] = useState<number | string>(51);
+
 
   // --- ESTADOS DE VALIDACIÓN Y MENSAJES ---
   const [nameError, setNameError] = useState<string | null>(null);
@@ -57,6 +61,8 @@ export default function AreasTab() {
     message: string;
   } | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [originalNiveles, setOriginalNiveles] = useState<string[]>([]);
+
 
   const fetchAreas = async () => {
     setLoading(true);
@@ -69,6 +75,9 @@ export default function AreasTab() {
           nombre_area: d.nombre_area,
           nota_aprobacion: d.nota_aprobacion
             ? Number(d.nota_aprobacion)
+            : 51,
+          nota_aprobacion_final: d.nota_aprobacion_final
+            ? Number(d.nota_aprobacion_final)
             : 51,
           tipo: d.tipo ?? 'INDIVIDUAL',
           niveles_target: d.niveles_target ?? null,
@@ -97,18 +106,24 @@ export default function AreasTab() {
       setEditingArea(area);
       setFormNombre(area.nombre_area);
       setFormNota(area.nota_aprobacion ?? 51);
+      setFormNotaFinal(area.nota_aprobacion_final ?? 51);
       setFormTipo(area.tipo);
-      setFormNiveles(
-        area.niveles_target
-          ? area.niveles_target.split(',').map((s) => s.trim())
-          : [],
-      );
+
+      const niveles = area.niveles_target
+        ? area.niveles_target.split(',').map((s) => s.trim())
+        : [];
+
+      setFormNiveles(niveles);
+      setOriginalNiveles(niveles);
+
     } else {
       setEditingArea(null);
       setFormNombre('');
       setFormNota(51);
+      setFormNotaFinal(51);
       setFormTipo('INDIVIDUAL');
       setFormNiveles([]);
+      setOriginalNiveles([]);
     }
     setIsModalOpen(true);
   };
@@ -121,6 +136,10 @@ export default function AreasTab() {
   };
 
   const handleLevelChange = (level: string) => {
+    if (originalNiveles.includes(level)) {
+      return;
+    }
+    
     setFormNiveles((prev) =>
       prev.includes(level)
         ? prev.filter((l) => l !== level)
@@ -153,6 +172,17 @@ export default function AreasTab() {
       return;
     }
     
+    const notaFinalFase = formNotaFinal === '' ? 0 : Number(formNotaFinal);
+
+    if (notaFinalFase < 0 || notaFinalFase > 100) {
+      setFormStatus({
+        type: 'error',
+        message: 'La nota de fase final debe estar entre 0 y 100.',
+      });
+      return;
+    }
+
+    
     if (formNiveles.length === 0) {
       setFormStatus({
         type: 'error',
@@ -178,6 +208,7 @@ export default function AreasTab() {
     const payload = {
       nombre_area: formNombre,
       nota_aprobacion: notaFinal,
+      nota_aprobacion_final: notaFinalFase,
       tipo: formTipo,
       niveles_target: formNiveles.join(', '),
     };
@@ -196,6 +227,9 @@ export default function AreasTab() {
           nota_aprobacion: data.nota_aprobacion
             ? Number(data.nota_aprobacion)
             : 51,
+          nota_aprobacion_final: data.nota_aprobacion_final
+            ? Number(data.nota_aprobacion_final)
+            : 51,
           tipo: data.tipo ?? 'INDIVIDUAL',
           niveles_target: data.niveles_target ?? null,
           id_area: editingArea.id_area,
@@ -208,6 +242,9 @@ export default function AreasTab() {
           nombre_area: data.nombre_area,
           nota_aprobacion: data.nota_aprobacion
             ? Number(data.nota_aprobacion)
+            : 51,
+          nota_aprobacion_final: data.nota_aprobacion_final
+            ? Number(data.nota_aprobacion_final)
             : 51,
           tipo: data.tipo ?? 'INDIVIDUAL',
           niveles_target: data.niveles_target ?? null,
@@ -240,22 +277,40 @@ export default function AreasTab() {
       }, 1500);
     } catch (error: unknown) {
       console.error('Error guardando área', error);
-
+      
       if (axios.isAxiosError(error)) {
         const status = error.response?.status;
+        const responseData = error.response?.data;
+        const errorMessage = responseData?.message || 'Conflicto desconocido con los datos.';
+
         if (status === 409) {
-          setNameError(
-            'El nombre del área ya está registrado (incluso si fue eliminado). Se reactivará si corresponde.',
-          );
-          return;
+          //Manejar el error específico de duplicidad de nombre
+          if (
+            typeof errorMessage === 'string' &&
+            errorMessage.includes('nombre del área ya existe')
+          ) {
+            setNameError(
+              'El nombre del área ya está registrado (incluso si fue eliminado). Se reactivará si corresponde.',
+            );
+            return;
+          }
+
+          setFormStatus({
+            type: 'error',
+            message: Array.isArray(errorMessage) 
+              ? errorMessage.join(', ')
+              : String(errorMessage),
+            });
+          return; // ¡Asegura que el flujo se detiene aquí!
         }
       }
-      setFormStatus({
-        type: 'error',
-        message: 'No se pudo registrar el área. Intente nuevamente.',
-      });
-    }
-  };
+
+        setFormStatus({
+          type: 'error',
+          message: 'No se pudo registrar el área. Intente nuevamente.',
+        });
+      }
+    };
 
   // --- LÓGICA DE ELIMINACIÓN (Modal) ---
 
@@ -392,6 +447,9 @@ export default function AreasTab() {
                   <th className="py-3 px-4 text-center font-semibold">
                     Nota Aprobación
                   </th>
+                  <th className="py-3 px-4 text-center font-semibold">
+                    Nota Aprobación fase final
+                  </th>
                   <th className="py-3 px-4 text-right font-semibold">
                     Acciones
                   </th>
@@ -439,6 +497,11 @@ export default function AreasTab() {
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
                       <span className="font-bold text-gray-800">
                         {area.nota_aprobacion ?? 51}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
+                      <span className="font-bold text-gray-800">
+                        {area.nota_aprobacion_final ?? 51}
                       </span>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
@@ -574,6 +637,41 @@ export default function AreasTab() {
                   </span>
                 </div>
               </div>
+
+              {/* Nota Aprobación Fase Final */}
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Nota Aprobación (Fase Final)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={formNotaFinal}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '') setFormNotaFinal('');
+                        else {
+                          const parsed = parseInt(val);
+                          if (!isNaN(parsed)) setFormNotaFinal(parsed);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (
+                          !/[0-9]/.test(e.key) &&
+                          !['Backspace', 'ArrowLeft', 'ArrowRight', 'Tab', 'Delete'].includes(e.key)
+                        ) {
+                          e.preventDefault();
+                        }
+                      }}
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-gray-900 text-sm transition"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-400 bg-white pl-2">
+                      Puntos
+                    </span>
+                  </div>
+                </div>
 
               {/* Tipo */}
               <div className="space-y-1.5">
