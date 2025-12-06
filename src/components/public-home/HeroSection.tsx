@@ -1,6 +1,6 @@
 // src/components/public-home/HeroSection.tsx
 
-import { Card, CardContent } from '@/components/ui/Card2'; // Revisa la ruta/nombre si usaste Card2
+import { Card, CardContent } from '@/components/ui/Card2'; 
 import { Award, Medal, Trophy, Users } from 'lucide-react';
 
 interface HeroSectionProps {
@@ -17,8 +17,12 @@ export function HeroSection({
   bronzeMedals,
 }: HeroSectionProps) {
   return (
-    <section className="bg-[var(--azul)] text-white py-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    // 🚨 CAMBIO: Eliminamos bg-[var(--azul)] y py-16.
+    // El padding y el color de fondo ahora son controlados por el contenedor en page.tsx.
+    <section className="text-white"> 
+      {/* 🚨 CAMBIO: Eliminamos el contenedor max-w-7xl/mx-auto/px-4 que ya está en page.tsx */}
+      {/* Lo reemplazamos con un div simple o simplemente usamos el div que ya estaba para el text-center */}
+      <div> 
         <div className="text-center">
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
             Olimpiada en Ciencias y Tecnología
