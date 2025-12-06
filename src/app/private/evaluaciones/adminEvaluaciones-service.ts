@@ -1,3 +1,4 @@
+//src/app/private/evaluaciones/adminEvaluaciones-service.ts
 import { api } from '@/libs/api';
 import { CompetidorInscripcionAdmin } from '@/types/notas';
 
