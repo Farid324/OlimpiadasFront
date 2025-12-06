@@ -1,4 +1,4 @@
-// src/components/public-home/ResultsFilters.tsx
+// src/components/public-home/ResultsFilters.tsx (CORREGIDO)
 
 import { Input } from '@/components/ui/Input';
 import {
@@ -8,8 +8,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/Select';
-import { Search, Filter, Calendar, Medal } from 'lucide-react';
-import { ActiveTab } from '@/types/principal'; // Importa el tipo
+import { Search, Filter, Calendar } from 'lucide-react'; // 🚨 ELIMINADO: Medal icon
+import { ActiveTab } from '@/types/principal';
 
 interface ResultsFiltersProps {
   searchTerm: string;
@@ -20,8 +20,8 @@ interface ResultsFiltersProps {
   selectedYear: string;
   onSelectedYearChange: (year: string) => void;
   years: number[];
-  selectedMedal: string;
-  onSelectedMedalChange: (medal: string) => void;
+  // 🚨 ELIMINADO: selectedMedal: string;
+  // 🚨 ELIMINADO: onSelectedMedalChange: (medal: string) => void;
   activeTab: ActiveTab;
 }
 
@@ -34,27 +34,35 @@ export function ResultsFilters({
   selectedYear,
   onSelectedYearChange,
   years,
-  selectedMedal,
-  onSelectedMedalChange,
+  // 🚨 ELIMINADO: selectedMedal,
+  // 🚨 ELIMINADO: onSelectedMedalChange,
   activeTab,
 }: ResultsFiltersProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-      <div className="relative md:col-span-2">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+    // Ahora, si Year está oculto, pasamos de 4 a 3 columnas activas en desktop
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6"> 
+      
+      {/* INPUT DE BÚSQUEDA */}
+      <div className="relative sm:col-span-2">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
         <Input
           placeholder="Buscar por CI..."
           value={searchTerm}
           onChange={(e) => onSearchTermChange(e.target.value)}
-          className="pl-10"
+          // 🚨 CAMBIO VISUAL: Borde más oscuro y texto más visible
+          className="pl-10 w-full border-gray-400 placeholder:text-gray-500 text-gray-900 focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
         />
       </div>
 
+      {/* SELECT DE ÁREA */}
       <Select value={selectedArea} onValueChange={onSelectedAreaChange}>
-        <SelectTrigger>
+        <SelectTrigger 
+          // 🚨 CAMBIO VISUAL: Borde más oscuro y texto más visible
+          className="border-gray-400 text-gray-900 data-[placeholder]:text-gray-900" 
+        >
           <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            <SelectValue placeholder="Área" />
+            <Filter className="h-4 w-4 text-gray-500" />
+            <SelectValue placeholder="Todas las áreas" />
           </div>
         </SelectTrigger>
         <SelectContent>
@@ -67,12 +75,16 @@ export function ResultsFilters({
         </SelectContent>
       </Select>
 
+      {/* SELECT DE AÑO (Solo en Histórico) */}
       {activeTab === 'historical' && (
         <Select value={selectedYear} onValueChange={onSelectedYearChange}>
-          <SelectTrigger>
+          <SelectTrigger 
+            // 🚨 CAMBIO VISUAL: Borde más oscuro y texto más visible
+            className="border-gray-400 text-gray-900 data-[placeholder]:text-gray-900"
+          >
             <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              <SelectValue placeholder="Año" />
+              <Calendar className="h-4 w-4 text-gray-500" />
+              <SelectValue placeholder="Todos los años" />
             </div>
           </SelectTrigger>
           <SelectContent>
@@ -86,22 +98,7 @@ export function ResultsFilters({
         </Select>
       )}
 
-      <Select value={selectedMedal} onValueChange={onSelectedMedalChange}>
-        <SelectTrigger
-          className={activeTab === 'current' ? '' : 'md:col-start-4'}
-        >
-          <div className="flex items-center gap-2">
-            <Medal className="h-4 w-4" />
-            <SelectValue placeholder="Medalla" />
-          </div>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Todas las medallas</SelectItem>
-          <SelectItem value="Oro">Oro</SelectItem>
-          <SelectItem value="Plata">Plata</SelectItem>
-          <SelectItem value="Bronce">Bronce</SelectItem>
-        </SelectContent>
-      </Select>
+      {/* 🚨 ELIMINADO: SELECT DE MEDALLA (Estaba aquí) */}
     </div>
   );
 }
