@@ -20,6 +20,17 @@ export async function fetchAreaCounters(): Promise<AreaCounter[]> {
     }));
   }
 }
+export async function fetchAvailableAreas(): Promise<string[]> {
+  try {
+    // Si tu API tiene un endpoint simple para las áreas:
+    const { data } = await api.get<{ nombre_area: string }[]>("/areas/nombres");
+    return data.map(a => a.nombre_area);
+  } catch {
+    // Si no lo tiene, reutilizamos la lógica de fetchAreaCounters para obtener los nombres
+    const { data } = await api.get<{ id_area: number; nombre_area: string }[]>("/areas");
+    return data.map(a => a.nombre_area);
+  }
+}
 
 export async function fetchOlimpistas(params?: { area?: string; q?: string }) {
   const { area, q } = params || {};

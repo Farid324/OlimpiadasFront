@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from '@/components/ui/Select';
 import { Search, Filter, Calendar, Medal } from 'lucide-react';
-import { ActiveTab } from '@/types/principal'; // Importa el tipo
+import { ActiveTab } from '@/types/principal';
 
 interface ResultsFiltersProps {
   searchTerm: string;
@@ -39,17 +39,22 @@ export function ResultsFilters({
   activeTab,
 }: ResultsFiltersProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-      <div className="relative md:col-span-2">
+    // CLASE CLAVE: grid-cols-1 en móvil, se expande a grid-cols-2 en sm, 
+    // y luego a grid-cols-4 en md (desktop/tablet grande).
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      
+      {/* INPUT DE BÚSQUEDA: Ocupa 1 columna en móvil (grid-cols-1), 2 en tablet (sm:col-span-2) */}
+      <div className="relative sm:col-span-2">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
         <Input
           placeholder="Buscar por CI..."
           value={searchTerm}
           onChange={(e) => onSearchTermChange(e.target.value)}
-          className="pl-10"
+          className="pl-10 w-full"
         />
       </div>
 
+      {/* SELECT DE ÁREA: Ocupa 1 columna en móvil, 1 en desktop */}
       <Select value={selectedArea} onValueChange={onSelectedAreaChange}>
         <SelectTrigger>
           <div className="flex items-center gap-2">
@@ -67,6 +72,7 @@ export function ResultsFilters({
         </SelectContent>
       </Select>
 
+      {/* SELECT DE AÑO (Solo en Histórico) */}
       {activeTab === 'historical' && (
         <Select value={selectedYear} onValueChange={onSelectedYearChange}>
           <SelectTrigger>
@@ -86,9 +92,13 @@ export function ResultsFilters({
         </Select>
       )}
 
+      {/* SELECT DE MEDALLA: Ocupa 1 columna en móvil. 
+        Aseguramos que ocupe la columna de la derecha en desktop cuando 'Año' no está presente. 
+      */}
       <Select value={selectedMedal} onValueChange={onSelectedMedalChange}>
+        {/* Usamos md:col-start-4 condicionalmente, asegurando que solo se aplique en desktop */}
         <SelectTrigger
-          className={activeTab === 'current' ? '' : 'md:col-start-4'}
+          className={activeTab === 'current' ? 'md:col-start-4' : ''}
         >
           <div className="flex items-center gap-2">
             <Medal className="h-4 w-4" />
