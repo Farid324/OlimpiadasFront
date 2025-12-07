@@ -140,7 +140,7 @@ export default function PhaseRow({
     }
   }
 
-  const isButtonDisabled = !!accionDisabled || !canApprove;
+  //const isButtonDisabled = !!accionDisabled || !canApprove;
 
   return (
     <>

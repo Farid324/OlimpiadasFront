@@ -92,8 +92,8 @@ export default function Page() {
         // ASUNCIÓN CLAVE: c.phase debe existir en CompetitorData y contener 'fase1' o 'fase2'
         // Si no tienes este campo, aquí es donde la lógica falla.
         results = results.filter((c) => {
-            // @ts-ignore: Asumimos que la data tiene un campo 'phase'
-            return c.phase === activePhase; 
+            
+            return (c as CompetitorData & { phase?: string }).phase === activePhase;
         });
     }
 
