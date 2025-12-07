@@ -3,7 +3,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { UserPlus, ShieldCheck, Users } from "lucide-react";
+import { ShieldCheck, Users } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import {
   fetchEquipoGestionActual,
@@ -48,8 +48,13 @@ export default function EquipoTab() {
     };
   }, []);
 
-  const responsables: ResponsableEquipo[] = data?.responsables ?? [];
-  const evaluadores: EvaluadorEquipo[] = data?.evaluadores ?? [];
+  const responsables = useMemo<ResponsableEquipo[]>(() => {
+    return data?.responsables ?? [];
+  }, [data]);
+
+  const evaluadores = useMemo<EvaluadorEquipo[]>(() => {
+    return data?.evaluadores ?? [];
+  }, [data]);
 
   const metrics = useMemo(() => {
     const totalResponsables = responsables.length;
