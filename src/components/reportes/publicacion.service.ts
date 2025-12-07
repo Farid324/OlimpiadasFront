@@ -1,49 +1,39 @@
-// src/components/reportes/publicacion.service.ts
+// src/services/publicacion.service.ts (o donde tengas tus servicios de API)
 import { api } from '@/libs/api';
-import { PublicacionFilters } from '@/types/principal'; // Importará de tu archivo de tipos
 
-// (Esta función es idéntica, solo cambia el tipo)
-// Normaliza params: quita null/undefined/0
-const toParams = (p: PublicacionFilters = {}) => {
-  const out: Record<string, string | number> = {};
-  if (p.id_area && Number(p.id_area) !== 0) out.id_area = Number(p.id_area);
-  if (p.id_nivel && Number(p.id_nivel) !== 0) out.id_nivel = Number(p.id_nivel);
-  if (p.anio) out.anio = Number(p.anio);
-  // 'q' (search) no es necesario para tu pestaña
-  return out;
+type PublicacionFilters = {
+  id_area?: number;
+  id_nivel?: number;
 };
 
-/** Descarga el Excel de Publicación (Clasificados) */
-export async function exportPublicacionExcel(params: PublicacionFilters = {}) {
-  const clean = toParams(params);
+/**
+ * Exporta el Excel de publicación
+ */
+export async function exportPublicacionExcel(filters?: PublicacionFilters): Promise<void> {
+  const params = new URLSearchParams();
   
-  // CAMBIO 1: Apunta al nuevo endpoint del backend
-  const res = await api.get<Blob>('/reportes/publicacion/export', {
-    params: clean,
+  if (filters?.id_area && filters.id_area > 0) {
+    params.set('id_area', String(filters.id_area));
+  }
+  if (filters?.id_nivel && filters.id_nivel > 0) {
+    params.set('id_nivel', String(filters.id_nivel));
+  }
+
+  const res = await api.get('/reportes/publicacion/export', {
+    params: Object.fromEntries(params),
     responseType: 'blob',
   });
 
-  // El resto es la misma lógica de descarga
-  const ts = new Date();
-  const hh = String(ts.getHours()).padStart(2, '0');
-  const mm = String(ts.getMinutes()).padStart(2, '0');
-  const ss = String(ts.getSeconds()).padStart(2, '0');
-  const anio = (clean.anio as number) ?? ts.getFullYear();
-
-  // CAMBIO 2: Cambia el nombre del archivo
-  const filename = `publicacion_${clean.id_area ?? 'todas'}_${
-    clean.id_nivel ?? 'todos'
-  }_${anio}_${hh}${mm}${ss}.xlsx`;
-
-  const blob = new Blob([res.data], {
-    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  });
-  const url = URL.createObjectURL(blob);
+  const blob = res.data as Blob;
+  const url = window.URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
+  
+  // Nombre del archivo con filtros
+  const ia = filters?.id_area ?? 'todas';
+  const inv = filters?.id_nivel ?? 'todos';
+  a.download = `publicacion_${ia}_${inv}.xlsx`;
+  
   a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  window.URL.revokeObjectURL(url);
 }
