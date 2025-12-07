@@ -1,3 +1,4 @@
+//src/app/private/evaluaciones/evaluadores/modalEvaluacion.tsx
 "use client";
 import React, { useEffect, useState } from "react";
 import { X, CheckCircle2, XCircle } from "lucide-react";

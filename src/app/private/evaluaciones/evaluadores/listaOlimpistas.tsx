@@ -1,3 +1,4 @@
+//src/app/private/evaluaciones/evaluadores/listaOlimpistas.tsx
 'use client';
 import { useMemo, useState } from 'react';
 import { CompetidorInscripcion } from '@/types/notas';
