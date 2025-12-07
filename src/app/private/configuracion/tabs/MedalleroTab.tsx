@@ -163,7 +163,7 @@ export default function MedalleroTab() {
     <div className="space-y-6">
 
       {/* Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-6 gap-4">
         <CardMetricNoIcon 
             label="Áreas" 
             value={metrics.totalAreas} 

@@ -22,6 +22,7 @@ export interface FilaFase {
     clasificados?: number;
     noClasificados?: number;
     descalificados?: number;
+    noEvaluados?: number;
   };
 
   responsable?: string;

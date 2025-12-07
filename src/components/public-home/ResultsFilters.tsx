@@ -1,4 +1,4 @@
-// src/components/public-home/ResultsFilters.tsx
+// src/components/public-home/ResultsFilters.tsx (CORREGIDO: Muestra el filtro de Año Siempre)
 
 import { Input } from '@/components/ui/Input';
 import {
@@ -8,8 +8,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/Select';
-import { Search, Filter, Calendar, Medal } from 'lucide-react';
-import { ActiveTab } from '@/types/principal'; // Importa el tipo
+import { Search, Filter, Calendar } from 'lucide-react'; 
+import { ActiveTab } from '@/types/principal';
 
 interface ResultsFiltersProps {
   searchTerm: string;
@@ -20,8 +20,6 @@ interface ResultsFiltersProps {
   selectedYear: string;
   onSelectedYearChange: (year: string) => void;
   years: number[];
-  selectedMedal: string;
-  onSelectedMedalChange: (medal: string) => void;
   activeTab: ActiveTab;
 }
 
@@ -34,27 +32,30 @@ export function ResultsFilters({
   selectedYear,
   onSelectedYearChange,
   years,
-  selectedMedal,
-  onSelectedMedalChange,
-  activeTab,
 }: ResultsFiltersProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-      <div className="relative md:col-span-2">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+    // La grilla md:grid-cols-4 ahora estará llena de filtros, incluso en 'current'
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6"> 
+      
+      {/* INPUT DE BÚSQUEDA */}
+      <div className="relative sm:col-span-2">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
         <Input
           placeholder="Buscar por CI..."
           value={searchTerm}
           onChange={(e) => onSearchTermChange(e.target.value)}
-          className="pl-10"
+          className="pl-10 w-full border-gray-400 placeholder:text-gray-500 text-gray-900 focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
         />
       </div>
 
+      {/* SELECT DE ÁREA */}
       <Select value={selectedArea} onValueChange={onSelectedAreaChange}>
-        <SelectTrigger>
+        <SelectTrigger 
+          className="border-gray-400 text-gray-900 data-[placeholder]:text-gray-900" 
+        >
           <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            <SelectValue placeholder="Área" />
+            <Filter className="h-4 w-4 text-gray-500" />
+            <SelectValue placeholder="Todas las áreas" />
           </div>
         </SelectTrigger>
         <SelectContent>
@@ -67,39 +68,24 @@ export function ResultsFilters({
         </SelectContent>
       </Select>
 
-      {activeTab === 'historical' && (
-        <Select value={selectedYear} onValueChange={onSelectedYearChange}>
-          <SelectTrigger>
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              <SelectValue placeholder="Año" />
-            </div>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos los años</SelectItem>
-            {years.map((year) => (
-              <SelectItem key={year} value={year.toString()}>
-                {year}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
-
-      <Select value={selectedMedal} onValueChange={onSelectedMedalChange}>
-        <SelectTrigger
-          className={activeTab === 'current' ? '' : 'md:col-start-4'}
+      {/* 🚨 CAMBIO CLAVE: Eliminamos la condición {activeTab === 'historical' && ...} */}
+      {/* SELECT DE AÑO (Visible Siempre) */}
+      <Select value={selectedYear} onValueChange={onSelectedYearChange}>
+        <SelectTrigger 
+          className="border-gray-400 text-gray-900 data-[placeholder]:text-gray-900"
         >
           <div className="flex items-center gap-2">
-            <Medal className="h-4 w-4" />
-            <SelectValue placeholder="Medalla" />
+            <Calendar className="h-4 w-4 text-gray-500" />
+            <SelectValue placeholder="Todos los años" />
           </div>
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Todas las medallas</SelectItem>
-          <SelectItem value="Oro">Oro</SelectItem>
-          <SelectItem value="Plata">Plata</SelectItem>
-          <SelectItem value="Bronce">Bronce</SelectItem>
+          <SelectItem value="all">Todos los años</SelectItem>
+          {years.map((year) => (
+            <SelectItem key={year} value={year.toString()}>
+              {year}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
     </div>

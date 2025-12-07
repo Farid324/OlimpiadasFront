@@ -23,6 +23,7 @@ export interface Evaluacion {
 
 export interface CompetidorInscripcion {
   clasificacion: string;
+  estado_final: string;
   id_inscripcion: number;
   estado_inscripcion: string;
   area: {
