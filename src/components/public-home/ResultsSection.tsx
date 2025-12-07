@@ -1,4 +1,4 @@
-// src/components/public-home/ResultsSection.tsx (CORREGIDO)
+// src/components/public-home/ResultsSection.tsx (FINAL CORREGIDO)
 
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card2';
@@ -9,6 +9,8 @@ import { ResultsFilters } from './ResultsFilters';
 import { ResultsTable } from './ResultsTable';
 
 import { CompetitorData, ActiveTab } from '@/types/principal';
+// 🚨 CAMBIO: Importamos ActivePhase desde el archivo page.tsx
+import { ActivePhase } from '@/app/page'; 
 
 interface ResultsSectionProps {
   competitors: CompetitorData[];
@@ -21,21 +23,22 @@ interface ResultsSectionProps {
   onSelectedAreaChange: (area: string) => void;
   selectedYear: string;
   onSelectedYearChange: (year: string) => void;
-  // 🚨 ELIMINADO: selectedMedal: string;
-  // 🚨 ELIMINADO: onSelectedMedalChange: (medal: string) => void;
   activeTab: ActiveTab;
   onActiveTabChange: (tab: ActiveTab) => void;
+  // 🚨 NUEVOS PROPS
+  activePhase: ActivePhase;
+  onActivePhaseChange: (phase: ActivePhase) => void;
   onDownloadPDF: () => void;
   getMedalColor: (medal: string) => string;
 }
 
 export function ResultsSection(props: ResultsSectionProps) {
+  const { activePhase, onActivePhaseChange, activeTab } = props;
+
   return (
-    // Se elimina el max-w-7xl y mx-auto de aquí, ya que el componente padre (Page.tsx) ya lo maneja
     <section className="py-12 border-[var(--bordeGris)]">
       <Card>
         <CardHeader>
-          {/* CLASE CLAVE: flex-col en móvil, cambia a flex-row en sm: (tablet) */}
           <CardTitle className="flex text-[var(--negro)] items-start justify-between sm:items-center flex-col sm:flex-row gap-4">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-6 w-6 text-[var(--azul)]" />
@@ -45,7 +48,7 @@ export function ResultsSection(props: ResultsSectionProps) {
             <Button
               onClick={props.onDownloadPDF}
               variant="outline"
-              className="gap-2 border-[var(--bordeGris)] w-full sm:w-auto" // w-full en móvil
+              className="gap-2 border-[var(--bordeGris)] w-full sm:w-auto"
             >
               <Download className="h-4 w-4" />
               Descargar PDF
@@ -60,10 +63,6 @@ export function ResultsSection(props: ResultsSectionProps) {
             onValueChange={(v) => props.onActiveTabChange(v as ActiveTab)}
             className="mb-6"
           >
-            {/* CLASE CLAVE: El TabsList ocupa todo el ancho (w-full) en móvil y se limita 
-                solo visualmente a 320px (max-w-[320px]) para que no se vea gigantesco en desktop. 
-                grid-cols-2 ya maneja la responsividad interna.
-            */}
             <TabsList className="grid w-full max-w-sm grid-cols-2">
               <TabsTrigger value="current" className="gap-2">
                 <Calendar className="h-4 w-4" />
@@ -80,14 +79,18 @@ export function ResultsSection(props: ResultsSectionProps) {
             {/* TAB: CLASIFICANDO (CON FASES INTERNAS) */}
             {/* ----------------------------------- */}
             <TabsContent value="current" className="mt-6">
-              <Tabs defaultValue="fase1" className="mb-6">
-                {/* Lo mismo para el TabsList interno, w-full en móvil, limitado en desktop */}
+              {/* 🚨 CAMBIO CLAVE: Controlamos el valor de la Fase interna con activePhase y onActivePhaseChange */}
+              <Tabs 
+                value={activePhase} 
+                onValueChange={(v) => onActivePhaseChange(v as ActivePhase)} 
+                className="mb-6"
+              >
                 <TabsList className="grid w-full max-w-sm grid-cols-2">
                   <TabsTrigger value="fase1">Fase Clasificatoria</TabsTrigger>
                   <TabsTrigger value="fase2">Fase Final</TabsTrigger>
                 </TabsList>
 
-                {/* === FASE CLASIFICATORIA === */}
+                {/* === FASE CLASIFICATORIA (fase1) === */}
                 <TabsContent value="fase1">
                   <ResultsFilters
                     searchTerm={props.searchTerm}
@@ -98,8 +101,6 @@ export function ResultsSection(props: ResultsSectionProps) {
                     selectedYear={props.selectedYear}
                     onSelectedYearChange={props.onSelectedYearChange}
                     years={props.years}
-                    // 🚨 ELIMINADO: selectedMedal={props.selectedMedal}
-                    // 🚨 ELIMINADO: onSelectedMedalChange={props.onSelectedMedalChange}
                     activeTab="current"
                   />
 
@@ -110,10 +111,13 @@ export function ResultsSection(props: ResultsSectionProps) {
                   <ResultsTable
                     filteredCompetitors={props.filteredCompetitors}
                     getMedalColor={props.getMedalColor}
+                    // 🚨 AÑADIDO: Pasamos activeTab y activePhase
+                    activeTab={activeTab} 
+                    activePhase={activePhase} 
                   />
                 </TabsContent>
 
-                {/* === FASE FINAL === */}
+                {/* === FASE FINAL (fase2) === */}
                 <TabsContent value="fase2">
                   <ResultsFilters
                     searchTerm={props.searchTerm}
@@ -124,8 +128,6 @@ export function ResultsSection(props: ResultsSectionProps) {
                     selectedYear={props.selectedYear}
                     onSelectedYearChange={props.onSelectedYearChange}
                     years={props.years}
-                    // 🚨 ELIMINADO: selectedMedal={props.selectedMedal}
-                    // 🚨 ELIMINADO: onSelectedMedalChange={props.onSelectedMedalChange}
                     activeTab="current"
                   />
 
@@ -136,6 +138,9 @@ export function ResultsSection(props: ResultsSectionProps) {
                   <ResultsTable
                     filteredCompetitors={props.filteredCompetitors}
                     getMedalColor={props.getMedalColor}
+                    // 🚨 AÑADIDO: Pasamos activeTab y activePhase
+                    activeTab={activeTab} 
+                    activePhase={activePhase} 
                   />
                 </TabsContent>
               </Tabs>
@@ -154,18 +159,15 @@ export function ResultsSection(props: ResultsSectionProps) {
                 selectedYear={props.selectedYear}
                 onSelectedYearChange={props.onSelectedYearChange}
                 years={props.years}
-                // 🚨 ELIMINADO: selectedMedal={props.selectedMedal}
-                // 🚨 ELIMINADO: onSelectedMedalChange={props.onSelectedMedalChange}
                 activeTab="historical"
               />
-
-              <div className="mb-4 text-sm text-gray-600">
-                Mostrando {props.filteredCompetitors.length} competidores
-              </div>
 
               <ResultsTable
                 filteredCompetitors={props.filteredCompetitors}
                 getMedalColor={props.getMedalColor}
+                // 🚨 AÑADIDO: Pasamos activeTab y activePhase
+                activeTab={activeTab}
+                activePhase={activePhase} 
               />
             </TabsContent>
           </Tabs>
