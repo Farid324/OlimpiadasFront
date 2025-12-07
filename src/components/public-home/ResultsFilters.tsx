@@ -1,4 +1,4 @@
-// src/components/public-home/ResultsFilters.tsx (CORREGIDO)
+// src/components/public-home/ResultsFilters.tsx (CORREGIDO: Muestra el filtro de Año Siempre)
 
 import { Input } from '@/components/ui/Input';
 import {
@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/Select';
-import { Search, Filter, Calendar } from 'lucide-react'; // 🚨 ELIMINADO: Medal icon
+import { Search, Filter, Calendar } from 'lucide-react'; 
 import { ActiveTab } from '@/types/principal';
 
 interface ResultsFiltersProps {
@@ -20,8 +20,6 @@ interface ResultsFiltersProps {
   selectedYear: string;
   onSelectedYearChange: (year: string) => void;
   years: number[];
-  // 🚨 ELIMINADO: selectedMedal: string;
-  // 🚨 ELIMINADO: onSelectedMedalChange: (medal: string) => void;
   activeTab: ActiveTab;
 }
 
@@ -34,12 +32,9 @@ export function ResultsFilters({
   selectedYear,
   onSelectedYearChange,
   years,
-  // 🚨 ELIMINADO: selectedMedal,
-  // 🚨 ELIMINADO: onSelectedMedalChange,
-  activeTab,
 }: ResultsFiltersProps) {
   return (
-    // Ahora, si Year está oculto, pasamos de 4 a 3 columnas activas en desktop
+    // La grilla md:grid-cols-4 ahora estará llena de filtros, incluso en 'current'
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6"> 
       
       {/* INPUT DE BÚSQUEDA */}
@@ -49,7 +44,6 @@ export function ResultsFilters({
           placeholder="Buscar por CI..."
           value={searchTerm}
           onChange={(e) => onSearchTermChange(e.target.value)}
-          // 🚨 CAMBIO VISUAL: Borde más oscuro y texto más visible
           className="pl-10 w-full border-gray-400 placeholder:text-gray-500 text-gray-900 focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
         />
       </div>
@@ -57,7 +51,6 @@ export function ResultsFilters({
       {/* SELECT DE ÁREA */}
       <Select value={selectedArea} onValueChange={onSelectedAreaChange}>
         <SelectTrigger 
-          // 🚨 CAMBIO VISUAL: Borde más oscuro y texto más visible
           className="border-gray-400 text-gray-900 data-[placeholder]:text-gray-900" 
         >
           <div className="flex items-center gap-2">
@@ -75,30 +68,26 @@ export function ResultsFilters({
         </SelectContent>
       </Select>
 
-      {/* SELECT DE AÑO (Solo en Histórico) */}
-      {activeTab === 'historical' && (
-        <Select value={selectedYear} onValueChange={onSelectedYearChange}>
-          <SelectTrigger 
-            // 🚨 CAMBIO VISUAL: Borde más oscuro y texto más visible
-            className="border-gray-400 text-gray-900 data-[placeholder]:text-gray-900"
-          >
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-gray-500" />
-              <SelectValue placeholder="Todos los años" />
-            </div>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos los años</SelectItem>
-            {years.map((year) => (
-              <SelectItem key={year} value={year.toString()}>
-                {year}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
-
-      {/* 🚨 ELIMINADO: SELECT DE MEDALLA (Estaba aquí) */}
+      {/* 🚨 CAMBIO CLAVE: Eliminamos la condición {activeTab === 'historical' && ...} */}
+      {/* SELECT DE AÑO (Visible Siempre) */}
+      <Select value={selectedYear} onValueChange={onSelectedYearChange}>
+        <SelectTrigger 
+          className="border-gray-400 text-gray-900 data-[placeholder]:text-gray-900"
+        >
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-gray-500" />
+            <SelectValue placeholder="Todos los años" />
+          </div>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Todos los años</SelectItem>
+          {years.map((year) => (
+            <SelectItem key={year} value={year.toString()}>
+              {year}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }

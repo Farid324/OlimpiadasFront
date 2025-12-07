@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, Filter, Users } from 'lucide-react';
+import { Search, Filter } from 'lucide-react';
 
 // Importar componentes de UI (Asegúrate de que estas rutas sean correctas)
 import { Input } from '@/components/ui/Input';

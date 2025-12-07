@@ -88,7 +88,7 @@ export default function OlimpistasPage() {
 
   return (
     // 👉 Contenedor igual que en tu código de ejemplo (desktop)
-    <div className="p-3 sm:p-6 space-y-6 overflow-hidden">
+    <div className="p-0 sm:p-6 space-y-6">
       {/* Encabezado */}
       <div>
         <h1 className="text-2xl font-bold text-black">Gestión de Olimpistas</h1>
