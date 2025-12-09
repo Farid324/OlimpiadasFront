@@ -59,7 +59,8 @@ export default function Page() {
     if (activeTab === 'historical' && selectedYear === 'all' && allYears.length > 0) {
       setSelectedYear(allYears[0].toString());
     }
-  }, [activeTab, allYears]); 
+    // ⭐ CORRECCIÓN DE WARNING: Añadir selectedYear a las dependencias (Línea 65)
+  }, [activeTab, allYears, selectedYear]); 
 
 
   // Función para obtener los datos de la PESTAÑA/FASE activa
@@ -68,7 +69,8 @@ export default function Page() {
     setCompetitors([]); 
 
     let endpoint = '';
-    let params: Record<string, any> = {};
+    // ⭐ CORRECCIÓN DE ERROR: Cambiar 'let' por 'const' (Línea 75)
+    const params: Record<string, number | undefined> = {}; 
 
     const idArea = selectedArea === 'all' ? undefined : parseInt(selectedArea);
 
@@ -115,7 +117,8 @@ export default function Page() {
     } finally {
       setLoading(false);
     }
-  }, [activeTab, activePhase, selectedArea, selectedYear, allYears]);
+    // Añadido selectedYear en la dependencia para `useCallback` en la corrección anterior
+  }, [activeTab, activePhase, selectedArea, selectedYear, allYears]); 
 
   // Disparar la carga cada vez que cambian las dependencias de la vista/filtro
   useEffect(() => {
@@ -224,7 +227,10 @@ export default function Page() {
         
         
 
+
+
 [Image of a simple loading spinner for web]
+
 
 
       </div>
