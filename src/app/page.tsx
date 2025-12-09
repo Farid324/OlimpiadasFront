@@ -1,8 +1,8 @@
-// Ruta: src/app/page.tsx (CON FILTRO POR FASE IMPLEMENTADO)
+// Ruta: src/app/page.tsx (COMPLETO Y FINAL CON RUTAS API CORREGIDAS)
 'use client'; 
 
 import { useRouter } from 'next/navigation';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import autoTable, { UserOptions } from 'jspdf-autotable';
@@ -22,7 +22,7 @@ declare module 'jspdf' {
   }
 }
 
-// 🚨 EXPORTAR EL TIPO DE FASE para que ResultsSection lo use
+// Exportar el tipo de fase para que ResultsSection lo use
 export type ActivePhase = 'fase1' | 'fase2'; 
 
 export default function Page() {
@@ -33,94 +33,131 @@ export default function Page() {
   const [selectedArea, setSelectedArea] = useState<string>('all');
   const [selectedYear, setSelectedYear] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<ActiveTab>('current');
-  // 🚨 AÑADIDO: Estado para la fase activa (solo relevante en activeTab='current')
   const [activePhase, setActivePhase] = useState<ActivePhase>('fase1'); 
-  const [competitors, setCompetitors] = useState<CompetitorData[]>([]);
+  const [competitors, setCompetitors] = useState<CompetitorData[]>([]); 
+  const [allYears, setAllYears] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // --- LOGICA DE LLAMADAS API (Fetch Data) ---
+
+  // 1. Obtener los años disponibles del Histórico (Solo al montar)
   useEffect(() => {
-    async function fetchData() {
+    async function fetchYears() {
       try {
-        setLoading(true);
-        const { data } = await api.get<CompetitorData[]>('/public/reportes/clasificados');
-        setCompetitors(data || []);
+        // 🛑 RUTA CORREGIDA: Usando /principal/
+        const { data } = await api.get<number[]>('/principal/historico/anios');
+        setAllYears(data || []);
       } catch (error) {
-        console.error('Error fetching data:', error);
-        setCompetitors([]);
-      } finally {
-        setLoading(false);
+        console.error('Error fetching historical years:', error);
       }
     }
-    fetchData();
-  }, []);
+    fetchYears();
+  }, []); 
 
+  // 2. Sincronizar el año al cambiar a la pestaña Histórico
+  useEffect(() => {
+    if (activeTab === 'historical' && selectedYear === 'all' && allYears.length > 0) {
+      setSelectedYear(allYears[0].toString());
+    }
+  }, [activeTab, allYears]); 
+
+
+  // Función para obtener los datos de la PESTAÑA/FASE activa
+  const fetchActiveData = useCallback(async () => {
+    setLoading(true);
+    setCompetitors([]); 
+
+    let endpoint = '';
+    let params: Record<string, any> = {};
+
+    const idArea = selectedArea === 'all' ? undefined : parseInt(selectedArea);
+
+    try {
+      if (activeTab === 'current') {
+        // GESTIÓN ACTUAL
+        if (activePhase === 'fase1') {
+          // 🛑 RUTA CORREGIDA
+          endpoint = '/principal/competidores/clasificatoria';
+          if (idArea) params.idArea = idArea;
+        } else {
+          // 🛑 RUTA CORREGIDA
+          endpoint = '/principal/competidores/final';
+          if (idArea) params.idArea = idArea;
+        }
+      } else {
+        // HISTÓRICO
+        // 🛑 RUTA CORREGIDA
+        endpoint = '/principal/historico/competidores';
+        
+        let anio: number | undefined;
+
+        if (selectedYear !== 'all') {
+            anio = parseInt(selectedYear);
+        } else if (allYears.length > 0) {
+             anio = allYears[0];
+        }
+
+        if (!anio || isNaN(anio)) {
+            setLoading(false);
+            return;
+        }
+
+        params.anio = anio;
+        if (idArea) params.idArea = idArea;
+      }
+      
+      const { data } = await api.get<CompetitorData[]>(endpoint, { params });
+      setCompetitors(data || []);
+
+    } catch (error) {
+      console.error(`Error fetching data for ${activeTab}/${activePhase}:`, error);
+      setCompetitors([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [activeTab, activePhase, selectedArea, selectedYear, allYears]);
+
+  // Disparar la carga cada vez que cambian las dependencias de la vista/filtro
+  useEffect(() => {
+    fetchActiveData();
+  }, [fetchActiveData]); 
+
+  // --- LOGICA DE FILTRADO LOCAL (Solo por CI) ---
+  
   const areas = useMemo(
     () => Array.from(new Set(competitors.map((c) => c.area))),
     [competitors]
   );
   
   const years = useMemo(
-    () =>
-      Array.from(new Set(competitors.map((c) => c.year))).sort(
-        (a, b) => b - a
-      ),
-    [competitors]
+    () => allYears,
+    [allYears]
   );
 
   const filteredCompetitors = useMemo(() => {
     const t = searchTerm.trim().toLowerCase();
     
-    // Obtenemos los competidores que coinciden con la búsqueda, área y año
-    let results = competitors.filter((c) => {
-      const matchesSearch = t === '' || c.ci.toLowerCase().includes(t);
-      const matchesArea = selectedArea === 'all' || c.area === selectedArea;
-      const matchesYear = selectedYear === 'all' || c.year.toString() === selectedYear;
-      
-      return matchesSearch && matchesArea && matchesYear;
-    });
+    if (t === '') return competitors;
 
-    // Filtro por Estatus (Actual/Histórico)
-    const currentYear = new Date().getFullYear();
-    results = results.filter((c) => {
-        return activeTab === 'current'
-          ? c.year === currentYear
-          : c.year < currentYear;
-    });
+    return competitors.filter((c) => c.ci.toLowerCase().includes(t));
 
-    // 🚨 FILTRO POR FASE: Solo si estamos en la pestaña 'current'
-    if (activeTab === 'current') {
-        // ASUNCIÓN CLAVE: c.phase debe existir en CompetitorData y contener 'fase1' o 'fase2'
-        // Si no tienes este campo, aquí es donde la lógica falla.
-        results = results.filter((c) => {
-            // @ts-ignore: Asumimos que la data tiene un campo 'phase'
-            return c.phase === activePhase; 
-        });
-    }
+  }, [competitors, searchTerm]);
 
-    return results;
 
-  }, [
-    competitors,
-    searchTerm,
-    selectedArea,
-    selectedYear,
-    activeTab,
-    activePhase // 🚨 AÑADIDO: activePhase al array de dependencias
-  ]);
-
-  const currentYearStats = useMemo(
-    () => competitors.filter((c) => c.year === new Date().getFullYear()),
-    [competitors]
-  );
-
-  const goldMedals = currentYearStats.filter((c) => c.medal === 'Oro').length;
-  const silverMedals = currentYearStats.filter((c) => c.medal === 'Plata').length;
-  const bronzeMedals = currentYearStats.filter((c) => c.medal === 'Bronce').length;
+  // --- ESTATUS Y MEDALLERO ---
+  
+  const currentYearStats = useMemo(() => {
+    // Retorna solo los competidores del año actual para los stats del Hero
+    return competitors.filter((c) => c.year === new Date().getFullYear());
+  }, [competitors]); 
+  
+  const goldMedals = currentYearStats.filter((c) => c.medal === 'ORO').length;
+  const silverMedals = currentYearStats.filter((c) => c.medal === 'PLATA').length;
+  const bronzeMedals = currentYearStats.filter((c) => c.medal === 'BRONCE').length;
 
   const handleNavigateToLogin = () => router.push('/auth');
 
   const downloadPDF = () => {
-    // ... (Lógica de downloadPDF sin cambios)
     const doc = new jsPDF();
     doc.setFontSize(18);
     doc.text('Oh! SanSi 2025', 14, 20);
@@ -135,7 +172,7 @@ export default function Page() {
       35
     );
     doc.text(
-      `Generado el: ${new Date().toLocaleDateString('es-ES')}`,
+      `Fase: ${activePhase === 'fase1' ? 'Clasificatoria' : 'Final'}`,
       14,
       41
     );
@@ -151,7 +188,7 @@ export default function Page() {
         c.area,
         c.school,
         c.year.toString(),
-        c.medal,
+        c.medal ?? 'N/A', 
         c.score.toString()
       ]),
       styles: { fontSize: 8 },
@@ -159,17 +196,17 @@ export default function Page() {
     });
 
     doc.save(
-      `clasificados-ohsansi-${activeTab}-${new Date().getTime()}.pdf`
+      `clasificados-ohsansi-${activeTab}-${activePhase}-${new Date().getTime()}.pdf`
     );
   };
 
-  const getMedalColor = (medal: string) => {
+  const getMedalColor = (medal: string | null) => {
     switch (medal) {
-      case 'Oro':
+      case 'ORO':
         return 'bg-yellow-500 text-white';
-      case 'Plata':
+      case 'PLATA':
         return 'bg-gray-400 text-white';
-      case 'Bronce':
+      case 'BRONCE':
         return 'bg-orange-600 text-white';
       default:
         return 'bg-gray-200 text-gray-800';
@@ -211,8 +248,8 @@ export default function Page() {
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 pt-0 -mt-10 md:-mt-16"> 
         <ResultsSection
-          competitors={competitors}
-          filteredCompetitors={filteredCompetitors}
+          competitors={competitors} 
+          filteredCompetitors={filteredCompetitors} 
           areas={areas}
           years={years}
           searchTerm={searchTerm}
@@ -223,7 +260,6 @@ export default function Page() {
           onSelectedYearChange={setSelectedYear}
           activeTab={activeTab}
           onActiveTabChange={setActiveTab}
-          // 🚨 NUEVOS PROPS
           activePhase={activePhase} 
           onActivePhaseChange={setActivePhase} 
           onDownloadPDF={downloadPDF}
