@@ -1,4 +1,4 @@
-// src/components/public-home/ResultsSection.tsx (FINAL CORREGIDO)
+// src/components/public-home/ResultsSection.tsx (CORREGIDO: Tipo de getMedalColor)
 
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card2';
@@ -7,7 +7,6 @@ import { Download, TrendingUp, Calendar, Trophy } from 'lucide-react';
 
 import { ResultsFilters } from './ResultsFilters';
 import { ResultsTable } from './ResultsTable';
-
 import { CompetitorData, ActiveTab } from '@/types/principal';
 // 🚨 CAMBIO: Importamos ActivePhase desde el archivo page.tsx
 import { ActivePhase } from '@/app/page'; 
@@ -29,7 +28,8 @@ interface ResultsSectionProps {
   activePhase: ActivePhase;
   onActivePhaseChange: (phase: ActivePhase) => void;
   onDownloadPDF: () => void;
-  getMedalColor: (medal: string) => string;
+  // 🚨 CORRECCIÓN CLAVE: El tipo de 'medal' debe aceptar string o null
+  getMedalColor: (medal: string | null) => string; 
 }
 
 export function ResultsSection(props: ResultsSectionProps) {
@@ -161,6 +161,10 @@ export function ResultsSection(props: ResultsSectionProps) {
                 years={props.years}
                 activeTab="historical"
               />
+
+              <div className="mb-4 text-sm text-gray-600">
+                Mostrando {props.filteredCompetitors.length} competidores
+              </div>
 
               <ResultsTable
                 filteredCompetitors={props.filteredCompetitors}
