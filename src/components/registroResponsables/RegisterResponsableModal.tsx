@@ -63,7 +63,6 @@ const schema = z.object({
     const v = value.trim();
     if (v === '') return; // opcional
 
-    // solo dígitos
     if (!/^\d+$/.test(v)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -72,7 +71,6 @@ const schema = z.object({
       return;
     }
 
-    // longitud exacta 8
     if (v.length !== 8) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -80,7 +78,6 @@ const schema = z.object({
       });
     }
 
-    // debe iniciar con 6 o 7
     if (!/^[67]/.test(v)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -95,31 +92,26 @@ const schema = z.object({
     .max(12, 'El CI debe tener entre 6 y 12 dígitos')
     .regex(/^[0-9]+$/, 'El CI solo debe contener números'),
 
-  // Institución sin validaciones (por ahora)
   institucion: z.string(),
-
-  // Experiencia sin validaciones (por ahora) → el back pondrá 1 por defecto si viene vacía
   experiencia: z.string(),
-
-  // Especialidad sin validación de mínimo (por ahora)
   especialidad: z.string(),
 
-  id_area: z
-    .string()
-    .refine((v) => v !== '0', { message: 'Debe seleccionar un área' }),
+  id_area: z.string().refine((v) => v !== '0', { message: 'Debe seleccionar un área' }),
 });
 
 type FormData = z.infer<typeof schema>;
 
+// Ajustado: opcionales para que NO se envíen si están vacíos
 type ResponsablePayload = {
   nombre: string;
   apellido: string;
   correo: string;
-  telefono: string;
   ci: string;
-  institucion: string;
-  especialidad: string;
   id_area: number;
+
+  telefono?: string;
+  institucion?: string;
+  especialidad?: string;
   experiencia?: number;
 };
 
@@ -133,7 +125,7 @@ export default function RegisterResponsableModal({
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [dupError, setDupError] = useState<string | null>(null);
-  const [lockAfterSuccess, setLockAfterSuccess] = useState(false); // deshabilita UI mientras muestra banner
+  const [lockAfterSuccess, setLockAfterSuccess] = useState(false);
 
   const {
     register,
@@ -153,9 +145,7 @@ export default function RegisterResponsableModal({
       setValue('institucion', initial.institucion || '');
       setValue('especialidad', initial.especialidad || '');
       setValue('experiencia', initial.experiencia || '');
-      if (initial.id_area) {
-        setValue('id_area', initial.id_area);
-      }
+      if (initial.id_area) setValue('id_area', initial.id_area);
     }
   }, [mode, initial, setValue]);
 
@@ -172,19 +162,25 @@ export default function RegisterResponsableModal({
   }, [mode, initial?.id_area, setValue]);
 
   const onSubmit = async (data: FormData) => {
-    if (lockAfterSuccess) return; // evita doble envío mientras muestra el banner
+    if (lockAfterSuccess) return;
+
     setLoading(true);
     setSuccessMsg(null);
     setDupError(null);
 
     try {
+      // normalizar valores
+      const correo = data.correo.trim();
+      const ci = data.ci.trim();
+      const telefono = data.telefono.trim();
+      const institucion = data.institucion.trim();
+      const especialidad = data.especialidad.trim();
+      const expStr = data.experiencia.trim();
+
       // Validaciones de duplicados (solo crear)
       if (mode === 'create') {
-        // Teléfono: solo si tiene valor
-        if (data.telefono && data.telefono.trim() !== '') {
-          const tel = await api.get(
-            `/responsables/check-telefono/${data.telefono.trim()}`,
-          );
+        if (telefono !== '') {
+          const tel = await api.get(`/responsables/check-telefono/${telefono}`);
           if (tel.data.exists) {
             setDupError('❌ El teléfono ya está registrado');
             setLoading(false);
@@ -192,18 +188,17 @@ export default function RegisterResponsableModal({
           }
         }
 
-        // CI y correo siempre se validan
-        const [ci, correo] = await Promise.all([
-          api.get(`/responsables/check-ci/${data.ci}`),
-          api.get(`/responsables/check-correo/${data.correo}`),
+        const [ciRes, correoRes] = await Promise.all([
+          api.get(`/responsables/check-ci/${ci}`),
+          api.get(`/responsables/check-correo/${correo}`),
         ]);
 
-        if (ci.data.exists) {
+        if (ciRes.data.exists) {
           setDupError('❌ El CI ya está registrado');
           setLoading(false);
           return;
         }
-        if (correo.data.exists) {
+        if (correoRes.data.exists) {
           setDupError('❌ El correo ya está registrado');
           setLoading(false);
           return;
@@ -212,6 +207,7 @@ export default function RegisterResponsableModal({
 
       // Un responsable por área
       const areaIdNum = Number(data.id_area);
+
       if (mode === 'create') {
         const areaRes = await api.get(`/responsables/check-area/${areaIdNum}`);
         if (areaRes.data?.exists) {
@@ -250,41 +246,36 @@ export default function RegisterResponsableModal({
         apellido = '';
       }
 
-      // Experiencia:
-      // - si está vacía NO se envía → el backend pondrá 1 año por defecto
-      // - si tiene valor se envía como number
-      const experienciaNum =
-        data.experiencia && data.experiencia.trim() !== ''
-          ? Number(data.experiencia.trim())
-          : undefined;
+      // Experiencia: si está vacía NO se envía
+      const experienciaNum = expStr !== '' ? Number(expStr) : undefined;
 
+      // Payload: SOLO mandamos opcionales si tienen valor
       const payload: ResponsablePayload = {
         nombre,
         apellido,
-        correo: data.correo,
-        telefono: data.telefono,
-        ci: data.ci,
-        institucion: data.institucion,
-        especialidad: data.especialidad,
-        id_area: Number(data.id_area),
+        correo,
+        ci,
+        id_area: areaIdNum,
       };
 
-      if (experienciaNum !== undefined) {
+      if (telefono !== '') payload.telefono = telefono;
+      if (institucion !== '') payload.institucion = institucion;
+      if (especialidad !== '') payload.especialidad = especialidad;
+      if (experienciaNum !== undefined && !Number.isNaN(experienciaNum)) {
         payload.experiencia = experienciaNum;
       }
 
       if (mode === 'edit' && initial?.id_usuario) {
         await api.patch(`/responsables/${initial.id_usuario}`, payload);
 
-        // 🔹 Mostrar banner y bloquear UI como en Evaluadores
         setSuccessMsg('Responsable actualizado correctamente');
         setLockAfterSuccess(true);
 
         setTimeout(() => {
           setLockAfterSuccess(false);
           setSuccessMsg(null);
-          onSuccess(); // refresca la lista
-          onClose();   // cierra el modal
+          onSuccess();
+          onClose();
         }, 1000);
       } else {
         await api.post('/responsables', payload);
@@ -292,15 +283,22 @@ export default function RegisterResponsableModal({
         setSuccessMsg('Responsable registrado con éxito');
         setLockAfterSuccess(true);
         reset();
+
         setTimeout(() => {
           setLockAfterSuccess(false);
           setSuccessMsg(null);
-          onSuccess(); // el padre refresca la lista
-          onClose();   // cerramos el modal
+          onSuccess();
+          onClose();
         }, 1000);
       }
-    } catch (err) {
+    } catch (err: any) {
+      // Mostrar el mensaje real del backend
       console.error('Error al registrar/actualizar responsable', err);
+      const backendMsg = err?.response?.data?.message;
+
+      if (Array.isArray(backendMsg)) setDupError(backendMsg.join(', '));
+      else if (typeof backendMsg === 'string') setDupError(backendMsg);
+      else setDupError('Ocurrió un error al registrar/actualizar responsable');
     } finally {
       setLoading(false);
     }
@@ -351,9 +349,7 @@ export default function RegisterResponsableModal({
                 Nombre Completo <span className="text-red-500">*</span>
               </label>
               <Input placeholder="Ej: Juan Pérez" {...register('nombre')} />
-              {errors.nombre && (
-                <p className="text-red-500 text-sm">{errors.nombre.message}</p>
-              )}
+              {errors.nombre && <p className="text-red-500 text-sm">{errors.nombre.message}</p>}
             </div>
 
             <div>
@@ -361,57 +357,35 @@ export default function RegisterResponsableModal({
                 Correo Electrónico <span className="text-red-500">*</span>
               </label>
               <Input placeholder="correo@ejemplo.com" {...register('correo')} />
-              {errors.correo && (
-                <p className="text-red-500 text-sm">{errors.correo.message}</p>
-              )}
+              {errors.correo && <p className="text-red-500 text-sm">{errors.correo.message}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">
-                Teléfono
-              </label>
+              <label className="block text-sm font-bold text-gray-700 mb-1">Teléfono</label>
               <Input placeholder="70000000" {...register('telefono')} />
               {errors.telefono && (
-                <p className="text-red-500 text-sm">
-                  {errors.telefono.message as string}
-                </p>
+                <p className="text-red-500 text-sm">{errors.telefono.message as string}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">
-                Especialización
-              </label>
-              <Input
-                placeholder="Área de especialización"
-                {...register('especialidad')}
-              />
+              <label className="block text-sm font-bold text-gray-700 mb-1">Especialización</label>
+              <Input placeholder="Área de especialización" {...register('especialidad')} />
               {errors.especialidad && (
-                <p className="text-red-500 text-sm">
-                  {errors.especialidad.message}
-                </p>
+                <p className="text-red-500 text-sm">{errors.especialidad.message}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">
-                Institución
-              </label>
-              <Input
-                placeholder="Universidad o institución"
-                {...register('institucion')}
-              />
+              <label className="block text-sm font-bold text-gray-700 mb-1">Institución</label>
+              <Input placeholder="Universidad o institución" {...register('institucion')} />
               {errors.institucion && (
-                <p className="text-red-500 text-sm">
-                  {errors.institucion.message}
-                </p>
+                <p className="text-red-500 text-sm">{errors.institucion.message}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">
-                Años de Experiencia
-              </label>
+              <label className="block text-sm font-bold text-gray-700 mb-1">Años de Experiencia</label>
               <Input
                 type="number"
                 inputMode="numeric"
@@ -430,11 +404,7 @@ export default function RegisterResponsableModal({
                   if (!/^\d{1,2}$/.test(text)) e.preventDefault();
                 }}
               />
-              {errors.experiencia && (
-                <p className="text-red-500 text-sm">
-                  {errors.experiencia.message}
-                </p>
-              )}
+              {errors.experiencia && <p className="text-red-500 text-sm">{errors.experiencia.message}</p>}
             </div>
 
             <div>
@@ -442,9 +412,7 @@ export default function RegisterResponsableModal({
                 Documento de Identidad (CI) <span className="text-red-500">*</span>
               </label>
               <Input placeholder="Número de CI" {...register('ci')} />
-              {errors.ci && (
-                <p className="text-red-500 text-sm">{errors.ci.message}</p>
-              )}
+              {errors.ci && <p className="text-red-500 text-sm">{errors.ci.message}</p>}
             </div>
 
             <div>
@@ -466,9 +434,7 @@ export default function RegisterResponsableModal({
                   </option>
                 ))}
               </select>
-              {errors.id_area && (
-                <p className="text-red-500 text-sm">{errors.id_area.message}</p>
-              )}
+              {errors.id_area && <p className="text-red-500 text-sm">{errors.id_area.message}</p>}
             </div>
           </div>
 
@@ -482,11 +448,8 @@ export default function RegisterResponsableModal({
             >
               Cancelar
             </Button>
-            <Button
-              type="submit"
-              disabled={loading || lockAfterSuccess}
-              className="w-full md:w-auto"
-            >
+
+            <Button type="submit" disabled={loading || lockAfterSuccess} className="w-full md:w-auto">
               {loading
                 ? mode === 'edit'
                   ? 'Guardando...'
