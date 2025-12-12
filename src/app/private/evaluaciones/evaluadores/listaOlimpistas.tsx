@@ -1,3 +1,4 @@
+//src/app/private/evaluaciones/evaluadores/listaOlimpistas.tsx
 'use client';
 import { useMemo, useState } from 'react';
 import { CompetidorInscripcion } from '@/types/notas';
@@ -177,7 +178,12 @@ export default function CompetidorList({
                 <th className="p-2 text-center">Área</th>
                 {mostrarNivel && <th className="p-2 text-center">Nivel</th>}
                 <th className="p-2 text-center">Nota</th>
-                {mostrarEstado && <th className="p-2 text-center">Clasificación</th>}
+                {/* {mostrarEstado && <th className="p-2 text-center">Clasificación</th>} */}
+                {mostrarEstado && (
+                  <th className="p-2 text-center">
+                    {fase === 'FASE_FINAL' ? 'Aprobación' : 'Clasificación'}
+                  </th>
+                )}
                 <th className="p-2 text-center">Acciones</th>
               </tr>
             </thead>
@@ -192,28 +198,50 @@ export default function CompetidorList({
                 const area = c.area?.nombre_area || c.area?.nombre || '—';
 
                 // ================== NUEVO: CLASIFICACIÓN ==================
+                // let estado: string;
+
+                // if (!c.evaluaciones || c.evaluaciones.length === 0) {
+                //   estado = 'SIN_EVALUACION';
+                // } else if (c.clasificacion === 'CLASIFICADO') {
+                //   estado = 'CLASIFICADO';
+                // } else if (c.clasificacion === 'NO_CLASIFICADO') {
+                //   estado = 'NO_CLASIFICADO';
+                // } else if (c.clasificacion === 'DESCALIFICADO') {
+                //   estado = 'DESCALIFICADO';
+                // } else {
+                //   estado = 'SIN_EVALUACION';
+                // }
+
                 let estado: string;
 
-                if (!c.evaluaciones || c.evaluaciones.length === 0) {
-                  estado = 'SIN_EVALUACION';
-                } else if (c.clasificacion === 'CLASIFICADO') {
-                  estado = 'CLASIFICADO';
-                } else if (c.clasificacion === 'NO_CLASIFICADO') {
-                  estado = 'NO_CLASIFICADO';
-                } else if (c.clasificacion === 'DESCALIFICADO') {
-                  estado = 'DESCALIFICADO';
+                if (fase === 'FASE_FINAL') {
+                  if (!c.evaluaciones || c.evaluaciones.length === 0) {
+                    estado = 'NO_EVALUADO';
+                  } else {
+                    estado = c.estado_final ?? 'NO_EVALUADO';
+                  }
                 } else {
-                  estado = 'SIN_EVALUACION';
+                  if (!c.evaluaciones || c.evaluaciones.length === 0) {
+                    estado = 'SIN_EVALUACION';
+                  } else if (c.clasificacion === 'CLASIFICADO') {
+                    estado = 'CLASIFICADO';
+                  } else if (c.clasificacion === 'NO_CLASIFICADO') {
+                    estado = 'NO_CLASIFICADO';
+                  } else if (c.clasificacion === 'DESCALIFICADO') {
+                    estado = 'DESCALIFICADO';
+                  } else {
+                    estado = 'SIN_EVALUACION';
+                  }
                 }
 
                 const chipStyle =
-                  estado === 'CLASIFICADO'
-                    ? 'bg-green-100 text-green-700 border-green-300'
-                    : estado === 'NO_CLASIFICADO'
-                    ? 'bg-gray-100 text-gray-700 border-gray-300'
-                    : estado === 'DESCALIFICADO'
-                    ? 'bg-red-100 text-red-700 border-red-300'
-                    : 'bg-yellow-100 text-yellow-700 border-yellow-300';
+                estado === 'CLASIFICADO' || estado === 'APROBADO'
+                  ? 'bg-green-100 text-green-700 border-green-300'
+                  : estado === 'NO_CLASIFICADO' || estado === 'NO_APROBADO'
+                  ? 'bg-gray-100 text-gray-700 border-gray-300'
+                  : estado === 'DESCALIFICADO'
+                  ? 'bg-red-100 text-red-700 border-red-300'
+                  : 'bg-yellow-100 text-yellow-700 border-yellow-300';
 
                 const firmada =
                   fase === 'CLASIFICACION' &&
@@ -257,13 +285,21 @@ export default function CompetidorList({
                         <span
                           className={`inline-block text-xs border px-2 py-0.5 rounded-md font-bold ${chipStyle}`}
                         >
-                          {estado === 'SIN_EVALUACION'
-                            ? 'Sin evaluación'
+                          {fase === 'FASE_FINAL'
+                            ? estado === 'APROBADO'
+                              ? 'Aprobado'
+                              : estado === 'NO_APROBADO'
+                              ? 'No aprobado'
+                              : estado === 'DESCALIFICADO'
+                              ? 'Descalificado'
+                              : 'No evaluado'
                             : estado === 'CLASIFICADO'
                             ? 'Clasificado'
                             : estado === 'NO_CLASIFICADO'
                             ? 'No clasificado'
-                            : 'Descalificado'}
+                            : estado === 'DESCALIFICADO'
+                            ? 'Descalificado'
+                            : 'Sin evaluación'}
                         </span>
                       </td>
                     )}

@@ -4,6 +4,15 @@ import PhaseRow from "./PhaseRow";
 import type { FilaFase } from "./types";
 import type { PhaseType } from "./phaseApi";
 
+interface PhaseTableProps {
+  title: string;
+  subtitle?: string;
+  filas: FilaFase[];
+  onRefresh: () => void | Promise<void>;
+  phaseType: PhaseType;
+  canApprove: boolean;
+}
+
 export default function PhaseTable({
   title,
   subtitle,
@@ -11,40 +20,40 @@ export default function PhaseTable({
   onRefresh,
   phaseType,
   canApprove,
-}: {
-  title: string;
-  subtitle?: string;
-  filas: FilaFase[];
-  onRefresh: () => void | Promise<void>;
-  phaseType: PhaseType;
-  canApprove: boolean;
-}) {
+}: PhaseTableProps) {
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-      {/* 🔽 Aquí bajamos el tamaño para que se vea como en Responsables */}
-      <div className="px-6 pt-6 pb-3 flex items-baseline justify-between gap-4">
-        <div>
-          <h2 className="font-semibold text-gray-800 text-base">
-            {title}
-          </h2>
-          {subtitle && (
-            <p className="text-sm text-gray-500">
-              {subtitle}
-            </p>
-          )}
-        </div>
+      {/* Encabezado */}
+      <div className="px-6 pt-6 pb-3">
+        <h2 className="font-semibold text-gray-800 text-base">
+          {title}
+        </h2>
+        {subtitle && (
+          <p className="text-sm text-gray-500">
+            {subtitle}
+          </p>
+        )}
       </div>
 
+      {/* Contenedor scroll horizontal */}
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[980px] table-fixed text-[14px]">
+        {/* Aumentamos min-w para que haya más espacio para Clasificación */}
+        <table className="w-full min-w-[1120px] table-fixed text-[14px]">
           <colgroup>
-            <col className="w-[100px]" />
-            <col className="w-[140px]" />
-            <col className="w-[100px]" />
-            <col className="w-[140px]" />
-            <col className="w-[140px]" />
-            <col className="w-[150px]" />
+            {/* Área / Nivel */}
             <col className="w-[120px]" />
+            {/* Fase Actual */}
+            <col className="w-[140px]" />
+            {/* Progreso */}
+            <col className="w-[90px]" />
+            {/* Clasificación -> MÁS ANCHA */}
+            <col className="w-[240px]" />
+            {/* Responsable */}
+            <col className="w-[160px]" />
+            {/* Estado */}
+            <col className="w-[140px]" />
+            {/* Acciones */}
+            <col className="w-[130px]" />
           </colgroup>
 
           <thead className="border-b border-slate-200 bg-slate-50/40">
@@ -64,16 +73,16 @@ export default function PhaseTable({
               <th className="px-4 py-3 text-black font-bold text-left">
                 Responsable
               </th>
-              <th className="py-3 px-4 text-black tabular-nums text-center w-24">
+              <th className="py-3 px-4 text-black tabular-nums text-center">
                 Estado
               </th>
-              <th className="py-3 px-4 text-black tabular-nums text-center w-24">
+              <th className="py-3 px-4 text-black tabular-nums text-center">
                 Acciones
               </th>
             </tr>
           </thead>
 
-          <tbody>
+          <tbody className="divide-y divide-slate-200">
             {filas.map((fila) => (
               <PhaseRow
                 key={fila.id}

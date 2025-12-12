@@ -142,7 +142,15 @@ export default function Page() {
     
     if (t === '') return competitors;
 
-    return competitors.filter((c) => c.ci.toLowerCase().includes(t));
+    // 🚨 FILTRO POR FASE: Solo si estamos en la pestaña 'current'
+    if (activeTab === 'current') {
+        // ASUNCIÓN CLAVE: c.phase debe existir en CompetitorData y contener 'fase1' o 'fase2'
+        // Si no tienes este campo, aquí es donde la lógica falla.
+        results = results.filter((c) => {
+            
+            return (c as CompetitorData & { phase?: string }).phase === activePhase;
+        });
+    }
 
   }, [competitors, searchTerm]);
 

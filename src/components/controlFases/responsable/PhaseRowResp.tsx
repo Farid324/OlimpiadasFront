@@ -179,6 +179,12 @@ export default function PhaseRowResp({
                 Descalificados: <b>{resumen?.descalificados ?? 0}</b>
               </span>
             </div>
+                        <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-gray-400" />
+              <span className="text-slate-700">
+                No evaluados: <b>{resumen?.noEvaluados ?? 0}</b>
+              </span>
+            </div>
           </div>
         </td>
 

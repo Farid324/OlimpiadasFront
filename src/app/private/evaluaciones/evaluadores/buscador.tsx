@@ -1,3 +1,4 @@
+//src/app/private/evaluaciones/evaluadores/buscador.tsx
 'use client';
 import { useState } from 'react';
 import { Search } from 'lucide-react';

@@ -1,10 +1,9 @@
-// src/app/private/registroActividades/responsablesLayout.tsx
+// src/app/private/registroActividades/layout.tsx
 'use client';
 
 export default function ResponsablesLayout({ children }: { children: React.ReactNode }) {
   return (
-    // Es CRÍTICO que tenga w-full y un padding lateral pequeño/nulo.
-    <div className="w-full py-6 px-4"> 
+    <div className="w-full max-w-none px-1 sm:px-6 lg:px-12 py-4 sm:py-6 lg:py-10"> 
       {children}
     </div>
   );

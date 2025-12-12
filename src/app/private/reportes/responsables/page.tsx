@@ -1,8 +1,9 @@
 // src/app/private/reportes/responsables/page.tsx
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
 import dynamic from "next/dynamic";
+import { useSearchParams, useRouter, usePathname } from "next/navigation"; // <--- NUEVO IMPORT
 import { api } from "@/libs/api";
 import { usePageHeader } from "@/contexts/pageHeader";
 import {
@@ -133,7 +134,12 @@ const PhaseTabs = ({
       onClick={() => !finalLocked && onChange("FINAL")}
       title={finalLocked ? "Fase Final bloqueada" : "Fase Final"}
     >
-      Fase Final <Lock className="w-4 h-4 text-red-500" />
+      Fase Final{" "}
+      {finalLocked ? (
+        <Lock className="w-4 h-4 text-red-500" />
+      ) : (
+        <LockOpen className="w-4 h-4 text-green-600" />
+      )}
     </button>
   </div>
 );
@@ -173,14 +179,38 @@ const SectionPillLeft = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
-/* Página principal*/
-export default function ReportesResponsablePage() {
+/* —=====================================
+   Componente de Contenido (Lógica Principal)
+   ======================================— */
+function ReportesResponsableContent() {
   const { setTitle } = usePageHeader();
+
+  // 1. Hooks de navegación
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
   useEffect(() => {
     setTitle("Reportes");
   }, [setTitle]);
 
-  const [phase, setPhase] = useState<Phase>("CLASIF");
+  // 2. Determinar fase inicial desde URL
+  const initialPhase = useMemo(() => {
+    const p = searchParams.get("phase");
+    // Validamos si es una fase válida, si no, default a CLASIF
+    if (p === "FINAL") return "FINAL";
+    return "CLASIF";
+  }, [searchParams]);
+
+  const [phase, setPhase] = useState<Phase>(initialPhase);
+
+  // 3. Manejador para actualizar estado y URL
+  const handlePhaseChange = (newPhase: Phase) => {
+    setPhase(newPhase);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("phase", newPhase);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   // Disponibilidad por fase
   const [availability, setAvailability] = useState<
@@ -219,6 +249,9 @@ export default function ReportesResponsablePage() {
   /* ——— Métricas (cards) ——— */
   const [resumen, setResumen] = useState<Resumen | null>(null);
   useEffect(() => {
+    // Solo cargar resumen cuando la fase CLASIFICACION está desbloqueada
+    if (!availability.CLASIFICACION.unlocked) return;
+
     getResumen()
       .then(setResumen)
       .catch(() =>
@@ -231,7 +264,7 @@ export default function ReportesResponsablePage() {
           totalPremiados: 0,
         })
       );
-  }, []);
+  }, [availability.CLASIFICACION.unlocked]);
 
   const cards = useMemo(
     () => [
@@ -280,9 +313,10 @@ export default function ReportesResponsablePage() {
   const locked = !currentAvail.unlocked;
 
   const lockedMessage =
-    currentPhaseType === "FINAL"
+    currentAvail.message ??
+    (currentPhaseType === "FINAL"
       ? "La fase final aún no ha sido aprobada. Los reportes se habilitarán una vez que des el aval correspondiente."
-      : "La fase de clasificación aún no ha sido aprobada. Los reportes se habilitarán una vez que des el aval correspondiente.";
+      : "La fase de clasificación aún no ha sido aprobada. Los reportes se habilitarán una vez que des el aval correspondiente.");
 
   const finalLocked = !availability.FINAL.unlocked;
   const clasifUnlocked = availability.CLASIFICACION.unlocked;
@@ -298,7 +332,12 @@ export default function ReportesResponsablePage() {
       </div>
 
       {/* Tabs de fase con candados */}
-      <PhaseTabs active={phase} onChange={setPhase} finalLocked={finalLocked} />
+      {/* 4. Usamos el nuevo handler */}
+      <PhaseTabs
+        active={phase}
+        onChange={handlePhaseChange}
+        finalLocked={finalLocked}
+      />
 
       {/* Banner de fase aprobada SOLO cuando la de clasificación está aprobada y activa */}
       {phase === "CLASIF" && clasifUnlocked && (
@@ -349,5 +388,13 @@ export default function ReportesResponsablePage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ReportesResponsablePage() {
+  return (
+    <Suspense fallback={<div className="p-6">Cargando reporte...</div>}>
+      <ReportesResponsableContent />
+    </Suspense>
   );
 }

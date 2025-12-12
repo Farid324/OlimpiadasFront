@@ -32,7 +32,6 @@ export function ResultsFilters({
   selectedYear,
   onSelectedYearChange,
   years,
-  
 }: ResultsFiltersProps) {
   return (
     // La grilla md:grid-cols-4 ahora estará llena de filtros, incluso en 'current'
