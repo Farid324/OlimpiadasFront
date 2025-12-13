@@ -140,7 +140,8 @@ export default function PhaseRow({
     }
   }
 
-  //const isButtonDisabled = !!accionDisabled || !canApprove;
+  // ✅ Botón bloqueado si ya está deshabilitado por fila o si no tiene permiso
+  const isButtonDisabled = !!accionDisabled || !canApprove;
 
   return (
     <>
@@ -191,7 +192,7 @@ export default function PhaseRow({
                 Descalificados: <b>{resumen?.descalificados ?? 0}</b>
               </span>
             </div>
-                        <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-gray-400" />
               <span className="text-slate-700">
                 No evaluados: <b>{resumen?.noEvaluados ?? 0}</b>
@@ -220,8 +221,20 @@ export default function PhaseRow({
           {accionLabel && (
             <button
               className={`inline-flex items-center rounded-lg px-3.5 py-2 text-xs font-bold shadow-sm focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${btnMap[accionColor]}`}
-              disabled={!!accionDisabled}
-              onClick={() => setOpen(true)}
+              disabled={isButtonDisabled}
+              onClick={() => {
+                // ✅ si no puede aprobar, no abre modal (y queda bloqueado)
+                if (!canApprove) {
+                  setErrorMsg("Solo el responsable del área puede aprobar la fase.");
+                  return;
+                }
+                setOpen(true);
+              }}
+              title={
+                !canApprove
+                  ? "Solo el responsable del área puede aprobar la fase."
+                  : undefined
+              }
             >
               {accionLabel}
             </button>
