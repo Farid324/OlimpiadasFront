@@ -57,7 +57,7 @@ const OlimpistaTable: React.FC<OlimpistaTableProps> = ({ data, loading }) => {
                 
                 {/* Propiedades de OlimpistaRow */}
                 <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{o.nombreCompleto}</td>
-                {/* 🚨 COLOR CORREGIDO: De text-blue-600 a text-gray-700 */}
+                {/* COLOR CORREGIDO: De text-blue-600 a text-gray-700 */}
                 <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700 font-medium">{o.area}</td> 
                 <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{o.nivel}</td> 
                 <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{o.unidadEducativa}</td> 
@@ -119,7 +119,7 @@ export default function OlimpistasTab() {
   return (
     <div className="space-y-6">
       {/* Toolbar y Filtros */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
+      <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-4 rounded-xl">
         
         {/* Filtros */}
         <div className="flex flex-wrap gap-4 items-center w-full sm:w-auto">
@@ -156,15 +156,13 @@ export default function OlimpistasTab() {
             </Select>
           </div>
         </div>
-
-        {/* Espacio para el botón "Nuevo Olimpista" (ELIMINADO) */}
-        <div className="flex gap-2 w-full sm:w-auto">
-             {/* Este div queda vacío */}
-        </div>
       </div>
 
       {/* Tabla de Olimpistas */}
-      <OlimpistaTable data={olimpistas} loading={loading} />
+      <div className='flex flex-col gap-3 p-4 bg-white rounded-lg'>
+        <h1 className='font-semibold'>Gestion Olimpistas</h1>
+        <OlimpistaTable data={olimpistas} loading={loading} />
+      </div>
       
   
     </div>

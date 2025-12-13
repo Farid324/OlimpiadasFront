@@ -295,7 +295,7 @@ function GestionContent() {
 
   return (
     <div className="p-1 space-y-6 text-gray-900">
-      <div className="bg-white min-h-[600px] p-6 flex flex-col gap-6">
+      <div className=" min-h-[600px] p-1 flex flex-col gap-6">
         {/* Encabezado + acciones de gestión */}
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
@@ -363,7 +363,7 @@ function GestionContent() {
         </div>
 
         {/* Tabs de navegación */}
-        <div className="flex justify-center md:justify-start overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
+        <div className="flex md:justify-start overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
           <div className="inline-flex items-center bg-gray-100 p-1 rounded-full shadow-inner whitespace-nowrap">
             <button
               onClick={() => handleTabChange("Olimpistas")}

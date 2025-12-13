@@ -80,7 +80,7 @@ export default function EquipoTab() {
   return (
     <div className="space-y-6">
       {/* Encabezado + botones de navegación a módulos de detalle */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="bg-white flex flex-col p-4 gap-3 sm:flex-row sm:items-center sm:justify-between rounded-lg">
         <div>
           <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wider">
             Directorio de Personal
