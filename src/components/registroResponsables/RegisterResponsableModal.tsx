@@ -115,6 +115,25 @@ type ResponsablePayload = {
   experiencia?: number;
 };
 
+// Helper seguro para leer mensaje del backend (Nest/Axios)
+function getBackendMessage(err: unknown): string | string[] | null {
+  if (typeof err !== 'object' || err === null) return null;
+  if (!('response' in err)) return null;
+
+  const response = (err as { response?: unknown }).response;
+  if (typeof response !== 'object' || response === null) return null;
+  if (!('data' in response)) return null;
+
+  const data = (response as { data?: unknown }).data;
+  if (typeof data !== 'object' || data === null) return null;
+  if (!('message' in data)) return null;
+
+  const message = (data as { message?: unknown }).message;
+  if (typeof message === 'string' || Array.isArray(message)) return message;
+
+  return null;
+}
+
 export default function RegisterResponsableModal({
   onClose,
   onSuccess,
@@ -291,10 +310,11 @@ export default function RegisterResponsableModal({
           onClose();
         }, 1000);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Mostrar el mensaje real del backend
       console.error('Error al registrar/actualizar responsable', err);
-      const backendMsg = err?.response?.data?.message;
+
+      const backendMsg = getBackendMessage(err);
 
       if (Array.isArray(backendMsg)) setDupError(backendMsg.join(', '));
       else if (typeof backendMsg === 'string') setDupError(backendMsg);
