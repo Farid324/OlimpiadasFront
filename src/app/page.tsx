@@ -1,4 +1,4 @@
-// Ruta: src/app/page.tsx (COMPLETO Y FINAL CON RUTAS API CORREGIDAS)
+// Ruta: src/app/page.tsx (COMPLETO Y FINAL CON FILTRO CORREGIDO)
 'use client'; 
 
 import { useRouter } from 'next/navigation';
@@ -44,7 +44,6 @@ export default function Page() {
   useEffect(() => {
     async function fetchYears() {
       try {
-        // 🛑 RUTA CORREGIDA: Usando /principal/
         const { data } = await api.get<number[]>('/principal/historico/anios');
         setAllYears(data || []);
       } catch (error) {
@@ -59,7 +58,6 @@ export default function Page() {
     if (activeTab === 'historical' && selectedYear === 'all' && allYears.length > 0) {
       setSelectedYear(allYears[0].toString());
     }
-    // ⭐ CORRECCIÓN DE WARNING: Añadir selectedYear a las dependencias (Línea 65)
   }, [activeTab, allYears, selectedYear]); 
 
 
@@ -69,27 +67,29 @@ export default function Page() {
     setCompetitors([]); 
 
     let endpoint = '';
-    // ⭐ CORRECCIÓN DE ERROR: Cambiar 'let' por 'const' (Línea 75)
-    const params: Record<string, number | undefined> = {}; 
+    const params: Record<string, any> = {}; // Cambiado a 'any' para aceptar strings o numbers
 
     const idArea = selectedArea === 'all' ? undefined : parseInt(selectedArea);
 
     try {
       if (activeTab === 'current') {
         // GESTIÓN ACTUAL
+        
+        // --- COMIENZA LA CORRECCIÓN CLAVE ---
         if (activePhase === 'fase1') {
-          // 🛑 RUTA CORREGIDA
           endpoint = '/principal/competidores/clasificatoria';
-          if (idArea) params.idArea = idArea;
+          // El endpoint de Clasificatoria NO necesita el parámetro 'type'
         } else {
-          // 🛑 RUTA CORREGIDA
           endpoint = '/principal/competidores/final';
-          if (idArea) params.idArea = idArea;
+          // El endpoint de Final NO necesita el parámetro 'type'
         }
+        // --- FIN DE LA CORRECCIÓN CLAVE ---
+
+        if (idArea) params.idArea = idArea;
+        
       } else {
         // HISTÓRICO
-        // 🛑 RUTA CORREGIDA
-        endpoint = '/principal/historico/competidores';
+        endpoint = '/principal/competidores/historico';
         
         let anio: number | undefined;
 
@@ -117,7 +117,6 @@ export default function Page() {
     } finally {
       setLoading(false);
     }
-    // Añadido selectedYear en la dependencia para `useCallback` en la corrección anterior
   }, [activeTab, activePhase, selectedArea, selectedYear, allYears]); 
 
   // Disparar la carga cada vez que cambian las dependencias de la vista/filtro
@@ -125,7 +124,7 @@ export default function Page() {
     fetchActiveData();
   }, [fetchActiveData]); 
 
-  // --- LOGICA DE FILTRADO LOCAL (Solo por CI) ---
+  // --- LOGICA DE FILTRADO LOCAL (useMemo) ---
   
   const areas = useMemo(
     () => Array.from(new Set(competitors.map((c) => c.area))),
@@ -140,27 +139,35 @@ export default function Page() {
   const filteredCompetitors = useMemo(() => {
     const t = searchTerm.trim().toLowerCase();
     
-    if (t === '') return competitors;
+    // 1. INICIALIZACIÓN
+    let results = competitors; 
 
-    // 🚨 FILTRO POR FASE: Solo si estamos en la pestaña 'current'
-    if (activeTab === 'current') {
-        // ASUNCIÓN CLAVE: c.phase debe existir en CompetitorData y contener 'fase1' o 'fase2'
-        // Si no tienes este campo, aquí es donde la lógica falla.
-        results = results.filter((c) => {
-            
-            return (c as CompetitorData & { phase?: string }).phase === activePhase;
-        });
+    // 2. FILTRO POR TÉRMINO DE BÚSQUEDA (CI o Nombre)
+    if (t !== '') {
+        results = results.filter(
+            (c) => 
+                c.ci.toLowerCase().includes(t) || 
+                c.name.toLowerCase().includes(t)
+        );
     }
+    
+    // El filtro por fase se eliminó correctamente, ya que el backend usa endpoints separados.
+    
+    return results;
 
-  }, [competitors, searchTerm]);
-
+  }, [competitors, searchTerm]); // Eliminé activeTab y activePhase del useMemo
 
   // --- ESTATUS Y MEDALLERO ---
   
   const currentYearStats = useMemo(() => {
-    // Retorna solo los competidores del año actual para los stats del Hero
-    return competitors.filter((c) => c.year === new Date().getFullYear());
-  }, [competitors]); 
+    // Si la pestaña actual es 'historical', estos KPIs deben basarse en los datos del año seleccionado
+    // Si es 'current', se basan en la gestión activa.
+    const yearToFilter = activeTab === 'current' 
+      ? new Date().getFullYear() 
+      : parseInt(selectedYear);
+      
+    return competitors.filter((c) => c.year === yearToFilter);
+  }, [competitors, activeTab, selectedYear]); 
   
   const goldMedals = currentYearStats.filter((c) => c.medal === 'ORO').length;
   const silverMedals = currentYearStats.filter((c) => c.medal === 'PLATA').length;
@@ -200,7 +207,7 @@ export default function Page() {
         c.school,
         c.year.toString(),
         c.medal ?? 'N/A', 
-        c.score.toString()
+        c.score ? c.score.toString() : 'N/A'
       ]),
       styles: { fontSize: 8 },
       headStyles: { fillColor: [37, 99, 235] }
@@ -219,6 +226,8 @@ export default function Page() {
         return 'bg-gray-400 text-white';
       case 'BRONCE':
         return 'bg-orange-600 text-white';
+      case 'MENCION':
+        return 'bg-purple-600 text-white';
       default:
         return 'bg-gray-200 text-gray-800';
     }
@@ -232,15 +241,6 @@ export default function Page() {
         <p className="animate-pulse text-xl font-bold text-blue-600">
           Cargando datos...
         </p>
-        
-        
-
-
-
-[Image of a simple loading spinner for web]
-
-
-
       </div>
     );
   }
