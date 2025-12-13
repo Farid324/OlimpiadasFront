@@ -56,7 +56,8 @@ export default function Page() {
   // 2. Sincronizar el año al cambiar a la pestaña Histórico
   useEffect(() => {
     if (activeTab === 'historical' && selectedYear === 'all' && allYears.length > 0) {
-      setSelectedYear(allYears[0].toString());
+      // ✅ Solución: Establecemos el primer año disponible para asegurar la carga.
+      setSelectedYear(allYears[0].toString()); 
     }
   }, [activeTab, allYears, selectedYear]); 
 
@@ -67,7 +68,7 @@ export default function Page() {
     setCompetitors([]); 
 
     let endpoint = '';
-    const params: Record<string, number> = {}; // Cambiado a 'any' para aceptar strings o numbers
+    const params: Record<string, number | undefined> = {}; 
 
     const idArea = selectedArea === 'all' ? undefined : parseInt(selectedArea);
 
@@ -75,31 +76,32 @@ export default function Page() {
       if (activeTab === 'current') {
         // GESTIÓN ACTUAL
         
-        // --- COMIENZA LA CORRECCIÓN CLAVE ---
         if (activePhase === 'fase1') {
           endpoint = '/principal/competidores/clasificatoria';
-          // El endpoint de Clasificatoria NO necesita el parámetro 'type'
         } else {
           endpoint = '/principal/competidores/final';
-          // El endpoint de Final NO necesita el parámetro 'type'
         }
-        // --- FIN DE LA CORRECCIÓN CLAVE ---
 
         if (idArea) params.idArea = idArea;
         
       } else {
         // HISTÓRICO
-        endpoint = '/principal/competidores/historico';
+        endpoint = '/principal/historico/competidores';
         
         let anio: number | undefined;
 
+        // ✅ CORRECCIÓN DE LÓGICA: Si selectedYear es 'all' AÚN, y tenemos años, 
+        // usamos el primero SIN modificar el estado seleccionado (se basa en el useEffect de arriba)
         if (selectedYear !== 'all') {
             anio = parseInt(selectedYear);
         } else if (allYears.length > 0) {
-             anio = allYears[0];
+            // Usamos el primer año disponible SOLO para la consulta inicial, 
+            // si el estado selectedYear aún no se ha sincronizado.
+             anio = allYears[0]; 
         }
 
         if (!anio || isNaN(anio)) {
+            // Esto sucede si no hay años históricos. No es un error, simplemente no hay datos.
             setLoading(false);
             return;
         }
@@ -151,22 +153,25 @@ export default function Page() {
         );
     }
     
-    // El filtro por fase se eliminó correctamente, ya que el backend usa endpoints separados.
-    
     return results;
 
-  }, [competitors, searchTerm]); // Eliminé activeTab y activePhase del useMemo
+  }, [competitors, searchTerm]);
 
   // --- ESTATUS Y MEDALLERO ---
   
   const currentYearStats = useMemo(() => {
-    // Si la pestaña actual es 'historical', estos KPIs deben basarse en los datos del año seleccionado
-    // Si es 'current', se basan en la gestión activa.
-    const yearToFilter = activeTab === 'current' 
-      ? new Date().getFullYear() 
-      : parseInt(selectedYear);
+    // Si es la pestaña 'current', usamos todos los competidores traídos (ya filtrados por el backend)
+    if (activeTab === 'current') {
+        return competitors;
+    }
+
+    // Si es histórico, filtramos por el año seleccionado
+    const yearToFilter = parseInt(selectedYear);
       
+    if (isNaN(yearToFilter)) return [];
+
     return competitors.filter((c) => c.year === yearToFilter);
+
   }, [competitors, activeTab, selectedYear]); 
   
   const goldMedals = currentYearStats.filter((c) => c.medal === 'ORO').length;
@@ -223,8 +228,10 @@ export default function Page() {
       case 'ORO':
         return 'bg-yellow-500 text-white';
       case 'PLATA':
+      case 'PLATA_PREMIADO': 
         return 'bg-gray-400 text-white';
       case 'BRONCE':
+      case 'BRONCE_PREMIADO':
         return 'bg-orange-600 text-white';
       case 'MENCION':
         return 'bg-purple-600 text-white';
