@@ -67,7 +67,7 @@ export default function Page() {
     setCompetitors([]); 
 
     let endpoint = '';
-    const params: Record<string, any> = {}; // Cambiado a 'any' para aceptar strings o numbers
+    const params: Record<string, number> = {}; // Cambiado a 'any' para aceptar strings o numbers
 
     const idArea = selectedArea === 'all' ? undefined : parseInt(selectedArea);
 
