@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CheckCircle2 } from 'lucide-react';
 
+// Definir interfaces de Props y Areas correctamente
 interface Props {
   onClose: () => void;
   onSuccess: () => void;
@@ -32,6 +33,7 @@ interface Area {
   nombre_area: string;
 }
 
+// Definición del esquema Zod para validaciones
 const schema = z.object({
   nombre: z
     .string()
@@ -58,7 +60,7 @@ const schema = z.object({
       message: 'El correo no debe contener espacios',
     }),
 
-  // Teléfono: opcional, pero si se llena valida dígitos, longitud y prefijo
+  // Validación del teléfono (opcional)
   telefono: z.string().superRefine((value, ctx) => {
     const v = value.trim();
     if (v === '') return; // opcional
@@ -101,14 +103,13 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-// Ajustado: opcionales para que NO se envíen si están vacíos
+// Definir Payload de Responsable
 type ResponsablePayload = {
   nombre: string;
   apellido: string;
   correo: string;
   ci: string;
   id_area: number;
-
   telefono?: string;
   institucion?: string;
   especialidad?: string;
@@ -155,6 +156,7 @@ export default function RegisterResponsableModal({
     watch,
   } = useForm<FormData>({ resolver: zodResolver(schema) });
 
+  // Cargar valores iniciales si el modo es "editar"
   useEffect(() => {
     if (mode === 'edit' && initial) {
       setValue('nombre', initial.nombre || '');
@@ -168,6 +170,7 @@ export default function RegisterResponsableModal({
     }
   }, [mode, initial, setValue]);
 
+  // Obtener las áreas disponibles
   useEffect(() => {
     (async () => {
       try {
@@ -180,6 +183,7 @@ export default function RegisterResponsableModal({
     })();
   }, [mode, initial?.id_area, setValue]);
 
+  // Función para manejar el submit
   const onSubmit = async (data: FormData) => {
     if (lockAfterSuccess) return;
 
@@ -188,7 +192,7 @@ export default function RegisterResponsableModal({
     setDupError(null);
 
     try {
-      // normalizar valores
+      // Normalizar los valores
       const correo = data.correo.trim();
       const ci = data.ci.trim();
       const telefono = data.telefono.trim();
@@ -196,7 +200,7 @@ export default function RegisterResponsableModal({
       const especialidad = data.especialidad.trim();
       const expStr = data.experiencia.trim();
 
-      // Validaciones de duplicados (solo crear)
+      // Validaciones de duplicados (solo en modo "crear")
       if (mode === 'create') {
         if (telefono !== '') {
           const tel = await api.get(`/responsables/check-telefono/${telefono}`);
@@ -224,7 +228,7 @@ export default function RegisterResponsableModal({
         }
       }
 
-      // Un responsable por área
+      // Validación para un solo responsable por área
       const areaIdNum = Number(data.id_area);
 
       if (mode === 'create') {
@@ -246,7 +250,7 @@ export default function RegisterResponsableModal({
         }
       }
 
-      // Nombre y apellido
+      // Separar nombre y apellido
       const partes = data.nombre.trim().split(/\s+/);
       let nombre = '';
       let apellido = '';
@@ -265,10 +269,10 @@ export default function RegisterResponsableModal({
         apellido = '';
       }
 
-      // Experiencia: si está vacía NO se envía
+      // Convertir experiencia si no está vacía
       const experienciaNum = expStr !== '' ? Number(expStr) : undefined;
 
-      // Payload: SOLO mandamos opcionales si tienen valor
+      // Crear el payload
       const payload: ResponsablePayload = {
         nombre,
         apellido,
@@ -311,7 +315,7 @@ export default function RegisterResponsableModal({
         }, 1000);
       }
     } catch (err: unknown) {
-      // Mostrar el mensaje real del backend
+      // Mostrar mensaje real del backend sin usar `any`
       console.error('Error al registrar/actualizar responsable', err);
 
       const backendMsg = getBackendMessage(err);
