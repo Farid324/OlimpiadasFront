@@ -98,7 +98,7 @@ const toParams = (filters?: ReportFilters) => {
 const cmpStr = (a: string, b: string) =>
   a.localeCompare(b, "es", { sensitivity: "base" });
 
-/** Ordena por Área -> Nivel (Secundaria, Primaria) -> Posición (asc/desc) */
+/** Ordena por Área -> Nivel (Secundaria, Primaria) -> Medalla -> Posición */
 function sortRows(rows: PremiadoItemDTO[], asc: boolean): PremiadoItemDTO[] {
   const copy = [...rows];
   copy.sort((a, b) => {
@@ -187,6 +187,37 @@ async function exportPremiados(filters?: ReportFilters): Promise<Blob> {
   return res.data as Blob;
 }
 
+/* ===================== Utilidades UI/Export ===================== */
+function normalizeId(v: number | null | undefined): number | null {
+  if (v === null || v === undefined) return null;
+  const n = Number(v);
+  if (Number.isNaN(n)) return null;
+  if (n === 0) return null;
+  return n;
+}
+
+function getNombreById(
+  id: number | null,
+  list: ReadonlyArray<{ id: number; nombre: string }>,
+  fallbackAll: string
+): string {
+  if (!id) return fallbackAll;
+  const found = list.find((x) => x.id === id);
+  return found?.nombre ?? fallbackAll;
+}
+
+function safeFilenamePart(input: string): string {
+  const s = (input ?? "").trim();
+  if (!s) return "todos";
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // sin tildes
+    .replace(/[^\w.-]+/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .toLowerCase();
+}
+
 /* ===================== Componente ===================== */
 export default function PremiadosTab({
   disabled,
@@ -251,10 +282,6 @@ export default function PremiadosTab({
     void fetchRows(filters);
   }, [filters, fetchRows]);
 
-  useEffect(() => {
-    console.log("premiados FE:", rows);
-  }, [rows]);
-
   const safeAreas = useMemo(
     () => areas.filter((a) => !!a && typeof a.id === "number"),
     [areas]
@@ -279,18 +306,50 @@ export default function PremiadosTab({
     ? "Posición (ascendente)"
     : "Posición (descendente)";
 
+  // Labels correctos para el resumen (Área/Nivel con NOMBRE)
+  const selectedAreaId = useMemo(
+    () => normalizeId(filters.id_area),
+    [filters.id_area]
+  );
+  const selectedNivelId = useMemo(
+    () => normalizeId(filters.id_nivel),
+    [filters.id_nivel]
+  );
+
+  const resumenArea = useMemo(
+    () => getNombreById(selectedAreaId, safeAreas, "Todas las áreas"),
+    [selectedAreaId, safeAreas]
+  );
+
+  const resumenNivel = useMemo(
+    () => getNombreById(selectedNivelId, safeNiveles, "Todos los niveles"),
+    [selectedNivelId, safeNiveles]
+  );
+
+  const resumenEstado = useMemo(() => {
+    const est = filters.estado ?? "TODOS";
+    if (est === "TODOS") return "Todos";
+    if (est === "ORO") return "Oro";
+    if (est === "PLATA") return "Plata";
+    if (est === "BRONCE") return "Bronce";
+    return "Mención";
+  }, [filters.estado]);
+
   /* ===== Exportar ===== */
   const doExport = async () => {
     try {
       setLoadingExport(true);
       const blob = await exportPremiados(filters);
+
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      const ia = filters.id_area ?? "todas";
-      const iniv = filters.id_nivel ?? "todos";
-      const est = filters.estado ?? "todos";
-      a.download = `premiados_${ia}_${iniv}_${est}.xlsx`;
+
+      const fileArea = safeFilenamePart(resumenArea);
+      const fileNivel = safeFilenamePart(resumenNivel);
+      const fileEstado = safeFilenamePart(resumenEstado);
+      a.download = `premiados_${fileArea}_${fileNivel}_${fileEstado}.xlsx`;
+
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (e) {
@@ -328,7 +387,6 @@ export default function PremiadosTab({
             {/* Área */}
             <div className="relative">
               <select
-                // CAMBIO AQUÍ: Clase condicional para el color del texto
                 className={`h-11 w-full appearance-none rounded-md border px-3 pr-9 ${
                   filters.id_area ? "text-black" : "text-gray-500"
                 }`}
@@ -350,7 +408,11 @@ export default function PremiadosTab({
                   Todas las áreas
                 </option>
                 {safeAreas.map((a) => (
-                  <option key={`area-${a.id}`} value={a.id} className="text-black">
+                  <option
+                    key={`area-${a.id}`}
+                    value={a.id}
+                    className="text-black"
+                  >
                     {a.nombre}
                   </option>
                 ))}
@@ -361,7 +423,6 @@ export default function PremiadosTab({
             {/* Nivel */}
             <div className="relative">
               <select
-                // CAMBIO AQUÍ: Clase condicional para el color del texto
                 className={`h-11 w-full appearance-none rounded-md border px-3 pr-9 ${
                   filters.id_nivel ? "text-black" : "text-gray-500"
                 }`}
@@ -383,7 +444,11 @@ export default function PremiadosTab({
                   Todos los niveles
                 </option>
                 {safeNiveles.map((n) => (
-                  <option key={`nivel-${n.id}`} value={n.id} className="text-black">
+                  <option
+                    key={`nivel-${n.id}`}
+                    value={n.id}
+                    className="text-black"
+                  >
                     {n.nombre}
                   </option>
                 ))}
@@ -394,7 +459,6 @@ export default function PremiadosTab({
             {/* Estado */}
             <div className="relative">
               <select
-                // CAMBIO AQUÍ: Clase condicional para el color del texto
                 className={`h-11 w-full appearance-none rounded-md border px-3 pr-9 ${
                   filters.estado ? "text-black" : "text-gray-500"
                 }`}
@@ -548,9 +612,7 @@ export default function PremiadosTab({
                       <td className="py-3 px-4 text-black">
                         {r.unidadEducativa}
                       </td>
-                      <td className="py-3 px-4 text-black">
-                        {r.departamento}
-                      </td>
+                      <td className="py-3 px-4 text-black">{r.departamento}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -578,13 +640,13 @@ export default function PremiadosTab({
                 </p>
                 <ul className="space-y-1">
                   <li>
-                    • <strong>Área:</strong> {filters.id_area ?? "Todas"}
+                    • <strong>Área:</strong> {resumenArea}
                   </li>
                   <li>
-                    • <strong>Nivel:</strong> {filters.id_nivel ?? "Todos"}
+                    • <strong>Nivel:</strong> {resumenNivel}
                   </li>
                   <li>
-                    • <strong>Estado:</strong> {filters.estado ?? "Todos"}
+                    • <strong>Estado:</strong> {resumenEstado}
                   </li>
                   <li>
                     • <strong>Orden:</strong> {orderLabel}
