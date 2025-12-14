@@ -22,8 +22,7 @@ interface ResultsTableProps {
 export function ResultsTable({ 
   filteredCompetitors, 
   getMedalColor, 
-  activeTab, 
-  activePhase 
+  activeTab,
 }: ResultsTableProps) {
   
   // Condición para mostrar la columna de Medalla: Solo se muestra en el tab 'historical'.
