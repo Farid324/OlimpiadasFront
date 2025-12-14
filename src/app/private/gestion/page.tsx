@@ -326,7 +326,7 @@ function GestionContent() {
 
           {/* Bloque de botones + mensaje de feedback visual */}
           <div className="flex flex-col gap-2 items-stretch md:items-end">
-            <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+            <div className="flex flex-col sm:flex-row gap-2 sm:items-center text-black">
               <Button
                 variant="outline"
                 size="sm"
@@ -444,7 +444,7 @@ function GestionContent() {
                   </label>
                   <input
                     type="number"
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 text-black"
                     value={nuevoAnio}
                     onChange={(e) => setNuevoAnio(e.target.value)}
                     min={2000}
@@ -453,7 +453,7 @@ function GestionContent() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-black ">
                     Nombre (opcional)
                   </label>
                   <input
