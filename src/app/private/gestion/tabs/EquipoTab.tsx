@@ -6,7 +6,6 @@ import Link from "next/link";
 import { ShieldCheck, Users } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import {
-  type EquipoGestionActualResponse,
   type ResponsableEquipo,
   type EvaluadorEquipo,
   fetchAllGestiones,
@@ -21,6 +20,14 @@ import {
   SelectValue,
 } from "@/components/ui/Select";
 
+type GestionKey = "ALL" | string;
+
+type EquipoPorGestion = {
+  gestion: Gestion;
+  responsables: ResponsableEquipo[];
+  evaluadores: EvaluadorEquipo[];
+};
+
 function getInitials(nombre: string, apellido: string): string {
   const n = (nombre ?? "").trim();
   const a = (apellido ?? "").trim();
@@ -34,17 +41,44 @@ function formatGestionLabel(g: Gestion): string {
   return `${g.anio}${nombre}${tag}`;
 }
 
+function toGestionKey(idGestion: number): GestionKey {
+  return String(idGestion);
+}
+
+function isGestionActiva(g: Gestion): boolean {
+  return g.estado === "ABIERTA";
+}
+
+function StatusPill({
+  label,
+  tone,
+}: {
+  label: string;
+  tone: "green" | "red" | "gray";
+}) {
+  const cls =
+    tone === "green"
+      ? "bg-green-100 text-green-700"
+      : tone === "red"
+      ? "bg-red-100 text-red-700"
+      : "bg-gray-100 text-gray-700";
+
+  return (
+    <span className={`px-2 py-0.5 text-[10px] rounded-full font-semibold ${cls}`}>
+      {label}
+    </span>
+  );
+}
+
 export default function EquipoTab() {
-  const [data, setData] = useState<EquipoGestionActualResponse | null>(null);
+  const [gestiones, setGestiones] = useState<Gestion[]>([]);
+  const [selectedGestionKey, setSelectedGestionKey] = useState<GestionKey>("ALL");
+
+  const [equipos, setEquipos] = useState<EquipoPorGestion[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [gestiones, setGestiones] = useState<Gestion[]>([]);
-  const [selectedGestionId, setSelectedGestionId] = useState<number | null>(
-    null
-  );
-
-  // 1) Cargar listado de gestiones (incluye abiertas y cerradas)
+  // Cargar gestiones (para el combo)
   useEffect(() => {
     let mounted = true;
 
@@ -55,10 +89,8 @@ export default function EquipoTab() {
 
         setGestiones(g);
 
-        const activa = g.find((x) => x.estado === "ABIERTA");
-        const fallback = activa?.id_gestion ?? g[0]?.id_gestion ?? null;
-
-        setSelectedGestionId((prev) => prev ?? fallback);
+        // Default: "Todas las Gestiones"
+        setSelectedGestionKey("ALL");
       } catch {
         if (!mounted) return;
         setError("No fue posible cargar las gestiones.");
@@ -70,50 +102,113 @@ export default function EquipoTab() {
     };
   }, []);
 
-  // 2) Cargar equipo académico según gestión seleccionada
+  // Cargar equipo según selección (ALL o una gestión)
   useEffect(() => {
     let mounted = true;
 
-    if (!selectedGestionId) return;
+    const run = async () => {
+      if (gestiones.length === 0) return;
 
-    setLoading(true);
-    setError(null);
+      setLoading(true);
+      setError(null);
+      setEquipos([]);
 
-    void fetchEquipoByGestion(selectedGestionId)
-      .then((res) => {
+      try {
+        if (selectedGestionKey === "ALL") {
+          const requests = gestiones.map(async (g) => {
+            const res = await fetchEquipoByGestion(g.id_gestion);
+            // Normalizar: el backend puede devolver gestion null si algo raro pasa
+            if (!res?.gestion) {
+              throw new Error("Respuesta inválida (gestion null).");
+            }
+            return {
+              gestion: res.gestion,
+              responsables: res.responsables ?? [],
+              evaluadores: res.evaluadores ?? [],
+            } satisfies EquipoPorGestion;
+          });
+
+          const settled = await Promise.allSettled(requests);
+
+          const ok: EquipoPorGestion[] = [];
+          for (const s of settled) {
+            if (s.status === "fulfilled") ok.push(s.value);
+          }
+
+          // Mantener orden como el combo (gestiones ya viene ordenada del BE)
+          const byId = new Map<number, EquipoPorGestion>(
+            ok.map((x) => [x.gestion.id_gestion, x])
+          );
+          const ordered = gestiones
+            .map((g) => byId.get(g.id_gestion))
+            .filter((x): x is EquipoPorGestion => !!x);
+
+          if (!mounted) return;
+
+          if (ordered.length === 0) {
+            setError("No fue posible cargar el equipo académico.");
+            setEquipos([]);
+            return;
+          }
+
+          // Si hubo fallas parciales, no cortamos la vista.
+          setEquipos(ordered);
+          return;
+        }
+
+        const idGestion = Number(selectedGestionKey);
+        const res = await fetchEquipoByGestion(idGestion);
+
         if (!mounted) return;
-        setData(res);
-      })
-      .catch(() => {
+
+        if (!res?.gestion) {
+          setEquipos([]);
+          setError("No se encontró información para la gestión seleccionada.");
+          return;
+        }
+
+        setEquipos([
+          {
+            gestion: res.gestion,
+            responsables: res.responsables ?? [],
+            evaluadores: res.evaluadores ?? [],
+          },
+        ]);
+      } catch {
         if (!mounted) return;
         setError("No fue posible cargar el equipo académico.");
-        setData(null);
-      })
-      .finally(() => {
+        setEquipos([]);
+      } finally {
         if (!mounted) return;
         setLoading(false);
-      });
+      }
+    };
+
+    void run();
 
     return () => {
       mounted = false;
     };
-  }, [selectedGestionId]);
+  }, [selectedGestionKey, gestiones]);
 
-  const responsables = useMemo<ResponsableEquipo[]>(() => {
-    return data?.responsables ?? [];
-  }, [data]);
-
-  const evaluadores = useMemo<EvaluadorEquipo[]>(() => {
-    return data?.evaluadores ?? [];
-  }, [data]);
+  // Datos visibles (unificados) para métricas
+  const visibles = useMemo(() => {
+    const responsablesAll: ResponsableEquipo[] = [];
+    const evaluadoresAll: EvaluadorEquipo[] = [];
+    for (const b of equipos) {
+      responsablesAll.push(...(b.responsables ?? []));
+      evaluadoresAll.push(...(b.evaluadores ?? []));
+    }
+    return { responsablesAll, evaluadoresAll };
+  }, [equipos]);
 
   const metrics = useMemo(() => {
-    const totalResponsables = responsables.length;
-    const totalEvaluadores = evaluadores.length;
+    const totalResponsables = visibles.responsablesAll.length;
+    const totalEvaluadores = visibles.evaluadoresAll.length;
 
     const areasSet = new Set<string>();
-    responsables.forEach((r) => areasSet.add(r.area.nombre_area));
-    evaluadores.forEach((e) => {
+    visibles.responsablesAll.forEach((r) => areasSet.add(r.area.nombre_area));
+    visibles.evaluadoresAll.forEach((e) => {
       (e.evaluadores_area ?? []).forEach(({ area }) =>
         areasSet.add(area.nombre_area)
       );
@@ -124,20 +219,20 @@ export default function EquipoTab() {
       totalEvaluadores,
       totalAreasCubiertas: areasSet.size,
     };
-  }, [responsables, evaluadores]);
+  }, [visibles]);
 
-  const hayGestionSeleccionadaValida = !!data?.gestion;
+  const hasData = equipos.length > 0;
 
   return (
     <div className="space-y-6">
-      {/* Encabezado + botones de navegación a módulos de detalle */}
+      {/* Encabezado + botones */}
       <div className="bg-white flex flex-col p-4 gap-3 sm:flex-row sm:items-center sm:justify-between rounded-lg">
         <div>
           <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wider">
             Directorio de Personal
           </h3>
           <p className="text-xs text-gray-500">
-            Visión consolidada de responsables y evaluadores por gestión.
+            Responsables y evaluadores por gestión.
           </p>
         </div>
 
@@ -152,11 +247,7 @@ export default function EquipoTab() {
             </Button>
           </Link>
           <Link href="/private/evaluadores">
-            <Button
-              size="sm"
-              variant="outline"
-              className="flex items-center gap-2"
-            >
+            <Button size="sm" variant="outline" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
               Evaluadores
             </Button>
@@ -170,16 +261,18 @@ export default function EquipoTab() {
           <p className="text-xs font-semibold text-gray-600">Gestión</p>
           <div className="max-w-xs">
             <Select
-              value={selectedGestionId ? String(selectedGestionId) : undefined}
-              onValueChange={(v) => setSelectedGestionId(Number(v))}
+              value={selectedGestionKey}
+              onValueChange={(v) => setSelectedGestionKey(v)}
               disabled={gestiones.length === 0}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Seleccionar gestión" />
               </SelectTrigger>
+
               <SelectContent>
+                <SelectItem value="ALL">Todas las Gestiones</SelectItem>
                 {gestiones.map((g) => (
-                  <SelectItem key={g.id_gestion} value={String(g.id_gestion)}>
+                  <SelectItem key={g.id_gestion} value={toGestionKey(g.id_gestion)}>
                     {formatGestionLabel(g)}
                   </SelectItem>
                 ))}
@@ -189,23 +282,14 @@ export default function EquipoTab() {
         </div>
       </div>
 
-      {/* Métricas rápidas */}
+      {/* Métricas */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <CardMetric
-          label="Responsables de área"
-          value={metrics.totalResponsables}
-        />
-        <CardMetric
-          label="Evaluadores activos"
-          value={metrics.totalEvaluadores}
-        />
-        <CardMetric
-          label="Áreas cubiertas"
-          value={metrics.totalAreasCubiertas}
-        />
+        <CardMetric label="Responsables de área" value={metrics.totalResponsables} />
+        <CardMetric label="Evaluadores" value={metrics.totalEvaluadores} />
+        <CardMetric label="Áreas cubiertas" value={metrics.totalAreasCubiertas} />
       </div>
 
-      {/* Estado de carga / error */}
+      {/* Estado */}
       {loading && (
         <div className="rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-500">
           Cargando equipo académico…
@@ -218,168 +302,204 @@ export default function EquipoTab() {
         </div>
       )}
 
-      {!loading && !error && !hayGestionSeleccionadaValida && (
+      {!loading && !error && !hasData && (
         <div className="rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-600">
-          No se encontró información para la gestión seleccionada.
+          No se encontró información para la selección actual.
         </div>
       )}
 
-      {/* Listados */}
-      {!loading && !error && hayGestionSeleccionadaValida && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Columna Responsables */}
-          <section className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h4 className="text-sm font-semibold text-gray-800">
-                Responsables de área ({responsables.length})
-              </h4>
-              <span className="text-xs text-gray-500">
-                Gestión {data?.gestion?.anio}
-              </span>
-            </div>
+      {/* Bloques por gestión */}
+      {!loading && !error && hasData && (
+        <div className="space-y-6">
+          {equipos.map((block) => {
+            const g = block.gestion;
+            const activa = isGestionActiva(g);
 
-            {responsables.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 p-4 text-xs text-gray-500">
-                No hay responsables registrados en esta gestión.
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {responsables.map((r) => {
-                  const initials = getInitials(
-                    r.usuario.nombre,
-                    r.usuario.apellido
-                  );
-                  return (
-                    <div
-                      key={r.id_responsable_area}
-                      className="p-4 rounded-lg border border-gray-200 hover:shadow-md transition bg-white flex items-start gap-3"
-                    >
-                      <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-700 font-bold shrink-0">
-                        {initials}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h5 className="font-semibold text-gray-900 truncate">
-                            {r.usuario.nombre} {r.usuario.apellido}
-                          </h5>
-                          {r.activo ? (
-                            <span className="px-2 py-0.5 text-[10px] rounded-full bg-green-100 text-green-700 font-semibold">
-                              Activo
-                            </span>
-                          ) : (
-                            <span className="px-2 py-0.5 text-[10px] rounded-full bg-red-100 text-red-700 font-semibold">
-                              Inactivo
-                            </span>
-                          )}
-                        </div>
+            const responsables = block.responsables ?? [];
+            const evaluadores = block.evaluadores ?? [];
 
-                        <p className="text-xs text-blue-700 font-medium mb-1 flex items-center gap-1">
-                          <ShieldCheck className="w-3 h-3" />
-                          Responsable de área
-                        </p>
+            return (
+              <div
+                key={g.id_gestion}
+                className="rounded-lg border border-gray-200 bg-white p-4 space-y-4"
+              >
+                {/* Header del bloque */}
+                <div className="flex items-start sm:items-center justify-between gap-3 flex-col sm:flex-row">
+                  <div className="min-w-0">
+                    <h4 className="text-sm font-semibold text-gray-900 truncate">
+                      Gestión {formatGestionLabel(g)}
+                    </h4>
+                    <p className="text-xs text-gray-500">
+                      {activa
+                        ? "Gestión activa: el estado de cada persona refleja su registro actual."
+                        : "Gestión cerrada: el equipo se muestra como histórico."}
+                    </p>
+                  </div>
 
-                        <p className="text-xs text-gray-600 mb-1">
-                          Área:{" "}
-                          <span className="font-semibold">
-                            {r.area.nombre_area}
-                          </span>
-                        </p>
+                  <div className="shrink-0">
+                    {activa ? (
+                      <StatusPill label="Activa" tone="green" />
+                    ) : (
+                      <StatusPill label="Cerrada" tone="gray" />
+                    )}
+                  </div>
+                </div>
 
-                        {r.usuario.institucion && (
-                          <p className="text-xs text-gray-500 truncate">
-                            {r.usuario.institucion}
-                          </p>
-                        )}
-                      </div>
+                {/* Contenido del bloque */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Responsables */}
+                  <section className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h5 className="text-sm font-semibold text-gray-800">
+                        Responsables de área ({responsables.length})
+                      </h5>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
 
-          {/* Columna Evaluadores */}
-          <section className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h4 className="text-sm font-semibold text-gray-800">
-                Evaluadores ({evaluadores.length})
-              </h4>
-              <span className="text-xs text-gray-500">
-                Gestión {data?.gestion?.anio}
-              </span>
-            </div>
-
-            {evaluadores.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 p-4 text-xs text-gray-500">
-                No hay evaluadores registrados en esta gestión.
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {evaluadores.map((e) => {
-                  const initials = getInitials(e.nombre, e.apellido);
-                  const areas = e.evaluadores_area ?? [];
-                  const displayAreas = areas.slice(0, 2);
-                  const extraCount =
-                    areas.length > 2 ? areas.length - displayAreas.length : 0;
-
-                  return (
-                    <div
-                      key={e.id_usuario}
-                      className="p-4 rounded-lg border border-gray-200 hover:shadow-md transition bg-white flex items-start gap-3"
-                    >
-                      <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-green-700 font-bold shrink-0">
-                        {initials}
+                    {responsables.length === 0 ? (
+                      <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 p-4 text-xs text-gray-500">
+                        No hay responsables registrados en esta gestión.
                       </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h5 className="font-semibold text-gray-900 truncate">
-                            {e.nombre} {e.apellido}
-                          </h5>
-                          {e.activo ? (
-                            <span className="px-2 py-0.5 text-[10px] rounded-full bg-green-100 text-green-700 font-semibold">
-                              Activo
-                            </span>
-                          ) : (
-                            <span className="px-2 py-0.5 text-[10px] rounded-full bg-red-100 text-red-700 font-semibold">
-                              Inactivo
-                            </span>
-                          )}
-                        </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {responsables.map((r) => {
+                          const initials = getInitials(
+                            r.usuario.nombre,
+                            r.usuario.apellido
+                          );
 
-                        <p className="text-xs text-green-700 font-medium mb-1">
-                          Evaluador
-                        </p>
+                          // Regla solicitada:
+                          // - Si la gestión NO está activa: siempre mostrar "Inactivo" (gris)
+                          // - Si está activa: usar r.activo (verde / rojo)
+                          const pill = !activa
+                            ? { label: "Inactivo", tone: "gray" as const }
+                            : r.activo
+                            ? { label: "Activo", tone: "green" as const }
+                            : { label: "Inactivo", tone: "red" as const };
 
-                        {displayAreas.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mb-1">
-                            {displayAreas.map(({ area }) => (
-                              <span
-                                key={area.id_area}
-                                className="px-2 py-0.5 rounded-md bg-gray-100 text-gray-800 text-[10px] font-semibold"
-                              >
-                                {area.nombre_area}
-                              </span>
-                            ))}
-                            {extraCount > 0 && (
-                              <span className="px-2 py-0.5 rounded-md bg-gray-100 text-gray-500 text-[10px] font-semibold">
-                                +{extraCount} más
-                              </span>
-                            )}
-                          </div>
-                        )}
+                          return (
+                            <div
+                              key={r.id_responsable_area}
+                              className="p-4 rounded-lg border border-gray-200 hover:shadow-md transition bg-white flex items-start gap-3"
+                            >
+                              <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-700 font-bold shrink-0">
+                                {initials}
+                              </div>
 
-                        {e.institucion && (
-                          <p className="text-xs text-gray-500 truncate">
-                            {e.institucion}
-                          </p>
-                        )}
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <h6 className="font-semibold text-gray-900 truncate">
+                                    {r.usuario.nombre} {r.usuario.apellido}
+                                  </h6>
+                                  <StatusPill label={pill.label} tone={pill.tone} />
+                                </div>
+
+                                <p className="text-xs text-blue-700 font-medium mb-1 flex items-center gap-1">
+                                  <ShieldCheck className="w-3 h-3" />
+                                  Responsable de área
+                                </p>
+
+                                <p className="text-xs text-gray-600 mb-1">
+                                  Área:{" "}
+                                  <span className="font-semibold">
+                                    {r.area.nombre_area}
+                                  </span>
+                                </p>
+
+                                {r.usuario.institucion && (
+                                  <p className="text-xs text-gray-500 truncate">
+                                    {r.usuario.institucion}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
+                    )}
+                  </section>
+
+                  {/* Evaluadores */}
+                  <section className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h5 className="text-sm font-semibold text-gray-800">
+                        Evaluadores ({evaluadores.length})
+                      </h5>
                     </div>
-                  );
-                })}
+
+                    {evaluadores.length === 0 ? (
+                      <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 p-4 text-xs text-gray-500">
+                        No hay evaluadores registrados en esta gestión.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {evaluadores.map((e) => {
+                          const initials = getInitials(e.nombre, e.apellido);
+                          const areas = e.evaluadores_area ?? [];
+                          const displayAreas = areas.slice(0, 2);
+                          const extraCount =
+                            areas.length > 2 ? areas.length - displayAreas.length : 0;
+
+                          const pill = !activa
+                            ? { label: "Inactivo", tone: "gray" as const }
+                            : e.activo
+                            ? { label: "Activo", tone: "green" as const }
+                            : { label: "Inactivo", tone: "red" as const };
+
+                          return (
+                            <div
+                              key={e.id_usuario}
+                              className="p-4 rounded-lg border border-gray-200 hover:shadow-md transition bg-white flex items-start gap-3"
+                            >
+                              <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-green-700 font-bold shrink-0">
+                                {initials}
+                              </div>
+
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <h6 className="font-semibold text-gray-900 truncate">
+                                    {e.nombre} {e.apellido}
+                                  </h6>
+                                  <StatusPill label={pill.label} tone={pill.tone} />
+                                </div>
+
+                                <p className="text-xs text-green-700 font-medium mb-1">
+                                  Evaluador
+                                </p>
+
+                                {displayAreas.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mb-1">
+                                    {displayAreas.map(({ area }) => (
+                                      <span
+                                        key={area.id_area}
+                                        className="px-2 py-0.5 rounded-md bg-gray-100 text-gray-800 text-[10px] font-semibold"
+                                      >
+                                        {area.nombre_area}
+                                      </span>
+                                    ))}
+                                    {extraCount > 0 && (
+                                      <span className="px-2 py-0.5 rounded-md bg-gray-100 text-gray-500 text-[10px] font-semibold">
+                                        +{extraCount} más
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+
+                                {e.institucion && (
+                                  <p className="text-xs text-gray-500 truncate">
+                                    {e.institucion}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </section>
+                </div>
               </div>
-            )}
-          </section>
+            );
+          })}
         </div>
       )}
     </div>
