@@ -1,16 +1,436 @@
-// src/app/private/olimpistas/page.tsx
-'use client';
-import { useEffect} from 'react';
-import { usePageHeader } from '@/contexts/pageHeader';
-export default function ReportesPage() {
-  const { setTitle } = usePageHeader();
-  useEffect(() => {
-    setTitle('Reportes');
-  }, [setTitle]);
+// src/app/private/reportes/page.tsx
+"use client";
+
+import type { ReactNode } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
+import dynamic from "next/dynamic";
+import { useSearchParams, useRouter, usePathname } from "next/navigation"; // <--- NUEVO
+import { api } from "@/libs/api";
+import { usePageHeader } from "@/contexts/pageHeader";
+import { Users, Trophy, Medal } from "lucide-react";
+import RoleGate from "@/components/features/RoleGate";
+
+/* =========================
+   Tipos y helpers de datos
+   ========================= */
+type ReportResumenDTO = {
+  clasificados: number;
+  oro: number;
+  plata: number;
+  bronce: number;
+  menciones: number;
+  totalPremiados: number;
+};
+
+type CeremoniaResumenDTO = {
+  total: number;
+  oro: number;
+  plata: number;
+  bronce: number;
+  mencion: number;
+};
+
+type PhaseType = "CLASIFICACION" | "FINAL";
+type TabKey =
+  | "Clasificados"
+  | "Premiados"
+  | "Certificados"
+  | "Ceremonia"
+  | "Publicación";
+
+type PhaseAvailability = {
+  unlocked: boolean;
+  message: string | null;
+};
+
+const defaultPhaseAvailability: PhaseAvailability = {
+  unlocked: false,
+  message: null,
+};
+
+const phaseByTab: Record<TabKey, PhaseType> = {
+  Clasificados: "CLASIFICACION",
+  Premiados: "FINAL",
+  Certificados: "FINAL",
+  Ceremonia: "FINAL",
+  Publicación: "FINAL",
+};
+
+async function getResumenClasificados(): Promise<ReportResumenDTO> {
+  const { data } = await api.get<ReportResumenDTO>(
+    "/reportes/clasificados/resumen"
+  );
+  return data;
+}
+
+async function getResumenCeremonia(): Promise<CeremoniaResumenDTO> {
+  const { data } = await api.get<CeremoniaResumenDTO>(
+    "/reportes/ceremonia/resumen"
+  );
+  return data;
+}
+
+async function checkAvailability(
+  type: PhaseType
+): Promise<{ unlocked: boolean; message: string | null }> {
+  const { data } = await api.get<{ unlocked: boolean; message: string | null }>(
+    "/phases/availability",
+    { params: { type } }
+  );
+  return data;
+}
+
+/* =========================
+   UI: Card métrica
+   ========================= */
+function CardMetric({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value: ReactNode;
+  icon: ReactNode;
+}) {
   return (
-    <div className="bg-white border rounded-xl p-6 shadow-sm">
-      <h2 className="text-xl font-semibold mb-2">Listado de Reportes</h2>
-      <p className="text-gray-700">Aquí va el contenido de la sección.</p>
+    <div className="bg-white p-4 rounded-lg shadow h-28 flex flex-col justify-between">
+      <div className="flex justify-between items-start">
+        <p className="text-sm text-gray-500">{label}</p>
+        <div className="text-black">{icon}</div>
+      </div>
+      <p className="text-2xl font-bold text-black">{value}</p>
     </div>
+  );
+}
+
+/* =========================
+   UI: Segmented Tabs
+   ========================= */
+function SegmentedTabs({
+  active,
+  onChange,
+}: {
+  active: TabKey;
+  onChange?: (tab: TabKey) => void;
+}) {
+  const tabs: TabKey[] = [
+    "Clasificados",
+    "Premiados",
+    "Certificados",
+    "Ceremonia",
+    "Publicación",
+  ];
+
+  return (
+    <>
+      {/* ===== MÓVIL: carrusel horizontal con scroll ===== */}
+      <div className="sm:hidden">
+        <div className="overflow-x-auto py-1">
+          <div
+            role="tablist"
+            aria-label="Secciones de reportes"
+            className="inline-flex items-center gap-2 rounded-full bg-gray-100 p-1"
+          >
+            {tabs.map((t) => {
+              const isActive = t === active;
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => onChange?.(t)}
+                  className={[
+                    "px-3 py-1 text-sm leading-none rounded-full transition whitespace-nowrap shrink-0",
+                    isActive
+                      ? "bg-white text-black shadow"
+                      : "text-gray-600 hover:bg-white hover:text-black",
+                  ].join(" ")}
+                >
+                  {t}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* ===== DESKTOP: segmented original ===== */}
+      <div
+        role="tablist"
+        aria-label="Secciones de reportes"
+        className="hidden sm:inline-flex items-center gap-1 rounded-full bg-gray-100 p-1"
+      >
+        {tabs.map((t) => {
+          const isActive = t === active;
+          return (
+            <button
+              key={t}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              className={[
+                "px-3 py-1 text-sm rounded-full transition",
+                isActive
+                  ? "bg-white text-black shadow"
+                  : "text-gray-600 hover:bg-white hover:text-black",
+              ].join(" ")}
+              onClick={() => onChange?.(t)}
+            >
+              {t}
+            </button>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+/* ==========================================
+   Carga perezosa de pestañas
+   ========================================== */
+type TabProps = { disabled?: boolean };
+
+const ClasificadosTab = dynamic<TabProps>(() => import("./tabs/clasificados"), {
+  ssr: false,
+});
+const PremiadosTab = dynamic<TabProps>(() => import("./tabs/premiados"), {
+  ssr: false,
+});
+const CertificadosTab = dynamic<TabProps>(() => import("./tabs/certificados"), {
+  ssr: false,
+});
+const CeremoniaTab = dynamic<TabProps>(() => import("./tabs/ceremonia"), {
+  ssr: false,
+});
+const PublicacionTab = dynamic<TabProps>(() => import("./tabs/publicacion"), {
+  ssr: false,
+});
+
+/* =========================
+   Componente Lógico (Contenido)
+   ========================= */
+function ReportesContent() {
+  const { setTitle } = usePageHeader();
+  
+  // 1. Hooks de navegación
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    setTitle("Reportes");
+  }, [setTitle]);
+
+  // 2. Determinar estado inicial desde la URL
+  const initialTab = useMemo(() => {
+    const t = searchParams.get("tab");
+    if (t && Object.keys(phaseByTab).includes(t)) {
+      return t as TabKey;
+    }
+    return "Clasificados";
+  }, [searchParams]);
+
+  const [active, setActive] = useState<TabKey>(initialTab);
+
+  // 3. Función para cambiar tab y actualizar URL
+  const handleTabChange = (newTab: TabKey) => {
+    setActive(newTab);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", newTab);
+    // replace evita acumular historial (back button funciona mejor), scroll false evita saltos
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
+  // Disponibilidad por fase (CLASIFICACION / FINAL)
+  const [availability, setAvailability] = useState<
+    Record<PhaseType, PhaseAvailability>
+  >({
+    CLASIFICACION: defaultPhaseAvailability,
+    FINAL: defaultPhaseAvailability,
+  });
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [clasif, final] = await Promise.all([
+          checkAvailability("CLASIFICACION"),
+          checkAvailability("FINAL"),
+        ]);
+
+        setAvailability({
+          CLASIFICACION: clasif,
+          FINAL: final,
+        });
+      } catch {
+        setAvailability({
+          CLASIFICACION: {
+            unlocked: false,
+            message: "No fue posible verificar el estado de la fase.",
+          },
+          FINAL: {
+            unlocked: false,
+            message: "No fue posible verificar el estado de la fase.",
+          },
+        });
+      }
+    })();
+  }, []);
+
+  // KPIs clasificados
+  const [resumenClasif, setResumenClasif] = useState<ReportResumenDTO | null>(
+    null
+  );
+
+  useEffect(() => {
+    getResumenClasificados()
+      .then(setResumenClasif)
+      .catch(() =>
+        setResumenClasif({
+          clasificados: 0,
+          oro: 0,
+          plata: 0,
+          bronce: 0,
+          menciones: 0,
+          totalPremiados: 0,
+        })
+      );
+  }, []);
+
+  // KPIs ceremonia (premios)
+  const [resumenCeremonia, setResumenCeremonia] =
+    useState<CeremoniaResumenDTO | null>(null);
+
+  useEffect(() => {
+    getResumenCeremonia()
+      .then(setResumenCeremonia)
+      .catch(() => setResumenCeremonia(null));
+  }, []);
+
+  // Cards: siempre usamos los premios desde Ceremonia
+  const cards = useMemo(() => {
+    const oro = resumenCeremonia?.oro ?? 0;
+    const plata = resumenCeremonia?.plata ?? 0;
+    const bronce = resumenCeremonia?.bronce ?? 0;
+    const menciones = resumenCeremonia?.mencion ?? 0;
+    const totalPremiados = resumenCeremonia?.total ?? 0;
+
+    return [
+      {
+        key: "clasificados",
+        label: "Clasificados",
+        value: resumenClasif?.clasificados ?? 0,
+        icon: <Users className="w-6 h-6" />,
+      },
+      {
+        key: "oro",
+        label: "Oro",
+        value: oro,
+        icon: <Trophy className="w-6 h-6" />,
+      },
+      {
+        key: "plata",
+        label: "Plata",
+        value: plata,
+        icon: <Medal className="w-6 h-6" />,
+      },
+      {
+        key: "bronce",
+        label: "Bronce",
+        value: bronce,
+        icon: <Medal className="w-6 h-6" />,
+      },
+      {
+        key: "menciones",
+        label: "Menciones",
+        value: menciones,
+        icon: <Medal className="w-6 h-6" />,
+      },
+      {
+        key: "total",
+        label: "Total Premiados",
+        value: totalPremiados,
+        icon: <Users className="w-6 h-6" />,
+      },
+    ];
+  }, [resumenClasif, resumenCeremonia]);
+
+  // Fase que controla la pestaña activa y bloqueo
+  const phaseOfTab: PhaseType = phaseByTab[active];
+  const currentPhaseAvailability = availability[phaseOfTab];
+  const locked = !currentPhaseAvailability.unlocked;
+
+  const lockedMessage: string =
+    currentPhaseAvailability.message ??
+    (phaseOfTab === "FINAL"
+      ? "La fase final aún no ha sido aprobada. Los reportes se habilitarán una vez que des el aval correspondiente."
+      : "La fase de clasificación aún no ha sido aprobada. Los reportes se habilitarán una vez que des el aval correspondiente.");
+
+  return (
+    <div className="p-0 sm:p-6 space-y-6">
+      {/* Encabezado */}
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-black">
+            Sistema de Reportes
+          </h1>
+          <p className="text-gray-500 text-sm">
+            Generación de listas y documentos para clasificados y premiados
+          </p>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div>
+        <SegmentedTabs active={active} onChange={handleTabChange} />
+      </div>
+
+      {/* Banner de bloqueo */}
+      {locked && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-amber-800 text-sm">
+          <strong>Fase Bloqueada.</strong> {lockedMessage}
+        </div>
+      )}
+
+      {/* Cards */}
+      <div
+        className={locked ? "opacity-50 pointer-events-none select-none" : ""}
+      >
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-6 gap-2 sm:gap-6">
+          {cards.map((c) => (
+            <CardMetric
+              key={c.key}
+              label={c.label}
+              value={c.value}
+              icon={c.icon}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Contenido del tab */}
+      <div
+        className={locked ? "opacity-50 pointer-events-none select-none" : ""}
+      >
+        {active === "Clasificados" && <ClasificadosTab disabled={locked} />}
+        {active === "Premiados" && <PremiadosTab disabled={locked} />}
+        {active === "Certificados" && <CertificadosTab disabled={locked} />}
+        {active === "Ceremonia" && <CeremoniaTab disabled={locked} />}
+        {active === "Publicación" && <PublicacionTab disabled={locked} />}
+      </div>
+    </div>
+  );
+}
+
+/* =========================
+   Página Principal (Wrapper)
+   ========================= */
+export default function ReportesPage() {
+  return (
+    <RoleGate allow={["ADMINISTRADOR"]}>
+      <Suspense fallback={<div className="p-6">Cargando reporte...</div>}>
+        <ReportesContent />
+      </Suspense>
+    </RoleGate>
   );
 }

@@ -15,8 +15,12 @@
   --bronce:#FFD5A6;
   --plata:#EFEFEF;
   --rojo:#FF0000;
+  --rojoNaranja: #FF5207;
   --fondoAzulGris:#E9F1F9;
   --sidebar-w: 280px;
+  --blancoOpaco: #ffffff2d;
+  --bordeGris:#c2c2c2;
+  --blancoGrisOscuro:#e4e4e4;
 }
 
 @theme inline {

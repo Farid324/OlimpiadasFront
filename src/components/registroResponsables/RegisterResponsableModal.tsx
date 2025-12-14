@@ -1,3 +1,4 @@
+//src/components/registroResponsables/RegisterResponsableModal.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -7,7 +8,9 @@ import { api } from '@/libs/api';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { CheckCircle2 } from 'lucide-react';
 
+// Definir interfaces de Props y Areas correctamente
 interface Props {
   onClose: () => void;
   onSuccess: () => void;
@@ -30,68 +33,107 @@ interface Area {
   nombre_area: string;
 }
 
-//Validación Zod
+// Definición del esquema Zod para validaciones
 const schema = z.object({
   nombre: z
     .string()
     .min(1, 'El nombre es obligatorio')
     .regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s]+$/, 'Solo se permiten letras')
-    .refine((val) => val.trim().split(/\s+/).length >= 2, {
+    .refine((v) => v.trim().split(/\s+/).length >= 2, {
       message: 'Debe ingresar nombre y apellido',
     })
     .refine(
-      (val) =>
-        val
+      (v) =>
+        v
           .trim()
           .split(/\s+/)
           .every((w) => /^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+$/.test(w)),
-      { message: 'Cada nombre y apellido debe iniciar con mayúscula' }
+      {
+        message: 'Cada nombre y apellido debe iniciar con mayúscula',
+      },
     ),
-
   correo: z
     .string()
     .min(1, 'El correo es obligatorio')
     .email('Correo inválido')
-    .refine((val) => !val.includes(' '), {
+    .refine((v) => !v.includes(' '), {
       message: 'El correo no debe contener espacios',
     }),
 
-  telefono: z
-    .string()
-    .min(8, 'El teléfono debe tener 8 dígitos')
-    .max(8, 'El teléfono debe tener 8 dígitos')
-    .regex(/^[0-9]+$/, 'Solo se permiten números'),
+  // Validación del teléfono (opcional)
+  telefono: z.string().superRefine((value, ctx) => {
+    const v = value.trim();
+    if (v === '') return; // opcional
+
+    if (!/^\d+$/.test(v)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'El teléfono solo debe contener dígitos',
+      });
+      return;
+    }
+
+    if (v.length !== 8) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'El teléfono debe tener exactamente 8 dígitos',
+      });
+    }
+
+    if (!/^[67]/.test(v)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'El teléfono debe iniciar con 6 o 7',
+      });
+    }
+  }),
 
   ci: z
     .string()
-    .min(6, 'El CI debe tener entre 6 y 8 dígitos')
-    .max(8, 'El CI debe tener entre 6 y 8 dígitos')
+    .min(6, 'El CI debe tener entre 6 y 12 dígitos')
+    .max(12, 'El CI debe tener entre 6 y 12 dígitos')
     .regex(/^[0-9]+$/, 'El CI solo debe contener números'),
 
-  institucion: z
-    .string()
-    .min(2, 'La institución es obligatoria')
-    .regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s]+$/, 'Solo se permiten letras'),
+  institucion: z.string(),
+  experiencia: z.string(),
+  especialidad: z.string(),
 
-  experiencia: z
-    .string()
-    .regex(/^[0-9]{1,2}$/, 'Debe ingresar 1 o 2 dígitos numéricos')
-    .refine(
-      (val) => {
-        const n = Number(val);
-        return n >= 1 && n <= 30;
-      },
-      { message: 'La experiencia debe estar entre 1 y 30 años' }
-    ),
-
-  especialidad: z.string().min(2, 'La especialidad es obligatoria'),
-
-  id_area: z.string().refine((v) => v !== '0', {
-    message: 'Debe seleccionar un área',
-  }),
+  id_area: z.string().refine((v) => v !== '0', { message: 'Debe seleccionar un área' }),
 });
 
 type FormData = z.infer<typeof schema>;
+
+// Definir Payload de Responsable
+type ResponsablePayload = {
+  nombre: string;
+  apellido: string;
+  correo: string;
+  ci: string;
+  id_area: number;
+  telefono?: string;
+  institucion?: string;
+  especialidad?: string;
+  experiencia?: number;
+};
+
+// Helper seguro para leer mensaje del backend (Nest/Axios)
+function getBackendMessage(err: unknown): string | string[] | null {
+  if (typeof err !== 'object' || err === null) return null;
+  if (!('response' in err)) return null;
+
+  const response = (err as { response?: unknown }).response;
+  if (typeof response !== 'object' || response === null) return null;
+  if (!('data' in response)) return null;
+
+  const data = (response as { data?: unknown }).data;
+  if (typeof data !== 'object' || data === null) return null;
+  if (!('message' in data)) return null;
+
+  const message = (data as { message?: unknown }).message;
+  if (typeof message === 'string' || Array.isArray(message)) return message;
+
+  return null;
+}
 
 export default function RegisterResponsableModal({
   onClose,
@@ -103,6 +145,7 @@ export default function RegisterResponsableModal({
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [dupError, setDupError] = useState<string | null>(null);
+  const [lockAfterSuccess, setLockAfterSuccess] = useState(false);
 
   const {
     register,
@@ -111,11 +154,9 @@ export default function RegisterResponsableModal({
     reset,
     setValue,
     watch,
-  } = useForm<FormData>({
-    resolver: zodResolver(schema),
-  });
+  } = useForm<FormData>({ resolver: zodResolver(schema) });
 
-  //Precargar datos si es edición
+  // Cargar valores iniciales si el modo es "editar"
   useEffect(() => {
     if (mode === 'edit' && initial) {
       setValue('nombre', initial.nombre || '');
@@ -125,57 +166,87 @@ export default function RegisterResponsableModal({
       setValue('institucion', initial.institucion || '');
       setValue('especialidad', initial.especialidad || '');
       setValue('experiencia', initial.experiencia || '');
-      // id_area se asigna cuando las áreas estén cargadas
+      if (initial.id_area) setValue('id_area', initial.id_area);
     }
   }, [mode, initial, setValue]);
 
-  //Cargar áreas y asignar área actual si está en edición
+  // Obtener las áreas disponibles
   useEffect(() => {
-    async function fetchAreas() {
+    (async () => {
       try {
         const { data } = await api.get<Area[]>('/areas');
         setAreas(data);
-
-        // Si es edición y tiene área, asignamos el valor al select
-        if (mode === 'edit' && initial?.id_area) {
-          setValue('id_area', initial.id_area);
-        }
+        if (mode === 'edit' && initial?.id_area) setValue('id_area', initial.id_area);
       } catch {
         console.error('Error al cargar áreas');
       }
-    }
-
-    fetchAreas();
+    })();
   }, [mode, initial?.id_area, setValue]);
 
+  // Función para manejar el submit
   const onSubmit = async (data: FormData) => {
+    if (lockAfterSuccess) return;
+
     setLoading(true);
     setSuccessMsg(null);
     setDupError(null);
 
     try {
-      // Validar duplicados solo al crear
+      // Normalizar los valores
+      const correo = data.correo.trim();
+      const ci = data.ci.trim();
+      const telefono = data.telefono.trim();
+      const institucion = data.institucion.trim();
+      const especialidad = data.especialidad.trim();
+      const expStr = data.experiencia.trim();
+
+      // Validaciones de duplicados (solo en modo "crear")
       if (mode === 'create') {
-        const [tel, ci, correo] = await Promise.all([
-          api.get(`/responsables/check-telefono/${data.telefono}`),
-          api.get(`/responsables/check-ci/${data.ci}`),
-          api.get(`/responsables/check-correo/${data.correo}`),
+        if (telefono !== '') {
+          const tel = await api.get(`/responsables/check-telefono/${telefono}`);
+          if (tel.data.exists) {
+            setDupError('❌ El teléfono ya está registrado');
+            setLoading(false);
+            return;
+          }
+        }
+
+        const [ciRes, correoRes] = await Promise.all([
+          api.get(`/responsables/check-ci/${ci}`),
+          api.get(`/responsables/check-correo/${correo}`),
         ]);
 
-        if (tel.data.exists) {
-          setDupError('❌ El teléfono ya está registrado');
-          setLoading(false);
-          return;
-        }
-        if (ci.data.exists) {
+        if (ciRes.data.exists) {
           setDupError('❌ El CI ya está registrado');
           setLoading(false);
           return;
         }
-        if (correo.data.exists) {
+        if (correoRes.data.exists) {
           setDupError('❌ El correo ya está registrado');
           setLoading(false);
           return;
+        }
+      }
+
+      // Validación para un solo responsable por área
+      const areaIdNum = Number(data.id_area);
+
+      if (mode === 'create') {
+        const areaRes = await api.get(`/responsables/check-area/${areaIdNum}`);
+        if (areaRes.data?.exists) {
+          setDupError('❌ Ya existe un responsable asignado a esta área');
+          setLoading(false);
+          return;
+        }
+      } else if (mode === 'edit') {
+        const currentArea = initial?.id_area ? Number(initial.id_area) : undefined;
+        if (currentArea !== undefined && areaIdNum !== currentArea) {
+          const areaRes = await api.get(`/responsables/check-area/${areaIdNum}`);
+          if (areaRes.data?.exists) {
+            setDupError('❌ Ya existe un responsable asignado a esta área');
+            setLoading(false);
+            return;
+          }
         }
       }
 
@@ -183,6 +254,7 @@ export default function RegisterResponsableModal({
       const partes = data.nombre.trim().split(/\s+/);
       let nombre = '';
       let apellido = '';
+
       if (partes.length === 4) {
         nombre = partes.slice(0, 2).join(' ');
         apellido = partes.slice(2).join(' ');
@@ -197,35 +269,60 @@ export default function RegisterResponsableModal({
         apellido = '';
       }
 
-      if (mode === 'edit' && initial?.id_usuario) {
-        await api.patch(`/responsables/${initial.id_usuario}`, {
-          ...data,
-          nombre,
-          apellido,
-          experiencia: Number(data.experiencia),
-          id_area: Number(data.id_area),
-        });
-        setSuccessMsg('Responsable actualizado correctamente');
-      } else {
-        await api.post('/responsables', {
-          ...data,
-          nombre,
-          apellido,
-          experiencia: Number(data.experiencia),
-          id_area: Number(data.id_area),
-        });
-        setSuccessMsg('Responsable registrado correctamente');
+      // Convertir experiencia si no está vacía
+      const experienciaNum = expStr !== '' ? Number(expStr) : undefined;
+
+      // Crear el payload
+      const payload: ResponsablePayload = {
+        nombre,
+        apellido,
+        correo,
+        ci,
+        id_area: areaIdNum,
+      };
+
+      if (telefono !== '') payload.telefono = telefono;
+      if (institucion !== '') payload.institucion = institucion;
+      if (especialidad !== '') payload.especialidad = especialidad;
+      if (experienciaNum !== undefined && !Number.isNaN(experienciaNum)) {
+        payload.experiencia = experienciaNum;
       }
 
-      reset();
-      onSuccess();
+      if (mode === 'edit' && initial?.id_usuario) {
+        await api.patch(`/responsables/${initial.id_usuario}`, payload);
 
-      setTimeout(() => {
-        setSuccessMsg(null);
-        onClose();
-      }, 1200);
-    } catch (err) {
+        setSuccessMsg('Responsable actualizado correctamente');
+        setLockAfterSuccess(true);
+
+        setTimeout(() => {
+          setLockAfterSuccess(false);
+          setSuccessMsg(null);
+          onSuccess();
+          onClose();
+        }, 1000);
+      } else {
+        await api.post('/responsables', payload);
+
+        setSuccessMsg('Responsable registrado con éxito');
+        setLockAfterSuccess(true);
+        reset();
+
+        setTimeout(() => {
+          setLockAfterSuccess(false);
+          setSuccessMsg(null);
+          onSuccess();
+          onClose();
+        }, 1000);
+      }
+    } catch (err: unknown) {
+      // Mostrar mensaje real del backend sin usar `any`
       console.error('Error al registrar/actualizar responsable', err);
+
+      const backendMsg = getBackendMessage(err);
+
+      if (Array.isArray(backendMsg)) setDupError(backendMsg.join(', '));
+      else if (typeof backendMsg === 'string') setDupError(backendMsg);
+      else setDupError('Ocurrió un error al registrar/actualizar responsable');
     } finally {
       setLoading(false);
     }
@@ -234,12 +331,13 @@ export default function RegisterResponsableModal({
   const selectedArea = watch('id_area');
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-2">
-      <div className="bg-white p-6 rounded-xl w-full max-w-lg sm:max-w-xl md:max-w-2xl relative">
-        {/* Cerrar */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-2 sm:p-3">
+      <div className="bg-white p-4 sm:p-6 rounded-xl w-full max-w-lg sm:max-w-xl md:max-w-2xl relative max-h-[90vh] overflow-y-auto">
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
+          aria-label="Cerrar"
+          disabled={lockAfterSuccess}
         >
           ✕
         </button>
@@ -253,45 +351,49 @@ export default function RegisterResponsableModal({
             : 'Complete la información del responsable'}
         </p>
 
-        {successMsg && <p className="text-green-600 text-sm mb-3">{successMsg}</p>}
+        {successMsg && (
+          <div
+            className="mb-3 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-green-700"
+            aria-live="polite"
+          >
+            <CheckCircle2 className="h-5 w-5" />
+            <span className="text-sm font-medium">{successMsg}</span>
+          </div>
+        )}
+
         {dupError && <p className="text-red-600 text-sm mb-3">{dupError}</p>}
 
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className={lockAfterSuccess ? 'pointer-events-none opacity-75' : ''}
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">
-                Nombre Completo
+                Nombre Completo <span className="text-red-500">*</span>
               </label>
               <Input placeholder="Ej: Juan Pérez" {...register('nombre')} />
-              {errors.nombre && (
-                <p className="text-red-500 text-sm">{errors.nombre.message}</p>
-              )}
+              {errors.nombre && <p className="text-red-500 text-sm">{errors.nombre.message}</p>}
             </div>
 
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">
-                Correo Electrónico
+                Correo Electrónico <span className="text-red-500">*</span>
               </label>
               <Input placeholder="correo@ejemplo.com" {...register('correo')} />
-              {errors.correo && (
-                <p className="text-red-500 text-sm">{errors.correo.message}</p>
-              )}
+              {errors.correo && <p className="text-red-500 text-sm">{errors.correo.message}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">
-                Teléfono
-              </label>
+              <label className="block text-sm font-bold text-gray-700 mb-1">Teléfono</label>
               <Input placeholder="70000000" {...register('telefono')} />
               {errors.telefono && (
-                <p className="text-red-500 text-sm">{errors.telefono.message}</p>
+                <p className="text-red-500 text-sm">{errors.telefono.message as string}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">
-                Especialización
-              </label>
+              <label className="block text-sm font-bold text-gray-700 mb-1">Especialización</label>
               <Input placeholder="Área de especialización" {...register('especialidad')} />
               {errors.especialidad && (
                 <p className="text-red-500 text-sm">{errors.especialidad.message}</p>
@@ -299,9 +401,7 @@ export default function RegisterResponsableModal({
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">
-                Institución
-              </label>
+              <label className="block text-sm font-bold text-gray-700 mb-1">Institución</label>
               <Input placeholder="Universidad o institución" {...register('institucion')} />
               {errors.institucion && (
                 <p className="text-red-500 text-sm">{errors.institucion.message}</p>
@@ -309,9 +409,7 @@ export default function RegisterResponsableModal({
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">
-                Años de Experiencia
-              </label>
+              <label className="block text-sm font-bold text-gray-700 mb-1">Años de Experiencia</label>
               <Input
                 type="number"
                 inputMode="numeric"
@@ -330,14 +428,12 @@ export default function RegisterResponsableModal({
                   if (!/^\d{1,2}$/.test(text)) e.preventDefault();
                 }}
               />
-              {errors.experiencia && (
-                <p className="text-red-500 text-sm">{errors.experiencia.message}</p>
-              )}
+              {errors.experiencia && <p className="text-red-500 text-sm">{errors.experiencia.message}</p>}
             </div>
 
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">
-                Documento de Identidad (CI)
+                Documento de Identidad (CI) <span className="text-red-500">*</span>
               </label>
               <Input placeholder="Número de CI" {...register('ci')} />
               {errors.ci && <p className="text-red-500 text-sm">{errors.ci.message}</p>}
@@ -345,7 +441,7 @@ export default function RegisterResponsableModal({
 
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">
-                Área Designada
+                Área Designada <span className="text-red-500">*</span>
               </label>
               <select
                 {...register('id_area')}
@@ -362,9 +458,7 @@ export default function RegisterResponsableModal({
                   </option>
                 ))}
               </select>
-              {errors.id_area && (
-                <p className="text-red-500 text-sm">{errors.id_area.message}</p>
-              )}
+              {errors.id_area && <p className="text-red-500 text-sm">{errors.id_area.message}</p>}
             </div>
           </div>
 
@@ -374,10 +468,12 @@ export default function RegisterResponsableModal({
               variant="outline"
               type="button"
               className="w-full md:w-auto"
+              disabled={lockAfterSuccess}
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading} className="w-full md:w-auto">
+
+            <Button type="submit" disabled={loading || lockAfterSuccess} className="w-full md:w-auto">
               {loading
                 ? mode === 'edit'
                   ? 'Guardando...'

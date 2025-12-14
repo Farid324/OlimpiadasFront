@@ -1,8 +1,8 @@
-//src/components/olimpistas/RegisterTutorModal.tsx
+// src/components/olimpistas/RegisterTutorModal.tsx
 "use client";
 
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type SubmitHandler } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/Input";
@@ -12,17 +12,52 @@ import type { CreateTutorInput, Tutor } from "@/types/tutor";
 import { Search } from "lucide-react";
 import ModalPortal from "@/components/ui/ModalPortal";
 
+/* ===================== Schema (mensajes específicos) ===================== */
 const schema = z.object({
-  nombreCompleto: z.string().min(1, "Requerido"),
+  nombreCompleto: z
+    .string()
+    .trim()
+    .min(1, "El nombre completo es obligatorio.")
+    .regex(
+      /^[\p{L}\s.'-]+$/u,
+      "Ingrese solo letras y espacios (sin números ni símbolos)."
+    )
+    .max(100, "El nombre completo no debe superar 100 caracteres."),
+
+  // CI opcional: vacío permitido; si viene, 5-12 dígitos
   ci: z
     .string()
+    .trim()
     .optional()
     .or(z.literal(""))
-    .refine((v) => !v || /^\d{5,12}$/.test(v), "CI inválido"),
-  correo: z.string().email("Correo inválido").optional().or(z.literal("")),
-  telefono: z.string().min(7).max(12).regex(/^\d+$/, "Solo números"),
-  unidadEducativa: z.string().optional().or(z.literal("")),
+    .refine(
+      (v) => !v || /^\d{5,12}$/.test(v),
+      "El CI debe tener 5 a 12 dígitos."
+    ),
+
+  // Correo opcional: vacío permitido; si viene, formato válido
+  correo: z
+    .string()
+    .trim()
+    .optional()
+    .or(z.literal(""))
+    .refine(
+      (v) => !v || z.string().email().safeParse(v).success,
+      "Correo inválido"
+    ),
+
+  // Teléfono requerido: 7-12 dígitos (sin símbolos)
+  telefono: z
+    .string()
+    .trim()
+    .min(7, "El teléfono debe tener entre 7 y 12 dígitos.")
+    .max(12, "El teléfono debe tener entre 7 y 12 dígitos.")
+    .regex(/^\d+$/, "El teléfono solo admite números."),
+
+  // Unidad Educativa opcional; vacío permitido
+  unidadEducativa: z.string().trim().optional().or(z.literal("")),
 });
+
 type FormData = z.infer<typeof schema>;
 
 export default function RegisterTutorModal({
@@ -47,11 +82,15 @@ export default function RegisterTutorModal({
     register,
     handleSubmit,
     setValue,
+    setError,
     formState: { errors },
+    reset,
   } = useForm<FormData>({
     resolver: zodResolver(schema),
+    mode: "onBlur",
   });
 
+  /* ===================== Búsqueda de tutores ===================== */
   useEffect(() => {
     const h = setTimeout(async () => {
       if (!q.trim()) {
@@ -69,6 +108,7 @@ export default function RegisterTutorModal({
     return () => clearTimeout(h);
   }, [q]);
 
+  /* ===================== Selección de un tutor ===================== */
   const pickTutor = async (t: Tutor) => {
     try {
       const det = await getTutor(t.id);
@@ -84,11 +124,12 @@ export default function RegisterTutorModal({
       setValue("correo", t.correo || "");
       setValue("telefono", t.telefono);
       setValue("unidadEducativa", t.unidadEducativa || "");
-      setRelacionados(t.relacionados);
+      setRelacionados(t.relacionados ?? null);
     }
   };
 
-  const onSubmit = async (f: FormData) => {
+  /* ===================== Submit ===================== */
+  const onSubmit: SubmitHandler<FormData> = async (f) => {
     setSubmitting(true);
     try {
       const payload: CreateTutorInput = {
@@ -98,16 +139,33 @@ export default function RegisterTutorModal({
         telefono: f.telefono.trim(),
         unidadEducativa: f.unidadEducativa?.trim() || undefined,
       };
+
       const res = await createTutor(payload);
+
       onSuccess({
         telefono: payload.telefono,
         tutorId: res.tutorId,
         linked: res.linked,
         tutorNombre: payload.nombreCompleto,
       });
+
+      reset();
       onClose();
-    } catch (e) {
-      console.error(e);
+    } catch (e: unknown) {
+      // Muestra errores "correspondientes":
+      // si backend devuelve conflicto por CI/correo, puedes mapearlo aquí
+      const msg =
+        e instanceof Error ? e.message : "No se pudo registrar el tutor.";
+      if (/ci/i.test(msg)) {
+        setError("ci", { type: "manual", message: msg });
+      } else if (/correo|email/i.test(msg)) {
+        setError("correo", { type: "manual", message: msg });
+      } else if (/tel|fono/i.test(msg)) {
+        setError("telefono", { type: "manual", message: msg });
+      } else {
+        // error general (opcional: podrías renderizarlo en un banner)
+        console.error(e);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -115,20 +173,21 @@ export default function RegisterTutorModal({
 
   return (
     <ModalPortal>
-      {}
+      {/* Backdrop */}
       <div
-        className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40"
-        onClick={onClose} // cerrar al clickear fuera
+        className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 px-2"
+        onClick={onClose}
       >
-        {}
+        {/* Modal */}
         <div
-          className="bg-white p-6 rounded-xl w-[720px] relative"
-          onClick={(e) => e.stopPropagation()} // no cerrar al clickear dentro
+          className="bg-white p-4 sm:p-6 rounded-xl w-full max-w-[720px] relative"
+          onClick={(e) => e.stopPropagation()}
         >
           <button
             type="button"
             onClick={onClose}
             className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
+            aria-label="Cerrar"
           >
             ✕
           </button>
@@ -140,7 +199,7 @@ export default function RegisterTutorModal({
             Complete la información del tutor
           </p>
 
-          {}
+          {/* Buscador */}
           <div className="relative mb-4">
             <Search
               className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
@@ -205,16 +264,22 @@ export default function RegisterTutorModal({
             )}
           </div>
 
-          {/* Formulario*/}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {/* Formulario */}
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="space-y-4"
+            noValidate
+          >
             <div className="grid grid-cols-2 gap-4">
+              {/* Nombre */}
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1">
-                  Nombre Completo
+                  Nombre Completo <span className="text-red-500">*</span>
                 </label>
                 <Input
                   placeholder="Nombre completo del tutor"
                   className="text-gray-700"
+                  aria-invalid={!!errors.nombreCompleto}
                   {...register("nombreCompleto")}
                 />
                 {errors.nombreCompleto && (
@@ -224,6 +289,7 @@ export default function RegisterTutorModal({
                 )}
               </div>
 
+              {/* CI */}
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1">
                   Cédula de identidad
@@ -231,6 +297,7 @@ export default function RegisterTutorModal({
                 <Input
                   placeholder="00000000"
                   className="text-gray-700"
+                  aria-invalid={!!errors.ci}
                   {...register("ci")}
                 />
                 {errors.ci && (
@@ -238,6 +305,7 @@ export default function RegisterTutorModal({
                 )}
               </div>
 
+              {/* Correo */}
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1">
                   Correo electrónico
@@ -245,6 +313,7 @@ export default function RegisterTutorModal({
                 <Input
                   placeholder="correo@ejemplo.com"
                   className="text-gray-700"
+                  aria-invalid={!!errors.correo}
                   {...register("correo")}
                 />
                 {errors.correo && (
@@ -254,13 +323,15 @@ export default function RegisterTutorModal({
                 )}
               </div>
 
+              {/* Teléfono */}
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1">
-                  Teléfono
+                  Teléfono <span className="text-red-500">*</span>
                 </label>
                 <Input
                   placeholder="7xxxxxxx"
                   className="text-gray-700"
+                  aria-invalid={!!errors.telefono}
                   {...register("telefono")}
                 />
                 {errors.telefono && (
@@ -270,6 +341,7 @@ export default function RegisterTutorModal({
                 )}
               </div>
 
+              {/* Unidad Educativa */}
               <div className="col-span-2">
                 <label className="block text-sm font-bold text-gray-700 mb-1">
                   Unidad Educativa
@@ -277,6 +349,7 @@ export default function RegisterTutorModal({
                 <Input
                   placeholder="U.E. ..."
                   className="text-gray-700"
+                  aria-invalid={!!errors.unidadEducativa}
                   {...register("unidadEducativa")}
                 />
               </div>

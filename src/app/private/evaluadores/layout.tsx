@@ -1,3 +1,9 @@
-export default function Layout({ children }: { children: React.ReactNode }) {
-  return <div className="min-h-[calc(100vh-4rem)] bg-white text-black">{children}</div>;
+'use client';
+
+export default function ResponsablesLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="w-full max-w-none px-1 sm:px-6 py-4 sm:py-6">
+      {children}
+    </div>
+  );
 }
