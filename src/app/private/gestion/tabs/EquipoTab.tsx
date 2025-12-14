@@ -6,11 +6,20 @@ import Link from "next/link";
 import { ShieldCheck, Users } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import {
-  fetchEquipoGestionActual,
   type EquipoGestionActualResponse,
   type ResponsableEquipo,
   type EvaluadorEquipo,
+  fetchAllGestiones,
+  fetchEquipoByGestion,
+  type Gestion,
 } from "@/libs/gestiones.api";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/Select";
 
 function getInitials(nombre: string, apellido: string): string {
   const n = (nombre ?? "").trim();
@@ -19,17 +28,58 @@ function getInitials(nombre: string, apellido: string): string {
   return ini || "NA";
 }
 
+function formatGestionLabel(g: Gestion): string {
+  const nombre = g.nombre ? ` – ${g.nombre}` : "";
+  const tag = g.estado === "ABIERTA" ? " (Activa)" : "";
+  return `${g.anio}${nombre}${tag}`;
+}
+
 export default function EquipoTab() {
   const [data, setData] = useState<EquipoGestionActualResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [gestiones, setGestiones] = useState<Gestion[]>([]);
+  const [selectedGestionId, setSelectedGestionId] = useState<number | null>(
+    null
+  );
+
+  // 1) Cargar listado de gestiones (incluye abiertas y cerradas)
   useEffect(() => {
     let mounted = true;
+
+    void (async () => {
+      try {
+        const g = await fetchAllGestiones();
+        if (!mounted) return;
+
+        setGestiones(g);
+
+        const activa = g.find((x) => x.estado === "ABIERTA");
+        const fallback = activa?.id_gestion ?? g[0]?.id_gestion ?? null;
+
+        setSelectedGestionId((prev) => prev ?? fallback);
+      } catch {
+        if (!mounted) return;
+        setError("No fue posible cargar las gestiones.");
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // 2) Cargar equipo académico según gestión seleccionada
+  useEffect(() => {
+    let mounted = true;
+
+    if (!selectedGestionId) return;
+
     setLoading(true);
     setError(null);
 
-    void fetchEquipoGestionActual()
+    void fetchEquipoByGestion(selectedGestionId)
       .then((res) => {
         if (!mounted) return;
         setData(res);
@@ -37,6 +87,7 @@ export default function EquipoTab() {
       .catch(() => {
         if (!mounted) return;
         setError("No fue posible cargar el equipo académico.");
+        setData(null);
       })
       .finally(() => {
         if (!mounted) return;
@@ -46,7 +97,7 @@ export default function EquipoTab() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [selectedGestionId]);
 
   const responsables = useMemo<ResponsableEquipo[]>(() => {
     return data?.responsables ?? [];
@@ -63,19 +114,19 @@ export default function EquipoTab() {
     const areasSet = new Set<string>();
     responsables.forEach((r) => areasSet.add(r.area.nombre_area));
     evaluadores.forEach((e) => {
-      e.evaluadores_area.forEach(({ area }) => areasSet.add(area.nombre_area));
+      (e.evaluadores_area ?? []).forEach(({ area }) =>
+        areasSet.add(area.nombre_area)
+      );
     });
-
-    const totalAreasCubiertas = areasSet.size;
 
     return {
       totalResponsables,
       totalEvaluadores,
-      totalAreasCubiertas,
+      totalAreasCubiertas: areasSet.size,
     };
   }, [responsables, evaluadores]);
 
-  const hayGestionAbierta = !!data?.gestion;
+  const hayGestionSeleccionadaValida = !!data?.gestion;
 
   return (
     <div className="space-y-6">
@@ -86,8 +137,7 @@ export default function EquipoTab() {
             Directorio de Personal
           </h3>
           <p className="text-xs text-gray-500">
-            Visión consolidada de responsables y evaluadores de la gestión
-            actual.
+            Visión consolidada de responsables y evaluadores por gestión.
           </p>
         </div>
 
@@ -111,6 +161,31 @@ export default function EquipoTab() {
               Evaluadores
             </Button>
           </Link>
+        </div>
+      </div>
+
+      {/* Filtro por gestión */}
+      <div className="bg-white p-4 rounded-lg border border-gray-200">
+        <div className="flex flex-col gap-1">
+          <p className="text-xs font-semibold text-gray-600">Gestión</p>
+          <div className="max-w-xs">
+            <Select
+              value={selectedGestionId ? String(selectedGestionId) : undefined}
+              onValueChange={(v) => setSelectedGestionId(Number(v))}
+              disabled={gestiones.length === 0}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar gestión" />
+              </SelectTrigger>
+              <SelectContent>
+                {gestiones.map((g) => (
+                  <SelectItem key={g.id_gestion} value={String(g.id_gestion)}>
+                    {formatGestionLabel(g)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
@@ -143,16 +218,14 @@ export default function EquipoTab() {
         </div>
       )}
 
-      {!loading && !error && !hayGestionAbierta && (
+      {!loading && !error && !hayGestionSeleccionadaValida && (
         <div className="rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-600">
-          No hay una gestión abierta actualmente. El equipo académico se
-          mostrará aquí cuando exista una gestión en estado ABierta y se hayan
-          registrado responsables y evaluadores.
+          No se encontró información para la gestión seleccionada.
         </div>
       )}
 
       {/* Listados */}
-      {!loading && !error && hayGestionAbierta && (
+      {!loading && !error && hayGestionSeleccionadaValida && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Columna Responsables */}
           <section className="space-y-3">
@@ -167,7 +240,7 @@ export default function EquipoTab() {
 
             {responsables.length === 0 ? (
               <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 p-4 text-xs text-gray-500">
-                No hay responsables registrados en la gestión actual.
+                No hay responsables registrados en esta gestión.
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -238,7 +311,7 @@ export default function EquipoTab() {
 
             {evaluadores.length === 0 ? (
               <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 p-4 text-xs text-gray-500">
-                No hay evaluadores registrados en la gestión actual.
+                No hay evaluadores registrados en esta gestión.
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

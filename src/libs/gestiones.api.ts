@@ -178,3 +178,12 @@ export async function fetchEquipoGestionActual(): Promise<EquipoGestionActualRes
   );
   return data;
 }
+
+export async function fetchEquipoByGestion(
+  idGestion: number
+): Promise<EquipoGestionActualResponse> {
+  const { data } = await api.get<EquipoGestionActualResponse>(
+    `/gestiones/equipo?id_gestion=${idGestion}`
+  );
+  return data;
+}
