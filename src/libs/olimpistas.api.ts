@@ -2,6 +2,8 @@
 import { api } from "@/libs/api";
 import type { AreaCounter, OlimpistaRow } from "@/types/olimpista";
 
+
+ // CONTADORES POR ÁREA
 export async function fetchAreaCounters(): Promise<AreaCounter[]> {
   try {
     const { data } = await api.get<AreaCounter[]>("/olimpistas/areas-counters");
@@ -20,17 +22,24 @@ export async function fetchAreaCounters(): Promise<AreaCounter[]> {
     }));
   }
 }
+
+
+ // Áreas disponibles (para filtros del front)
+
 export async function fetchAvailableAreas(): Promise<string[]> {
   try {
-    // Si tu API tiene un endpoint simple para las áreas:
     const { data } = await api.get<{ nombre_area: string }[]>("/areas/nombres");
-    return data.map(a => a.nombre_area);
+    return data.map((a) => a.nombre_area);
   } catch {
-    // Si no lo tiene, reutilizamos la lógica de fetchAreaCounters para obtener los nombres
-    const { data } = await api.get<{ id_area: number; nombre_area: string }[]>("/areas");
-    return data.map(a => a.nombre_area);
+    const { data } = await api.get<{ id_area: number; nombre_area: string }[]>(
+      "/areas",
+    );
+    return data.map((a) => a.nombre_area);
   }
 }
+
+
+ // LISTADO OLIMPISTAS (ACTUAL)
 
 export async function fetchOlimpistas(params?: { area?: string; q?: string }) {
   const { area, q } = params || {};
@@ -40,6 +49,8 @@ export async function fetchOlimpistas(params?: { area?: string; q?: string }) {
   return data;
 }
 
+ // CSV: VALIDACIÓN / IMPORT
+ 
 export type CsvSummary = {
   total: number;
   ok: number;
@@ -51,18 +62,72 @@ export type CsvSummary = {
 export async function validateCsvOlimpistas(file: File): Promise<CsvSummary> {
   const fd = new FormData();
   fd.append("file", file);
+
   const { data } = await api.post<CsvSummary>("/olimpistas/register", fd, {
     params: { dryRun: true },
     headers: { "Content-Type": "multipart/form-data" },
   });
+
   return data;
 }
 
 export async function importCsvOlimpistas(file: File): Promise<CsvSummary> {
   const fd = new FormData();
   fd.append("file", file);
+
   const { data } = await api.post<CsvSummary>("/olimpistas/register", fd, {
     headers: { "Content-Type": "multipart/form-data" },
   });
+
   return data;
+}
+
+
+ // HISTORIAL POR GESTIÓN (CERRADA)
+
+export async function fetchOlimpistasByGestion(
+  idGestion: number,
+  params?: { area?: string; q?: string },
+) {
+  const { area, q } = params || {};
+  const { data } = await api.get<{ olimpistas: OlimpistaRow[] }>(
+    `/gestiones/${idGestion}/olimpistas`,
+    { params: { area, q } },
+  );
+  return data.olimpistas;
+}
+
+export async function fetchOlimpistasAreasByGestion(idGestion: number) {
+  const { data } = await api.get<{ areas: string[] }>(
+    `/gestiones/${idGestion}/olimpistas-areas`,
+  );
+  return data.areas;
+}
+
+export async function fetchOlimpistasClasificadosByGestion(
+  idGestion: number,
+  params?: { area?: string; q?: string },
+) {
+  const { area, q } = params || {};
+  const { data } = await api.get<{ olimpistas: OlimpistaRow[] }>(
+    `/gestiones/${idGestion}/olimpistas-clasificados`,
+    { params: { area, q } },
+  );
+  return data.olimpistas;
+}
+
+export type OlimpistaFinalistaRow = OlimpistaRow & {
+  medalla?: "ORO" | "PLATA" | "BRONCE" | "MENCION" | null;
+};
+
+export async function fetchOlimpistasFinalistasByGestion(
+  idGestion: number,
+  params?: { area?: string; q?: string },
+) {
+  const { area, q } = params || {};
+  const { data } = await api.get<{ olimpistas: OlimpistaFinalistaRow[] }>(
+    `/gestiones/${idGestion}/olimpistas-finalistas`,
+    { params: { area, q } },
+  );
+  return data.olimpistas;
 }
